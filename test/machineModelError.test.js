@@ -3,6 +3,7 @@ import request from "supertest";
 import app from "../code/server/app.js";
 import * as machineModelService from "../code/server/services/machineModelService.js";
 import { ApiError } from "../code/server/utils/ApiError.js";
+import { Prisma } from "@prisma/client";
 
 // Mock the service so no database query is executed.
 vi.mock("../code/server/services/machineModelService.js", () => ({
@@ -69,5 +70,22 @@ describe("Machine model error handling", () => {
       message: "Updated machine model is invalid",
       errors: validationErrors,
     });
+  });
+
+  it.each([
+    ["P2002", 409, "A record with these values already exists."],
+    ["P2003", 409, "The operation violates a relationship constraint."],
+    ["P2025", 404, "Requested record not found."],
+  ])("should map Prisma error %s to its public HTTP response", async (code, status, message) => {
+    const error = new Prisma.PrismaClientKnownRequestError(
+      "Simulated Prisma error",
+      { code, clientVersion: "test" },
+    );
+    machineModelService.findAllMachineModels.mockRejectedValue(error);
+
+    const response = await request(app).get("/api/v1/machine-models");
+
+    expect(response.status).toBe(status);
+    expect(response.body).toEqual({ success: false, message });
   });
 });
