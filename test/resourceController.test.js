@@ -183,9 +183,9 @@ defineCrudControllerTests({
   notFoundMessage: "Manufacturer not found",
   createMessage: "Manufacturer created successfully",
   updateMessage: "Manufacturer updated successfully",
-  createInput: " Mimaki ",
+  createInput: { name: " Mimaki " },
   createServiceArgs: [" Mimaki "],
-  updateInput: "Epson",
+  updateInput: { name: "Epson" },
   updateServiceArgs: ["record-1", "Epson"],
 });
 
@@ -209,9 +209,9 @@ defineCrudControllerTests({
   notFoundMessage: "Customer not found",
   createMessage: "Customer created successfully",
   updateMessage: "Customer updated successfully",
-  createInput: " Example Customer ",
+  createInput: { name: " Example Customer " },
   createServiceArgs: [" Example Customer "],
-  updateInput: "Updated Customer",
+  updateInput: { name: "Updated Customer" },
   updateServiceArgs: ["record-1", "Updated Customer"],
 });
 
