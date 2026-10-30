@@ -1,5 +1,6 @@
 import * as machineModelService from "../services/machineModelService.js";
 
+// Retrieve all machine models.
 export async function getAllMachineModels(req, res) {
   const models = await machineModelService.findAllMachineModels();
 
@@ -10,6 +11,7 @@ export async function getAllMachineModels(req, res) {
   });
 }
 
+// Retrieve one machine model by its ID.
 export async function getMachineModelById(req, res) {
   const model = await machineModelService.findMachineModelById(req.params.id);
 
@@ -26,6 +28,7 @@ export async function getMachineModelById(req, res) {
   });
 }
 
+// Create a new machine model.
 export async function createMachineModel(req, res) {
   const model = await machineModelService.createMachineModel(req.body);
 
@@ -36,6 +39,7 @@ export async function createMachineModel(req, res) {
   });
 }
 
+// Update an existing machine model by its ID.
 export async function updateMachineModel(req, res) {
   const model = await machineModelService.updateMachineModelValidated(
     req.params.id,
@@ -49,6 +53,7 @@ export async function updateMachineModel(req, res) {
   });
 }
 
+// Delete a machine model by its ID.
 export async function deleteMachineModel(req, res) {
   await machineModelService.removeMachineModel(req.params.id);
 
