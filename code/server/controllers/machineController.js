@@ -1,6 +1,6 @@
 import * as machineService from "../services/machineService.js";
 
-// GET /api/v1/machines
+// Retrieve all machines.
 export async function getMachines(req, res) {
   const machines = await machineService.findAllMachines();
 
@@ -11,7 +11,7 @@ export async function getMachines(req, res) {
   });
 }
 
-// GET /api/v1/machines/:id
+// Retrieve one machine by its ID.
 export async function getMachineById(req, res) {
   const { id } = req.params;
 
@@ -30,7 +30,7 @@ export async function getMachineById(req, res) {
   });
 }
 
-// POST /api/v1/machines
+// Create a new machine.
 export async function createMachine(req, res) {
   const data = {
     ...req.body,
@@ -45,7 +45,7 @@ export async function createMachine(req, res) {
   });
 }
 
-// PATCH /api/v1/machines/:id
+// Update an existing machine by its ID.
 export async function updateMachine(req, res) {
   const { id } = req.params;
 
@@ -63,7 +63,7 @@ export async function updateMachine(req, res) {
   });
 }
 
-// DELETE /api/v1/machines/:id
+// Delete a machine by its ID.
 export async function deleteMachine(req, res) {
   const { id } = req.params;
 
