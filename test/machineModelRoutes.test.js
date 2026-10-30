@@ -153,4 +153,29 @@ describe("Machine model route validation", () => {
 
     expect(machineModelController.deleteMachineModel).not.toHaveBeenCalled();
   });
+
+  it("should allow a valid DELETE request through to the controller", async () => {
+    const machineModelId = "550e8400-e29b-41d4-a716-446655440000";
+
+    machineModelController.deleteMachineModel.mockClear();
+    machineModelController.deleteMachineModel.mockImplementationOnce(
+      (req, res) =>
+        res.status(200).json({
+          success: true,
+          message: "Machine model deleted successfully",
+          id: req.params.id,
+        }),
+    );
+
+    const response = await request(app).delete(
+      `/api/v1/machine-models/${machineModelId}`,
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.body.success).toBe(true);
+    expect(response.body.message).toBe("Machine model deleted successfully");
+    expect(response.body.id).toBe(machineModelId);
+
+    expect(machineModelController.deleteMachineModel).toHaveBeenCalledOnce();
+  });
 });
