@@ -111,4 +111,25 @@ describe("Machine model route validation", () => {
 
     expect(machineModelController.updateMachineModel).toHaveBeenCalledOnce();
   });
+
+  it("should reject an invalid PATCH UUID before reaching the controller", async () => {
+    machineModelController.updateMachineModel.mockClear();
+
+    const response = await request(app)
+      .patch("/api/v1/machine-models/invalid-id")
+      .send({ notes: "Updated printer specifications" });
+
+    expect(response.status).toBe(400);
+    expect(response.body.success).toBe(false);
+    expect(response.body.message).toBe("Validation failed");
+    expect(response.body.errors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          field: "id",
+        }),
+      ]),
+    );
+
+    expect(machineModelController.updateMachineModel).not.toHaveBeenCalled();
+  });
 });
