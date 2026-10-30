@@ -1,5 +1,6 @@
 import * as customerSiteService from "../services/customerSiteService.js";
 
+// Retrieve all customer sites.
 export async function getAllCustomerSites(req, res) {
   const sites = await customerSiteService.findAllCustomerSites();
 
@@ -10,6 +11,7 @@ export async function getAllCustomerSites(req, res) {
   });
 }
 
+// Retrieve one customer site by its ID.
 export async function getCustomerSiteById(req, res) {
   const site = await customerSiteService.findCustomerSiteById(req.params.id);
 
@@ -26,6 +28,7 @@ export async function getCustomerSiteById(req, res) {
   });
 }
 
+// Create a new customer site.
 export async function createCustomerSite(req, res) {
   const site = await customerSiteService.createCustomerSite(req.body);
 
@@ -36,6 +39,7 @@ export async function createCustomerSite(req, res) {
   });
 }
 
+// Update an existing customer site by its ID.
 export async function updateCustomerSite(req, res) {
   const site = await customerSiteService.updateCustomerSite(
     req.params.id,
@@ -49,6 +53,7 @@ export async function updateCustomerSite(req, res) {
   });
 }
 
+// Delete a customer site by its ID.
 export async function deleteCustomerSite(req, res) {
   await customerSiteService.removeCustomerSite(req.params.id);
 
