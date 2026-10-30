@@ -91,4 +91,24 @@ describe("Machine model route validation", () => {
 
     expect(machineModelController.updateMachineModel).not.toHaveBeenCalled();
   });
+
+  it("should allow a valid partial PATCH request through validation", async () => {
+    const updateData = {
+      notes: "Updated printer specifications",
+    };
+
+    machineModelController.updateMachineModel.mockImplementationOnce(
+      (req, res) => res.status(200).json({ success: true, data: req.body }),
+    );
+
+    const response = await request(app)
+      .patch("/api/v1/machine-models/550e8400-e29b-41d4-a716-446655440000")
+      .send(updateData);
+
+    expect(response.status).toBe(200);
+    expect(response.body.success).toBe(true);
+    expect(response.body.data).toEqual(updateData);
+
+    expect(machineModelController.updateMachineModel).toHaveBeenCalledOnce();
+  });
 });
