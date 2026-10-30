@@ -132,4 +132,25 @@ describe("Machine model route validation", () => {
 
     expect(machineModelController.updateMachineModel).not.toHaveBeenCalled();
   });
+
+  it("should reject an invalid DELETE UUID before reaching the controller", async () => {
+    machineModelController.deleteMachineModel.mockClear();
+
+    const response = await request(app).delete(
+      "/api/v1/machine-models/invalid-id",
+    );
+
+    expect(response.status).toBe(400);
+    expect(response.body.success).toBe(false);
+    expect(response.body.message).toBe("Validation failed");
+    expect(response.body.errors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          field: "id",
+        }),
+      ]),
+    );
+
+    expect(machineModelController.deleteMachineModel).not.toHaveBeenCalled();
+  });
 });
