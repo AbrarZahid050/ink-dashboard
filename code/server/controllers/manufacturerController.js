@@ -1,5 +1,6 @@
 import * as manufacturerService from "../services/manufacturerService.js";
 
+// Retrieve all manufacturers.
 export async function getAllManufacturers(req, res) {
   const manufacturers = await manufacturerService.findAllManufacturers();
 
@@ -10,6 +11,7 @@ export async function getAllManufacturers(req, res) {
   });
 }
 
+// Retrieve one manufacturer by its ID.
 export async function getManufacturerById(req, res) {
   const manufacturer = await manufacturerService.findManufacturerById(
     req.params.id,
@@ -28,6 +30,7 @@ export async function getManufacturerById(req, res) {
   });
 }
 
+// Create a new manufacturer.
 export async function createManufacturer(req, res) {
   const manufacturer = await manufacturerService.createManufacturer(
     req.body.name,
@@ -40,6 +43,7 @@ export async function createManufacturer(req, res) {
   });
 }
 
+// Update an existing manufacturer by its ID.
 export async function updateManufacturer(req, res) {
   const manufacturer = await manufacturerService.updateManufacturer(
     req.params.id,
@@ -53,6 +57,7 @@ export async function updateManufacturer(req, res) {
   });
 }
 
+// Delete a manufacturer by its ID.
 export async function deleteManufacturer(req, res) {
   await manufacturerService.removeManufacturer(req.params.id);
 
