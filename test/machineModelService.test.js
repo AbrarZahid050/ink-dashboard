@@ -165,4 +165,42 @@ describe("Machine model service", () => {
       include: modelDetails,
     });
   });
+  it("should preserve existing optional fields when they are omitted from an update", async () => {
+    const changes = { modelName: "JV100-160 Plus" };
+    prisma.machineModel.findUnique.mockResolvedValue(model);
+    prisma.machineModel.update.mockResolvedValue({ ...model, ...changes });
+
+    await expect(
+      updateMachineModelValidated(model.id, changes),
+    ).resolves.toEqual({ ...model, ...changes });
+
+    expect(prisma.machineModel.update).toHaveBeenCalledWith({
+      where: { id: model.id },
+      data: changes,
+      include: modelDetails,
+    });
+  });
+
+  it("should accept explicit null values and update all supplied optional fields", async () => {
+    const changes = {
+      configuration: "HYBRID",
+      maxRollWidthMm: 1800,
+      flatbedWidthMm: 1200,
+      flatbedLengthMm: 2400,
+      notes: null,
+    };
+    prisma.machineModel.findUnique.mockResolvedValue(model);
+    prisma.machineModel.update.mockResolvedValue({ ...model, ...changes });
+
+    await expect(
+      updateMachineModelValidated(model.id, changes),
+    ).resolves.toEqual({ ...model, ...changes });
+
+    expect(prisma.machineModel.update).toHaveBeenCalledWith({
+      where: { id: model.id },
+      data: changes,
+      include: modelDetails,
+    });
+  });
+
 });
