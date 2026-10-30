@@ -1,5 +1,6 @@
 import * as customerService from "../services/customerService.js";
 
+// Retrieve all customers.
 export async function getAllCustomers(req, res) {
   const customers = await customerService.findAllCustomers();
 
@@ -10,6 +11,7 @@ export async function getAllCustomers(req, res) {
   });
 }
 
+// Retrieve one customer by its ID.
 export async function getCustomerById(req, res) {
   const customer = await customerService.findCustomerById(req.params.id);
 
@@ -26,6 +28,7 @@ export async function getCustomerById(req, res) {
   });
 }
 
+// Create a new customer.
 export async function createCustomer(req, res) {
   const customer = await customerService.createCustomer(req.body.name);
 
@@ -36,6 +39,7 @@ export async function createCustomer(req, res) {
   });
 }
 
+// Update an existing customer by its ID.
 export async function updateCustomer(req, res) {
   const customer = await customerService.updateCustomer(
     req.params.id,
@@ -49,6 +53,7 @@ export async function updateCustomer(req, res) {
   });
 }
 
+// Delete a customer by its ID.
 export async function deleteCustomer(req, res) {
   await customerService.removeCustomer(req.params.id);
 
