@@ -1,0 +1,353 @@
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  // The application uses PostgreSQL as its database.
+  // The connection URL is configured in prisma7.config.ts.
+  provider = "postgresql"
+}
+
+
+// ============================================================
+// ENUMS
+// Enums restrict a field to a predefined set of values.
+// This prevents inconsistent values such as "Roll to Roll",
+// "roll-to-roll", and "ROLL_TO_ROLL" in the database.
+// ============================================================
+
+// The printing technology used by a machine model.
+enum MachineTechnology {
+  SOLVENT
+  LATEX
+  UV
+  SUBLIMATION
+  OTHER
+}
+
+// The physical configuration of a machine model.
+enum MachineConfiguration {
+  ROLL_TO_ROLL
+  FLATBED
+  HYBRID
+}
+
+// The current operational/lifecycle status of a physical machine.
+enum MachineStatus {
+  ACTIVE
+  INACTIVE
+  DECOMMISSIONED
+}
+
+
+// ============================================================
+// MANUFACTURER
+// Stores each manufacturer once, instead of repeating its name
+// for every model it produces.
+// Example: Mimaki, HP, HandTop, Epson.
+// ============================================================
+
+model Manufacturer {
+  // Primary key: uniquely identifies this manufacturer.
+  // UUIDs are generated automatically when a record is created.
+  id        String   @id @default(uuid()) @db.Uuid
+
+  // Manufacturer's name must be unique.
+  // Application logic should normalize capitalization and
+  // whitespace to avoid duplicates such as "Mimaki" and "MIMAKI".
+  name      String   @unique
+
+  // Automatically record when this row is created.
+  createdAt DateTime @default(now())
+
+  // Automatically update this timestamp when the row is updated.
+  updatedAt DateTime @updatedAt
+
+  // Relationship: one manufacturer can have many machine models.
+  // This is the reverse side of MachineModel.manufacturer.
+  models    MachineModel[]
+}
+
+
+// ============================================================
+// MACHINE MODEL
+// Stores specifications shared by all physical machines
+// belonging to the same manufacturer model/variant.
+// Example: Mimaki CJV330-160.
+// The actual physical printers are stored in the Machine table.
+// ============================================================
+
+model MachineModel {
+  // Primary key for this model record.
+  id                    String                @id @default(uuid()) @db.Uuid
+
+  // Foreign key referencing Manufacturer.id.
+  // This identifies who makes the machine model.
+  manufacturerId        String                @db.Uuid
+
+  // Manufacturer's model name, for example "CJV330-160".
+  modelName             String
+
+  // Printing technology used by this model.
+  technology            MachineTechnology
+
+  // Physical configuration: roll-to-roll, flatbed, or hybrid.
+  configuration         MachineConfiguration
+
+  // Maximum supported roll media width, in millimetres.
+  // Relevant to roll-to-roll and roll-capable hybrid models.
+  // Optional because flatbed-only models may not support rolls.
+  maxRollWidthMm        Int?
+
+  // Flatbed working width, in millimetres.
+  // Relevant to flatbed and hybrid models with a table.
+  flatbedWidthMm        Int?
+
+  // Flatbed working length, in millimetres.
+  // Relevant to flatbed and hybrid models with a table.
+  flatbedLengthMm       Int?
+
+  // Optional notes for additional model specifications.
+  notes                 String?
+
+  // Creation and modification timestamps.
+  createdAt             DateTime              @default(now())
+  updatedAt             DateTime              @updatedAt
+
+  // Relationship to the manufacturer.
+  // manufacturerId stores the foreign key in this table.
+  manufacturer          Manufacturer          @relation(fields: [manufacturerId],references: [id])
+
+  // One model can be referenced by many physical machines.
+  // Example: several CJV330-160 printers with different serial numbers.
+  machines              Machine[]
+
+  // Prevent duplicate model names for the same manufacturer.
+  // The same model name may still exist under another manufacturer.
+  @@unique([manufacturerId, modelName])
+}
+
+
+// ============================================================
+// CUSTOMER
+// Stores each customer company once.
+// A customer can have multiple sites or branches.
+// Example: ABC Printing LLC.
+// ============================================================
+
+model Customer {
+  // Primary key identifying the customer.
+  id        String         @id @default(uuid()) @db.Uuid
+
+  // Customer/company name.
+  name      String
+
+  // Creation and modification timestamps.
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  // One customer can have multiple customer sites.
+  // The related site records are stored in CustomerSite.
+  sites     CustomerSite[]
+}
+
+
+// ============================================================
+// CUSTOMER SITE
+// Represents a particular branch or physical location
+// belonging to a customer.
+// Example: ABC Printing LLC - Dubai Branch.
+// A site can have multiple installed machines.
+// ============================================================
+
+model CustomerSite {
+  // Primary key identifying this specific site.
+  id         String       @id @default(uuid()) @db.Uuid
+
+  // Foreign key referencing Customer.id.
+  // Determines which customer owns this site record.
+  customerId String       @db.Uuid
+
+  // Site or branch name.
+  name       String
+
+  // Optional address details.
+  address    String?
+  city       String?
+  country    String?
+
+  // Creation and modification timestamps.
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  // Relationship back to the customer that owns this site.
+  customer   Customer     @relation(fields: [customerId],references: [id])
+
+  // One site can contain multiple registered machines.
+  machines   Machine[]
+
+  // Site names must be unique within the same customer.
+  // Different customers may use the same site name.
+  @@unique([customerId, name])
+}
+
+
+// ============================================================
+// MACHINE
+// Represents one actual physical printer installed at
+// a customer site.
+// Example: a particular CJV330-160 with serial number MIM-001.
+// Do not confuse this with MachineModel, which describes
+// the shared specifications of the model.
+// ============================================================
+
+model Machine {
+  // Primary key identifying this physical machine in our app.
+  id                String        @id @default(uuid()) @db.Uuid
+
+  // Manufacturer-assigned serial number.
+  // Unique so the same physical machine cannot be registered twice.
+  serialNumber      String        @unique
+
+  // Foreign key referencing MachineModel.id.
+  // Identifies the model and shared specifications of this machine.
+  machineModelId    String        @db.Uuid
+
+  // Foreign key referencing CustomerSite.id.
+  // Identifies the machine's CURRENT installed site.
+  // When the machine moves, update this value.
+  // This schema does not store relocation history.
+  siteId            String        @db.Uuid
+
+  // Date the machine was installed at the customer site.
+  // @db.Date stores a date without a time of day.
+  installationDate  DateTime      @db.Date
+
+  // Current status of the physical machine.
+  // Defaults to ACTIVE when a record is created.
+  status            MachineStatus @default(ACTIVE)
+
+  // Optional notes about this particular physical machine,
+  // not the general model specifications.
+  notes             String?
+
+  // Creation and modification timestamps.
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  // Relationship to the machine model.
+  // machineModelId is the foreign key.
+  machineModel      MachineModel  @relation(fields: [machineModelId],references: [id])
+
+  // Relationship to the current customer site.
+  // siteId is the foreign key.
+  site              CustomerSite  @relation(fields: [siteId],references: [id])
+}
+
+//------------------------------[old code without comments]--------------------------------------------------//
+// generator client {
+//   provider = "prisma-client"
+//   output   = "../generated/prisma"
+// }
+
+// datasource db {
+//   provider = "postgresql"
+// }
+
+// enum MachineTechnology {
+//   SOLVENT
+//   LATEX
+//   UV
+//   SUBLIMATION
+//   OTHER
+// }
+
+// enum MachineConfiguration {
+//   ROLL_TO_ROLL
+//   FLATBED
+//   HYBRID
+// }
+
+// enum MachineStatus {
+//   ACTIVE
+//   INACTIVE
+//   DECOMMISSIONED
+// }
+
+// model Manufacturer {
+//   id        String         @id @default(uuid()) @db.Uuid
+//   name      String         @unique
+//   createdAt DateTime       @default(now())
+//   updatedAt DateTime       @updatedAt
+
+//   models    MachineModel[]
+// }
+
+
+// model MachineModel {
+//   id                    String                @id @default(uuid()) @db.Uuid
+//   manufacturerId        String                @db.Uuid
+//   modelName             String
+//   technology            MachineTechnology
+//   configuration         MachineConfiguration
+
+//   // Roll media dimensions (roll-to-roll and hybrid)
+//   maxRollWidthMm        Int?
+
+//   // Flatbed working dimensions (flatbed and hybrid)
+//   flatbedWidthMm        Int?
+//   flatbedLengthMm       Int?
+
+//   notes                 String?
+//   createdAt             DateTime              @default(now())
+//   updatedAt             DateTime              @updatedAt
+
+//   // Relationships
+//   manufacturer          Manufacturer          @relation(fields: [manufacturerId], references: [id])
+//   machines              Machine[]
+
+//   // A manufacturer cannot have duplicate model names
+//   @@unique([manufacturerId, modelName])
+// }
+
+
+// model Customer {
+//   id        String         @id @default(uuid()) @db.Uuid
+//   name      String
+//   createdAt DateTime       @default(now())
+//   updatedAt DateTime       @updatedAt
+
+//   sites     CustomerSite[]
+// }
+
+// model CustomerSite {
+//   id         String       @id @default(uuid()) @db.Uuid
+//   customerId String       @db.Uuid
+//   name       String
+//   address    String?
+//   city       String?
+//   country    String?
+//   createdAt  DateTime     @default(now())
+//   updatedAt  DateTime     @updatedAt
+
+//   customer   Customer     @relation(fields: [customerId], references: [id])
+//   machines   Machine[]
+
+//   @@unique([customerId, name])
+// }
+
+// model Machine {
+//   id                String        @id @default(uuid()) @db.Uuid
+//   serialNumber      String        @unique
+//   machineModelId    String        @db.Uuid
+//   siteId            String        @db.Uuid
+//   installationDate  DateTime      @db.Date
+//   status            MachineStatus @default(ACTIVE)
+//   notes             String?
+//   createdAt         DateTime      @default(now())
+//   updatedAt         DateTime      @updatedAt
+
+//   machineModel      MachineModel  @relation(fields: [machineModelId], references: [id])
+//   site              CustomerSite  @relation(fields: [siteId], references: [id])
+// }
