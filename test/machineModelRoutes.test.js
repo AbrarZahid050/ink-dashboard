@@ -69,4 +69,26 @@ describe("Machine model route validation", () => {
 
     expect(machineModelController.createMachineModel).not.toHaveBeenCalled();
   });
+
+  it("should reject an empty PATCH body before reaching the controller", async () => {
+    const response = await request(app)
+      .patch("/api/v1/machine-models/550e8400-e29b-41d4-a716-446655440000")
+      .send({});
+
+    expect(response.status).toBe(400);
+
+    expect(response.body.success).toBe(false);
+    expect(response.body.message).toBe("Validation failed");
+
+    expect(response.body.errors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          field: "",
+          message: "At least one field must be provided.",
+        }),
+      ]),
+    );
+
+    expect(machineModelController.updateMachineModel).not.toHaveBeenCalled();
+  });
 });
