@@ -178,4 +178,48 @@ describe("Machine model route validation", () => {
 
     expect(machineModelController.deleteMachineModel).toHaveBeenCalledOnce();
   });
+  
+  it("should allow a valid GET by ID request through to the controller", async () => {
+    const machineModelId = "550e8400-e29b-41d4-a716-446655440000";
+    const machineModel = { id: machineModelId, modelName: "JV100-160" };
+
+    machineModelController.getMachineModelById.mockClear();
+    machineModelController.getMachineModelById.mockImplementationOnce(
+      (req, res) => res.status(200).json({ success: true, data: machineModel }),
+    );
+
+    const response = await request(app).get(
+      `/api/v1/machine-models/${machineModelId}`,
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({ success: true, data: machineModel });
+    expect(machineModelController.getMachineModelById).toHaveBeenCalledOnce();
+  });
+
+  it("should pass a valid machine model through POST validation", async () => {
+    const input = {
+      manufacturerId: "550e8400-e29b-41d4-a716-446655440000",
+      modelName: "  JV100-160  ",
+      technology: "SOLVENT",
+      configuration: "ROLL_TO_ROLL",
+      maxRollWidthMm: 1600,
+    };
+
+    machineModelController.createMachineModel.mockClear();
+    machineModelController.createMachineModel.mockImplementationOnce(
+      (req, res) => res.status(201).json({ success: true, data: req.body }),
+    );
+
+    const response = await request(app)
+      .post("/api/v1/machine-models")
+      .send(input);
+
+    expect(response.status).toBe(201);
+    expect(response.body).toEqual({
+      success: true,
+      data: { ...input, modelName: "JV100-160" },
+    });
+    expect(machineModelController.createMachineModel).toHaveBeenCalledOnce();
+  });
 });
