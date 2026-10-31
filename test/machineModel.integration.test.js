@@ -353,4 +353,20 @@ describe("Machine Model API - PostgreSQL integration", () => {
     });
   });
 
+  it("returns 404 when updating a machine model that does not exist", async () => {
+    const nonExistentId = randomUUID();
+
+    const response = await request(app)
+      .patch(`/api/v1/machine-models/${nonExistentId}`)
+      .send({
+        modelName: "Updated Non-existent Integration Printer",
+      });
+
+    expect(response.status).toBe(404);
+    expect(response.body).toMatchObject({
+      success: false,
+      message: "Machine model not found",
+    });
+  });
+
 });
