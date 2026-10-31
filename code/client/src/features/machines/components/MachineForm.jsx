@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Controller, useForm } from 'react-hook-form'
+import { Controller, useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { AddRounded } from '@mui/icons-material'
 import {
@@ -74,7 +74,6 @@ function MachineForm({ onCreated }) {
     setValue,
     setError,
     clearErrors,
-    watch,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(machineSchema),
@@ -82,7 +81,7 @@ function MachineForm({ onCreated }) {
   })
 
   const today = getLocalDateString()
-  const selectedCustomerId = watch('customerId')
+  const selectedCustomerId = useWatch({ control, name: 'customerId' })
   const customerSites = sites.filter((site) => site.customerId === selectedCustomerId)
 
   const handleCustomerChange = (customerId) => {
@@ -109,7 +108,8 @@ function MachineForm({ onCreated }) {
     if (!confirmationData) return
     setServerError('')
     try {
-      const { customerId, status, ...machineData } = confirmationData
+      const { status, ...machineData } = confirmationData
+      delete machineData.customerId
       await createMachine({
         ...machineData,
         ...(status ? { status } : {}),
