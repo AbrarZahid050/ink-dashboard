@@ -20,19 +20,19 @@ function Sidebar({ mobileOpen, onClose, isMobile, activePage, onNavigate }) {
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <Box sx={{ px: 3, py: 3 }}>
         <Typography variant="h5" sx={{ color: '#FFFFFF', fontWeight: 800, letterSpacing: '-0.04em' }}>
-          ink<span style={{ color: '#54C5BC' }}>.</span>
+          ink<span style={{ color: '#45C7B8' }}>.</span>
         </Typography>
-        <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.58)' }}>
+        <Typography variant="caption" sx={{ color: 'rgba(232,238,248,0.58)' }}>
           Equipment management
         </Typography>
       </Box>
 
-      <Divider sx={{ borderColor: 'rgba(255,255,255,0.10)' }} />
+      <Divider sx={{ borderColor: 'rgba(232,238,248,0.10)' }} />
 
       <Box sx={{ px: 2, pt: 3, pb: 1 }}>
         <Typography
           variant="overline"
-          sx={{ px: 1.5, color: 'rgba(255,255,255,0.48)', fontWeight: 700, letterSpacing: '0.1em' }}
+          sx={{ px: 1.5, color: 'rgba(232,238,248,0.48)', fontWeight: 700, letterSpacing: '0.1em' }}
         >
           WORKSPACE
         </Typography>
@@ -50,15 +50,15 @@ function Sidebar({ mobileOpen, onClose, isMobile, activePage, onNavigate }) {
             mb: 0.5,
             px: 1.5,
             borderRadius: 2,
-            color: 'rgba(255,255,255,0.72)',
+            color: 'rgba(232,238,248,0.72)',
             '& .MuiListItemIcon-root': { color: 'inherit', minWidth: 38 },
             '&.Mui-selected': {
               color: '#FFFFFF',
-              backgroundColor: 'rgba(84,197,188,0.16)',
-              '& .MuiListItemIcon-root': { color: '#54C5BC' },
+              backgroundColor: 'rgba(69,199,184,0.15)',
+              '& .MuiListItemIcon-root': { color: '#45C7B8' },
             },
-            '&.Mui-selected:hover': { backgroundColor: 'rgba(84,197,188,0.22)' },
-            '&:hover': { backgroundColor: 'rgba(255,255,255,0.07)' },
+            '&.Mui-selected:hover': { backgroundColor: 'rgba(69,199,184,0.22)' },
+            '&:hover': { backgroundColor: 'rgba(232,238,248,0.07)' },
           }}
         >
           <ListItemIcon><ViewInArOutlined fontSize="small" /></ListItemIcon>
@@ -67,7 +67,7 @@ function Sidebar({ mobileOpen, onClose, isMobile, activePage, onNavigate }) {
       </List>
 
       <Box sx={{ mt: 'auto' }}>
-        <Divider sx={{ borderColor: 'rgba(255,255,255,0.10)' }} />
+        <Divider sx={{ borderColor: 'rgba(232,238,248,0.10)' }} />
         <List sx={{ px: 1.5, py: 2 }}>
           <ListItemButton
             onClick={isMobile ? onClose : undefined}
@@ -75,9 +75,9 @@ function Sidebar({ mobileOpen, onClose, isMobile, activePage, onNavigate }) {
               minHeight: 46,
               px: 1.5,
               borderRadius: 2,
-              color: 'rgba(255,255,255,0.72)',
+              color: 'rgba(232,238,248,0.72)',
               '& .MuiListItemIcon-root': { color: 'inherit', minWidth: 38 },
-              '&:hover': { backgroundColor: 'rgba(255,255,255,0.07)' },
+              '&:hover': { backgroundColor: 'rgba(232,238,248,0.07)' },
             }}
           >
             <ListItemIcon><SettingsOutlined fontSize="small" /></ListItemIcon>
@@ -101,7 +101,7 @@ function Sidebar({ mobileOpen, onClose, isMobile, activePage, onNavigate }) {
           width: drawerWidth,
           boxSizing: 'border-box',
           border: 0,
-          backgroundColor: '#172A46',
+          backgroundColor: '#0D192B',
           color: '#FFFFFF',
         },
       }}
