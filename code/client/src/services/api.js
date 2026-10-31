@@ -12,6 +12,14 @@ export const api = createApi({
       transformResponse: (response) => response.data ?? [],
       providesTags: ['Manufacturer'],
     }),
+    createManufacturer: builder.mutation({
+      query: (manufacturer) => ({
+        url: '/manufacturers',
+        method: 'POST',
+        body: manufacturer,
+      }),
+      invalidatesTags: ['Manufacturer'],
+    }),
     getMachineModels: builder.query({
       query: () => '/machine-models',
       transformResponse: (response) => response.data ?? [],
@@ -30,6 +38,7 @@ export const api = createApi({
 
 export const {
   useGetManufacturersQuery,
+  useCreateManufacturerMutation,
   useGetMachineModelsQuery,
   useCreateMachineModelMutation,
 } = api
