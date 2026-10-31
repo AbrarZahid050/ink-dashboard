@@ -1,4 +1,9 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useState } from 'react'
+import {
+  useCreateMachineModelMutation,
+  useGetMachineModelsQuery,
+  useGetManufacturersQuery,
+} from '../services/api.js'
 import {
   AddRounded,
   CloseRounded,
@@ -29,8 +34,6 @@ import {
   Typography,
 } from '@mui/material'
 
-const API_BASE = '/api/v1'
-
 const technologyOptions = [
   { value: 'SOLVENT', label: 'Solvent' },
   { value: 'LATEX', label: 'Latex' },
@@ -56,28 +59,51 @@ const initialForm = {
   notes: '',
 }
 
-async function readApiResponse(response) {
-  const payload = await response.json().catch(() => ({}))
+function getApiErrorMessage(error, fallback) {
+  const payload = error?.data
 
-  if (!response.ok) {
-    const detail = Array.isArray(payload.errors)
-      ? payload.errors.map((item) => item.message).filter(Boolean).join(', ')
-      : payload.message
-    throw new Error(detail || `Request failed with status ${response.status}`)
+  if (Array.isArray(payload?.errors)) {
+    const details = payload.errors
+      .map((item) => item.message)
+      .filter(Boolean)
+      .join(', ')
+
+    if (details) return details
   }
 
-  return payload
+  return payload?.message || error?.error || fallback
 }
 
 function MachineModels() {
   const [form, setForm] = useState(initialForm)
-  const [manufacturers, setManufacturers] = useState([])
-  const [models, setModels] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
-  const [loadError, setLoadError] = useState('')
   const [formError, setFormError] = useState('')
   const [notice, setNotice] = useState('')
+
+  const {
+    data: manufacturers = [],
+    isLoading: manufacturersLoading,
+    isFetching: manufacturersFetching,
+    error: manufacturersError,
+    refetch: refetchManufacturers,
+  } = useGetManufacturersQuery()
+
+  const {
+    data: models = [],
+    isLoading: modelsLoading,
+    isFetching: modelsFetching,
+    error: modelsError,
+    refetch: refetchModels,
+  } = useGetMachineModelsQuery()
+
+  const [createMachineModel, { isLoading: saving }] = useCreateMachineModelMutation()
+
+  const loading = manufacturersLoading || modelsLoading
+  const refreshing = manufacturersFetching || modelsFetching
+  const loadError = manufacturersError || modelsError
+  const handleRefresh = () => {
+    refetchManufacturers()
+    refetchModels()
+  }
 
   const configuration = form.configuration
   const needsRollWidth = configuration === 'ROLL_TO_ROLL' || configuration === 'HYBRID'
@@ -110,11 +136,6 @@ function MachineModels() {
     loadData()
   }, [loadData])
 
-  const manufacturerNames = useMemo(
-    () => new Map(manufacturers.map((manufacturer) => [manufacturer.id, manufacturer.name])),
-    [manufacturers],
-  )
-
   const handleChange = (event) => {
     const { name, value } = event.target
     setForm((current) => {
@@ -136,7 +157,6 @@ function MachineModels() {
 
   const handleSubmit = async (event) => {
     event.preventDefault()
-    setSaving(true)
     setFormError('')
 
     const payload = {
@@ -151,24 +171,11 @@ function MachineModels() {
     }
 
     try {
-      const response = await fetch(`${API_BASE}/machine-models`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      })
-      const result = await readApiResponse(response)
-
-      setModels((current) => [...current, result.data].sort((a, b) => {
-        const manufacturerA = a.manufacturer?.name ?? ''
-        const manufacturerB = b.manufacturer?.name ?? ''
-        return manufacturerA.localeCompare(manufacturerB) || a.modelName.localeCompare(b.modelName)
-      }))
+      await createMachineModel(payload).unwrap()
       setForm(initialForm)
       setNotice('Machine model added successfully.')
     } catch (error) {
-      setFormError(error.message || 'Unable to save this machine model.')
-    } finally {
-      setSaving(false)
+      setFormError(getApiErrorMessage(error, 'Unable to save this machine model.'))
     }
   }
 
@@ -192,7 +199,7 @@ function MachineModels() {
         <Button
           variant="outlined"
           startIcon={<RefreshRounded />}
-          onClick={loadData}
+          onClick={handleRefresh}
           disabled={loading}
         >
           Refresh
@@ -203,7 +210,7 @@ function MachineModels() {
         <Alert severity="error" sx={{ mb: 2 }} action={
           <Button color="inherit" size="small" onClick={loadData}>Retry</Button>
         }>
-          {loadError}. Make sure the backend API is running on port 3000.
+          {loadError}. Check that the backend API is running and try again.
         </Alert>
       )}
 
@@ -417,7 +424,7 @@ function MachineModels() {
               <TableBody>
                 {models.map((model) => (
                   <TableRow key={model.id} hover>
-                    <TableCell>{model.manufacturer?.name ?? manufacturerNames.get(model.manufacturerId) ?? '—'}</TableCell>
+                    <TableCell>{model.manufacturer?.name ?? manufacturers.find((manufacturer) => manufacturer.id === model.manufacturerId)?.name ?? '—'}</TableCell>
                     <TableCell sx={{ fontWeight: 600 }}>{model.modelName}</TableCell>
                     <TableCell>{technologyOptions.find((item) => item.value === model.technology)?.label ?? model.technology}</TableCell>
                     <TableCell>{configurationOptions.find((item) => item.value === model.configuration)?.label ?? model.configuration}</TableCell>
