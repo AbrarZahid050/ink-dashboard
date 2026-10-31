@@ -173,6 +173,9 @@ model CustomerSite {
   // Primary key identifying this specific site.
   id         String       @id @default(uuid()) @db.Uuid
 
+  // OCC version used to detect concurrent modifications.
+  version    Int          @default(0)
+
   // Foreign key referencing Customer.id.
   // Determines which customer owns this site record.
   customerId String       @db.Uuid
