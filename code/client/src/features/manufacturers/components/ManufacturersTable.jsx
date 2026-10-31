@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { BusinessOutlined, CloseRounded } from '@mui/icons-material'
+import { BusinessOutlined, CloseRounded, EditOutlined } from '@mui/icons-material'
 import {
   Alert,
   Box,
@@ -18,16 +18,70 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  TextField,
   Tooltip,
   Typography,
 } from '@mui/material'
-import { useDeleteManufacturerMutation } from '../../../services/api.js'
+import {
+  useDeleteManufacturerMutation,
+  useUpdateManufacturerMutation,
+} from '../../../services/api.js'
 import { getApiErrorMessage } from '../../machine-models/utils/getApiErrorMessage.js'
 
 function ManufacturersTable({ manufacturers, loading }) {
+  const [manufacturerToEdit, setManufacturerToEdit] = useState(null)
+  const [editName, setEditName] = useState('')
+  const [editError, setEditError] = useState('')
   const [manufacturerToDelete, setManufacturerToDelete] = useState(null)
   const [deleteError, setDeleteError] = useState('')
+  const [updateManufacturer, { isLoading: updating }] = useUpdateManufacturerMutation()
   const [deleteManufacturer, { isLoading: deleting }] = useDeleteManufacturerMutation()
+
+  const handleOpenEdit = (manufacturer) => {
+    setEditError('')
+    setManufacturerToEdit(manufacturer)
+    setEditName(manufacturer.name)
+  }
+
+  const handleCloseEdit = () => {
+    if (!updating) {
+      setManufacturerToEdit(null)
+      setEditError('')
+    }
+  }
+
+  const handleSaveEdit = async () => {
+    const name = editName.trim()
+
+    if (!name) {
+      setEditError('Manufacturer name is required.')
+      return
+    }
+
+    const duplicate = manufacturers.some(
+      (manufacturer) =>
+        manufacturer.id !== manufacturerToEdit.id &&
+        manufacturer.name?.trim().toLowerCase() === name.toLowerCase(),
+    )
+
+    if (duplicate) {
+      setEditError('Another manufacturer already has this name.')
+      return
+    }
+
+    setEditError('')
+
+    try {
+      await updateManufacturer({
+        id: manufacturerToEdit.id,
+        version: manufacturerToEdit.version,
+        name,
+      }).unwrap()
+      setManufacturerToEdit(null)
+    } catch (error) {
+      setEditError(getApiErrorMessage(error, 'Unable to update this manufacturer.'))
+    }
+  }
 
   const handleOpenDelete = (manufacturer) => {
     setDeleteError('')
@@ -78,7 +132,7 @@ function ManufacturersTable({ manufacturers, loading }) {
               <TableHead>
                 <TableRow>
                   <TableCell>Manufacturer</TableCell>
-                  <TableCell align="right" sx={{ width: 72 }}>Actions</TableCell>
+                  <TableCell align="right" sx={{ width: 112 }}>Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -86,6 +140,15 @@ function ManufacturersTable({ manufacturers, loading }) {
                   <TableRow key={manufacturer.id} hover>
                     <TableCell sx={{ fontWeight: 600 }}>{manufacturer.name}</TableCell>
                     <TableCell align="right">
+                      <Tooltip title={`Edit ${manufacturer.name}`}>
+                        <IconButton
+                          aria-label={`Edit ${manufacturer.name}`}
+                          size="small"
+                          onClick={() => handleOpenEdit(manufacturer)}
+                        >
+                          <EditOutlined fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
                       <Tooltip title={`Delete ${manufacturer.name}`}>
                         <IconButton
                           aria-label={`Delete ${manufacturer.name}`}
@@ -105,12 +168,40 @@ function ManufacturersTable({ manufacturers, loading }) {
         )}
       </Paper>
 
-      <Dialog
-        open={Boolean(manufacturerToDelete)}
-        onClose={handleCloseDelete}
-        fullWidth
-        maxWidth="xs"
-      >
+      <Dialog open={Boolean(manufacturerToEdit)} onClose={handleCloseEdit} fullWidth maxWidth="xs">
+        <DialogTitle>Edit manufacturer</DialogTitle>
+        <DialogContent dividers>
+          <TextField
+            autoFocus
+            fullWidth
+            required
+            label="Manufacturer name"
+            value={editName}
+            onChange={(event) => {
+              setEditName(event.target.value)
+              setEditError('')
+            }}
+            error={Boolean(editError)}
+            helperText={editError || ' '}
+            sx={{ mt: 1 }}
+          />
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={handleCloseEdit} color="inherit" disabled={updating}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSaveEdit}
+            variant="contained"
+            disabled={updating || !editName.trim()}
+            startIcon={updating ? <CircularProgress size={17} color="inherit" /> : <EditOutlined />}
+          >
+            {updating ? 'Saving...' : 'Save changes'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={Boolean(manufacturerToDelete)} onClose={handleCloseDelete} fullWidth maxWidth="xs">
         <DialogTitle>Delete manufacturer?</DialogTitle>
         <DialogContent dividers>
           <Typography variant="body2" color="text.secondary">
