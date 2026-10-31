@@ -56,7 +56,7 @@ describe("API request validation integration tests", () => {
     expectValidationError(response, ["customerId", "name"]);
   });
 
-  it("should reject a machine model with invalid manufacturer, technology, and required dimensions", async () => {
+  it("should reject a machine model with an invalid manufacturer ID and technology", async () => {
     const response = await request(app)
       .post("/api/v1/machine-models")
       .send({
@@ -64,14 +64,23 @@ describe("API request validation integration tests", () => {
         modelName: "Validation Model",
         technology: "INK",
         configuration: "ROLL_TO_ROLL",
-        maxRollWidthMm: null,
+        maxRollWidthMm: 3200,
       });
 
-    expectValidationError(response, [
-      "manufacturerId",
-      "technology",
-      "maxRollWidthMm",
-    ]);
+    expectValidationError(response, ["manufacturerId", "technology"]);
+  });
+
+  it("should reject a machine model when its configuration-specific dimension is missing", async () => {
+    const response = await request(app)
+      .post("/api/v1/machine-models")
+      .send({
+        manufacturerId: randomUUID(),
+        modelName: "Validation Model",
+        technology: "UV",
+        configuration: "ROLL_TO_ROLL",
+      });
+
+    expectValidationError(response, ["maxRollWidthMm"]);
   });
 
   it("should reject a machine with an invalid installation date and status", async () => {
