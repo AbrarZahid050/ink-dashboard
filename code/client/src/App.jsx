@@ -4,6 +4,7 @@ import MainLayout from './components/layout/MainLayout.jsx'
 
 const MachineModels = lazy(() => import('./pages/MachineModels.jsx'))
 const Manufacturers = lazy(() => import('./pages/Manufacturers.jsx'))
+const Customers = lazy(() => import('./pages/Customers.jsx'))
 
 function PageLoader() {
   return (
@@ -19,7 +20,13 @@ function App() {
   return (
     <MainLayout activePage={activePage} onNavigate={setActivePage}>
       <Suspense fallback={<PageLoader />}>
-        {activePage === 'Manufacturers' ? <Manufacturers /> : <MachineModels />}
+        {activePage === 'Manufacturers' ? (
+          <Manufacturers />
+        ) : activePage === 'Customers' ? (
+          <Customers />
+        ) : (
+          <MachineModels />
+        )}
       </Suspense>
     </MainLayout>
   )
