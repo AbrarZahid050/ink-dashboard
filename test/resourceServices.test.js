@@ -23,6 +23,7 @@ const { prisma } = vi.hoisted(() => ({
       findUnique: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
+      updateMany: vi.fn(),
       delete: vi.fn(),
     },
     machine: {
@@ -268,19 +269,44 @@ describe("Customer site service", () => {
     });
   });
 
-  it("should update a site with relation details", async () => {
+  it("should update a site with relation details and increment its version", async () => {
     const data = { name: "Abu Dhabi" };
-    const record = { id: "site-1", ...data };
-    prisma.customerSite.update.mockResolvedValue(record);
+    const record = { id: "site-1", ...data, version: 1 };
+    prisma.customerSite.updateMany.mockResolvedValue({ count: 1 });
+    prisma.customerSite.findUnique.mockResolvedValue(record);
 
     await expect(
-      customerSiteService.updateCustomerSite("site-1", data),
+      customerSiteService.updateCustomerSite("site-1", data, 0),
     ).resolves.toBe(record);
-    expect(prisma.customerSite.update).toHaveBeenCalledWith({
+    expect(prisma.customerSite.updateMany).toHaveBeenCalledWith({
+      where: { id: "site-1", version: 0 },
+      data: { ...data, version: { increment: 1 } },
+    });
+    expect(prisma.customerSite.findUnique).toHaveBeenLastCalledWith({
       where: { id: "site-1" },
-      data,
       include: siteDetails,
     });
+  });
+
+  it("should return 404 when updating a nonexistent customer site", async () => {
+    prisma.customerSite.updateMany.mockResolvedValue({ count: 0 });
+    prisma.customerSite.findUnique.mockResolvedValue(null);
+
+    await expect(
+      customerSiteService.updateCustomerSite("missing-site", { name: "Dubai" }, 0),
+    ).rejects.toMatchObject({
+      statusCode: 404,
+      message: "Customer site not found.",
+    });
+  });
+
+  it("should return 409 when the customer site version is stale", async () => {
+    prisma.customerSite.updateMany.mockResolvedValue({ count: 0 });
+    prisma.customerSite.findUnique.mockResolvedValue({ id: "site-1" });
+
+    await expect(
+      customerSiteService.updateCustomerSite("site-1", { name: "Dubai" }, 0),
+    ).rejects.toMatchObject({ statusCode: 409 });
   });
 
   it("should delete a site by ID", async () => {
