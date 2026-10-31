@@ -92,7 +92,7 @@ describe("Machine controller", () => {
   });
 
   it("should convert installationDate to a Date when updating a machine", async () => {
-    const body = { installationDate: "2026-10-29", notes: "Updated" };
+    const body = { version: 0, installationDate: "2026-10-29", notes: "Updated" };
     const updatedMachine = { id: "machine-1", ...body };
     machineService.updateMachine.mockResolvedValue(updatedMachine);
     const res = makeResponse();
@@ -105,7 +105,7 @@ describe("Machine controller", () => {
     expect(machineService.updateMachine).toHaveBeenCalledWith("machine-1", {
       installationDate: new Date("2026-10-29T00:00:00.000Z"),
       notes: "Updated",
-    });
+    }, 0);
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith({
       success: true,
@@ -114,13 +114,13 @@ describe("Machine controller", () => {
   });
 
   it("should preserve other fields when updating without installationDate", async () => {
-    const body = { status: "INACTIVE", notes: null };
+    const body = { version: 0, status: "INACTIVE", notes: null };
     machineService.updateMachine.mockResolvedValue({ id: "machine-1", ...body });
     const res = makeResponse();
 
     await updateMachine({ params: { id: "machine-1" }, body }, res);
 
-    expect(machineService.updateMachine).toHaveBeenCalledWith("machine-1", body);
+    expect(machineService.updateMachine).toHaveBeenCalledWith("machine-1", { status: "INACTIVE", notes: null }, 0);
   });
 
   it("should delete a machine and return 204", async () => {
