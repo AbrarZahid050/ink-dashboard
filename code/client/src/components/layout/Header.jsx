@@ -24,7 +24,7 @@ function Header({ onMenuClick, isMobile }) {
         ml: { md: '256px' },
         borderBottom: 1,
         borderColor: 'divider',
-        backgroundColor: 'rgba(255,255,255,0.94)',
+        backgroundColor: 'rgba(17,28,46,0.92)',
         backdropFilter: 'blur(12px)',
       }}
     >
@@ -47,11 +47,20 @@ function Header({ onMenuClick, isMobile }) {
             borderColor: 'divider',
             borderRadius: 2,
             color: 'text.secondary',
-            backgroundColor: '#FAFBFD',
+            backgroundColor: 'background.default',
           }}
         >
           <SearchRounded fontSize="small" />
-          <InputBase placeholder="Search anything..." inputProps={{ 'aria-label': 'Search' }} sx={{ fontSize: 13, flex: 1 }} />
+          <InputBase
+            placeholder="Search anything..."
+            inputProps={{ 'aria-label': 'Search' }}
+            sx={{
+              fontSize: 13,
+              flex: 1,
+              color: 'text.primary',
+              '& input::placeholder': { color: 'text.secondary', opacity: 1 },
+            }}
+          />
         </Box>
 
         <Box sx={{ flexGrow: 1 }} />
