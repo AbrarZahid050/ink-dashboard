@@ -1,12 +1,8 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, Alert, Button, Divider, Grid, Stack, TextField, Typography } from '@mui/material'
+import { Alert, Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, Grid, TextField, Typography } from '@mui/material'
 import { EditOutlined } from '@mui/icons-material'
-import {
-  configurationOptions,
-  technologyOptions,
-} from '../constants/machineModelOptions.js'
 import {
   initialMachineModelValues,
   machineModelSchema,
