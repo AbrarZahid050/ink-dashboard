@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Alert, Box, Button, Snackbar } from '@mui/material'
+import { Alert, Box, Button, Snackbar, Typography } from '@mui/material'
 import ManufacturerForm from '../features/manufacturers/components/ManufacturerForm.jsx'
 import ManufacturersTable from '../features/manufacturers/components/ManufacturersTable.jsx'
 import { getApiErrorMessage } from '../features/machine-models/utils/getApiErrorMessage.js'
