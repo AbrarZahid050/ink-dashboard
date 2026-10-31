@@ -77,4 +77,60 @@ describe("Machine Model API - PostgreSQL integration", () => {
       });
     }
   });
+
+  it("retrieves an existing machine model by ID with its manufacturer", async () => {
+    const manufacturer = await prisma.manufacturer.create({
+      data: {
+        name: `Integration Retrieval Manufacturer ${randomUUID()}`,
+      },
+    });
+
+    let machineModel;
+
+    try {
+      machineModel = await prisma.machineModel.create({
+        data: {
+          manufacturerId: manufacturer.id,
+          modelName: `Integration Retrieval Printer ${randomUUID()}`,
+          technology: "UV",
+          configuration: "ROLL_TO_ROLL",
+          maxRollWidthMm: 3200,
+        },
+      });
+
+      const response = await request(app).get(
+        `/api/v1/machine-models/${machineModel.id}`,
+      );
+
+      expect(response.status).toBe(200);
+      expect(response.body).toMatchObject({
+        success: true,
+        data: {
+          id: machineModel.id,
+          manufacturerId: manufacturer.id,
+          modelName: machineModel.modelName,
+          technology: "UV",
+          configuration: "ROLL_TO_ROLL",
+          maxRollWidthMm: 3200,
+          manufacturer: {
+            id: manufacturer.id,
+            name: manufacturer.name,
+          },
+          _count: {
+            machines: 0,
+          },
+        },
+      });
+    } finally {
+      if (machineModel) {
+        await prisma.machineModel.delete({
+          where: { id: machineModel.id },
+        });
+      }
+
+      await prisma.manufacturer.delete({
+        where: { id: manufacturer.id },
+      });
+    }
+  });
 });
