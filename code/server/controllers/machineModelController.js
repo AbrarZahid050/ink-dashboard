@@ -41,9 +41,11 @@ export async function createMachineModel(req, res) {
 
 // Update an existing machine model by its ID.
 export async function updateMachineModel(req, res) {
+  const { version, ...data } = req.body;
   const model = await machineModelService.updateMachineModelValidated(
     req.params.id,
-    req.body,
+    data,
+    version,
   );
 
   return res.status(200).json({
