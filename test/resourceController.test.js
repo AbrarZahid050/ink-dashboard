@@ -243,6 +243,6 @@ defineCrudControllerTests({
     customerId: "550e8400-e29b-41d4-a716-446655440000",
     name: "Dubai Branch",
   }],
-  updateInput: { name: "Abu Dhabi Branch" },
-  updateServiceArgs: ["record-1", { name: "Abu Dhabi Branch" }],
+  updateInput: { name: "Abu Dhabi Branch", version: 0 },
+  updateServiceArgs: ["record-1", { name: "Abu Dhabi Branch" }, 0],
 });
