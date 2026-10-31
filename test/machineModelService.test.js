@@ -106,6 +106,27 @@ describe("Machine model service", () => {
     });
   });
 
+
+  it("should return 409 when the conditional update loses a concurrent race", async () => {
+    prisma.machineModel.updateMany.mockResolvedValue({ count: 0 });
+    prisma.machineModel.findUnique.mockResolvedValue({ id: model.id });
+
+    await expect(
+      updateMachineModel(model.id, { notes: "Concurrent update" }, 0),
+    ).rejects.toMatchObject({
+      statusCode: 409,
+      message: "Machine model was modified by another user. Please retrieve the latest version and try again.",
+    });
+
+    expect(prisma.machineModel.updateMany).toHaveBeenCalledWith({
+      where: { id: model.id, version: 0 },
+      data: {
+        notes: "Concurrent update",
+        version: { increment: 1 },
+      },
+    });
+  });
+
   it("should delete a machine model by ID", async () => {
     prisma.machineModel.delete.mockResolvedValue({ id: model.id });
 
