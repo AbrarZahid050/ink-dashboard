@@ -41,10 +41,33 @@ export async function findMachineModelForUpdate(id) {
 }
 
 // UPDATE machine model
-export async function updateMachineModel(id, data) {
-  return prisma.machineModel.update({
+export async function updateMachineModel(id, data, version) {
+  const result = await prisma.machineModel.updateMany({
+    where: { id, version },
+    data: {
+      ...data,
+      version: { increment: 1 },
+    },
+  });
+
+  if (result.count === 0) {
+    const machineModel = await prisma.machineModel.findUnique({
+      where: { id },
+      select: { id: true },
+    });
+
+    if (!machineModel) {
+      throw new ApiError(404, "Machine model not found");
+    }
+
+    throw new ApiError(
+      409,
+      "Machine model was modified by another user. Please retrieve the latest version and try again.",
+    );
+  }
+
+  return prisma.machineModel.findUnique({
     where: { id },
-    data,
     include: modelDetails,
   });
 }
@@ -56,11 +79,18 @@ export async function removeMachineModel(id) {
   });
 }
 
-export async function updateMachineModelValidated(id, data) {
+export async function updateMachineModelValidated(id, data, version) {
   const existingModel = await findMachineModelForUpdate(id);
 
   if (!existingModel) {
     throw new ApiError(404, "Machine model not found");
+  }
+
+  if (existingModel.version !== version) {
+    throw new ApiError(
+      409,
+      "Machine model was modified by another user. Please retrieve the latest version and try again.",
+    );
   }
 
   const candidate = {
@@ -99,5 +129,5 @@ export async function updateMachineModelValidated(id, data) {
     Object.keys(data).map((key) => [key, validation.data[key]]),
   );
 
-  return updateMachineModel(id, updatedFields);
+  return updateMachineModel(id, updatedFields, version);
 }
