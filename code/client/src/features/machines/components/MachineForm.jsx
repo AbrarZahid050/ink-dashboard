@@ -19,6 +19,7 @@ import {
 import { z } from 'zod'
 import {
   useCreateMachineMutation,
+  useGetCustomersQuery,
   useGetCustomerSitesQuery,
   useGetMachineModelsQuery,
   useGetMachinesQuery,
@@ -28,6 +29,7 @@ import { getApiErrorMessage } from '../../machine-models/utils/getApiErrorMessag
 const machineSchema = z.object({
   serialNumber: z.string().trim().min(1, 'Serial number is required'),
   machineModelId: z.string().uuid('Select a machine model'),
+  customerId: z.string().uuid('Select a customer'),
   siteId: z.string().uuid('Select a customer site'),
   installationDate: z.string().min(1, 'Installation date is required'),
   status: z.enum(['ACTIVE', 'INACTIVE', 'DECOMMISSIONED']),
@@ -40,6 +42,7 @@ function MachineForm({ onCreated }) {
   const [serverError, setServerError] = useState('')
   const [createMachine, { isLoading: saving }] = useCreateMachineMutation()
   const { data: models = [], isLoading: modelsLoading } = useGetMachineModelsQuery()
+  const { data: customers = [], isLoading: customersLoading } = useGetCustomersQuery()
   const { data: sites = [], isLoading: sitesLoading } = useGetCustomerSitesQuery()
   const { data: machines = [] } = useGetMachinesQuery()
 
@@ -47,20 +50,32 @@ function MachineForm({ onCreated }) {
     register,
     handleSubmit,
     reset,
+    setValue,
     setError,
     clearErrors,
+    watch,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(machineSchema),
     defaultValues: {
       serialNumber: '',
       machineModelId: '',
+      customerId: '',
       siteId: '',
       installationDate: '',
       status: 'ACTIVE',
       notes: '',
     },
   })
+
+  const selectedCustomerId = watch('customerId')
+  const customerSites = sites.filter((site) => site.customerId === selectedCustomerId)
+
+  const handleCustomerChange = (event) => {
+    setValue('customerId', event.target.value, { shouldDirty: true, shouldValidate: true })
+    setValue('siteId', '', { shouldDirty: true, shouldValidate: true })
+    clearErrors('siteId')
+  }
 
   const handleReview = (values) => {
     const duplicate = machines.some(
@@ -80,9 +95,10 @@ function MachineForm({ onCreated }) {
     if (!confirmationData) return
     setServerError('')
     try {
+      const { customerId, ...machineData } = confirmationData
       await createMachine({
-        ...confirmationData,
-        notes: confirmationData.notes || null,
+        ...machineData,
+        notes: machineData.notes || null,
       }).unwrap()
       setConfirmationOpen(false)
       setConfirmationData(null)
@@ -94,6 +110,7 @@ function MachineForm({ onCreated }) {
   }
 
   const selectedModel = models.find((model) => model.id === confirmationData?.machineModelId)
+  const selectedCustomer = customers.find((customer) => customer.id === confirmationData?.customerId)
   const selectedSite = sites.find((site) => site.id === confirmationData?.siteId)
 
   return (
@@ -112,8 +129,8 @@ function MachineForm({ onCreated }) {
         {models.length === 0 && !modelsLoading && (
           <Alert severity="info" sx={{ mb: 2 }}>Add a machine model before registering a physical machine.</Alert>
         )}
-        {sites.length === 0 && !sitesLoading && (
-          <Alert severity="info" sx={{ mb: 2 }}>Add a customer site before registering a physical machine.</Alert>
+        {customers.length === 0 && !customersLoading && (
+          <Alert severity="info" sx={{ mb: 2 }}>Add a customer before registering a physical machine.</Alert>
         )}
 
         <Stack spacing={2}>
@@ -144,18 +161,28 @@ function MachineForm({ onCreated }) {
               ))}
             </TextField>
             <TextField
-              {...register('siteId')}
-              select fullWidth required label="Customer site"
-              error={Boolean(errors.siteId)} helperText={errors.siteId?.message}
-              disabled={sitesLoading || sites.length === 0}
+              {...register('customerId')}
+              onChange={handleCustomerChange}
+              select fullWidth required label="Customer / company"
+              error={Boolean(errors.customerId)} helperText={errors.customerId?.message}
+              disabled={customersLoading || customers.length === 0}
             >
-              {sites.map((site) => (
-                <MenuItem key={site.id} value={site.id}>
-                  {site.customer?.name} — {site.name}
-                </MenuItem>
+              {customers.map((customer) => (
+                <MenuItem key={customer.id} value={customer.id}>{customer.name}</MenuItem>
               ))}
             </TextField>
           </Stack>
+          <TextField
+            {...register('siteId')}
+            select fullWidth required label="Customer site"
+            error={Boolean(errors.siteId)}
+            helperText={errors.siteId?.message || (!selectedCustomerId ? 'Select a customer first' : customerSites.length === 0 && !sitesLoading ? 'No sites registered for this customer' : '')}
+            disabled={!selectedCustomerId || sitesLoading || customerSites.length === 0}
+          >
+            {customerSites.map((site) => (
+              <MenuItem key={site.id} value={site.id}>{site.name}</MenuItem>
+            ))}
+          </TextField>
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
             <TextField {...register('status')} select fullWidth label="Status">
               <MenuItem value="ACTIVE">Active</MenuItem>
@@ -168,7 +195,7 @@ function MachineForm({ onCreated }) {
             type="submit"
             variant="contained"
             startIcon={<AddRounded />}
-            disabled={modelsLoading || sitesLoading || models.length === 0 || sites.length === 0}
+            disabled={modelsLoading || customersLoading || sitesLoading || models.length === 0 || customers.length === 0 || customerSites.length === 0}
             sx={{ alignSelf: 'flex-start', minWidth: 170, minHeight: 48 }}
           >
             Review details
@@ -185,7 +212,8 @@ function MachineForm({ onCreated }) {
           <Stack spacing={1}>
             <Typography><strong>Serial number:</strong> {confirmationData?.serialNumber}</Typography>
             <Typography><strong>Model:</strong> {selectedModel?.manufacturer?.name} {selectedModel?.modelName}</Typography>
-            <Typography><strong>Customer site:</strong> {selectedSite?.customer?.name} — {selectedSite?.name}</Typography>
+            <Typography><strong>Customer:</strong> {selectedCustomer?.name}</Typography>
+            <Typography><strong>Site:</strong> {selectedSite?.name}</Typography>
             <Typography><strong>Installation:</strong> {confirmationData?.installationDate}</Typography>
             <Typography><strong>Status:</strong> {confirmationData?.status}</Typography>
             {confirmationData?.notes && <Typography><strong>Notes:</strong> {confirmationData.notes}</Typography>}
