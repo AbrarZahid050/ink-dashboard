@@ -5,6 +5,7 @@ import {
   PeopleAltOutlined,
   PrecisionManufacturingOutlined,
   SettingsOutlined,
+  ViewInArOutlined,
 } from '@mui/icons-material'
 import {
   Box,
@@ -22,12 +23,13 @@ const drawerWidth = 256
 const navigationItems = [
   { label: 'Overview', icon: DashboardOutlined },
   { label: 'Machines', icon: PrecisionManufacturingOutlined },
+  { label: 'Machine Models', icon: ViewInArOutlined },
   { label: 'Service requests', icon: BuildOutlined },
   { label: 'Inventory', icon: Inventory2Outlined },
   { label: 'Customers', icon: PeopleAltOutlined },
 ]
 
-function Sidebar({ mobileOpen, onClose, isMobile }) {
+function Sidebar({ mobileOpen, onClose, isMobile, activePage, onNavigate }) {
   const drawerContent = (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <Box sx={{ px: 3, py: 3 }}>
@@ -54,8 +56,11 @@ function Sidebar({ mobileOpen, onClose, isMobile }) {
         {navigationItems.map(({ label, icon: Icon }) => (
           <ListItemButton
             key={label}
-            selected={label === 'Overview'}
-            onClick={isMobile ? onClose : undefined}
+            selected={activePage === label}
+            onClick={() => {
+              onNavigate(label)
+              if (isMobile) onClose()
+            }}
             sx={{
               minHeight: 46,
               mb: 0.5,
@@ -75,7 +80,7 @@ function Sidebar({ mobileOpen, onClose, isMobile }) {
             <ListItemIcon><Icon fontSize="small" /></ListItemIcon>
             <ListItemText
               primary={label}
-              primaryTypographyProps={{ fontSize: 14, fontWeight: label === 'Overview' ? 600 : 500 }}
+              primaryTypographyProps={{ fontSize: 14, fontWeight: activePage === label ? 600 : 500 }}
             />
           </ListItemButton>
         ))}
