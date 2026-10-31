@@ -52,6 +52,9 @@ model Manufacturer {
   // UUIDs are generated automatically when a record is created.
   id        String   @id @default(uuid()) @db.Uuid
 
+  // OCC version used to detect concurrent modifications.
+  version   Int      @default(0)
+
   // Manufacturer's name must be unique.
   // Application logic should normalize capitalization and
   // whitespace to avoid duplicates such as "Mimaki" and "MIMAKI".
