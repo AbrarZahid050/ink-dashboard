@@ -36,12 +36,22 @@ const defaultValues = {
   notes: '',
 }
 
+const getLocalDateString = () => {
+  const date = new Date()
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
 const machineSchema = z.object({
   serialNumber: z.string().trim().min(1, 'Serial number is required'),
   machineModelId: z.string().uuid('Select a machine model'),
   customerId: z.string().uuid('Select a customer'),
   siteId: z.string().uuid('Select a customer site'),
-  installationDate: z.string().min(1, 'Installation date is required'),
+  installationDate: z.string()
+    .min(1, 'Installation date is required')
+    .refine((date) => !date || date <= getLocalDateString(), 'Installation date cannot be in the future'),
   status: z.enum(['ACTIVE', 'INACTIVE', 'DECOMMISSIONED']),
   notes: z.string().trim(),
 })
@@ -71,6 +81,7 @@ function MachineForm({ onCreated }) {
     defaultValues,
   })
 
+  const today = getLocalDateString()
   const selectedCustomerId = watch('customerId')
   const customerSites = sites.filter((site) => site.customerId === selectedCustomerId)
 
@@ -147,7 +158,7 @@ function MachineForm({ onCreated }) {
             />
             <TextField
               {...register('installationDate')}
-              fullWidth required type="date" label="Installation date"
+              fullWidth required type="date" label="Installation date" max={today}
               InputLabelProps={{ shrink: true }}
               error={Boolean(errors.installationDate)} helperText={errors.installationDate?.message}
             />
