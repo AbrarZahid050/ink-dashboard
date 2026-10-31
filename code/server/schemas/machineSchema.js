@@ -29,6 +29,9 @@ export const createMachineSchema = z
 
 export const updateMachineSchema = z
   .object({
+    // OCC: version originally retrieved by the client.
+    version: z.number().int().nonnegative(),
+
     serialNumber: z.string().trim().min(1).optional(),
     machineModelId: uuidSchema.optional(),
     siteId: uuidSchema.optional(),
@@ -38,6 +41,6 @@ export const updateMachineSchema = z
   })
   .strict()
   .refine(
-    (data) => Object.keys(data).length > 0,
+    (data) => Object.keys(data).some((key) => key !== "version"),
     "At least one field must be provided.",
   );
