@@ -1,8 +1,11 @@
+import Dashboard from './pages/Dashboard.jsx'
+import MainLayout from './components/layout/MainLayout.jsx'
+
 function App() {
   return (
-    <main className="app">
-      <h1>Ink Dashboard</h1>
-    </main>
+    <MainLayout>
+      <Dashboard />
+    </MainLayout>
   )
 }
 
