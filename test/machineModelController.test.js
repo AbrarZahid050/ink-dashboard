@@ -193,6 +193,7 @@ describe("updateMachineModel", () => {
     const modelId = "model-1";
 
     const mockInput = {
+      version: 0,
       modelName: "JV100-160 Plus",
     };
 
@@ -223,7 +224,7 @@ describe("updateMachineModel", () => {
     // Assert: Verify the service received the correct arguments.
     expect(
       machineModelService.updateMachineModelValidated,
-    ).toHaveBeenCalledWith(modelId, mockInput);
+    ).toHaveBeenCalledWith(modelId, { modelName: "JV100-160 Plus" }, 0);
 
     // Verify the HTTP response.
     expect(res.status).toHaveBeenCalledWith(200);
