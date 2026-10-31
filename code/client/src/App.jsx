@@ -5,6 +5,7 @@ import MainLayout from './components/layout/MainLayout.jsx'
 const MachineModels = lazy(() => import('./pages/MachineModels.jsx'))
 const Manufacturers = lazy(() => import('./pages/Manufacturers.jsx'))
 const Customers = lazy(() => import('./pages/Customers.jsx'))
+const CustomerSites = lazy(() => import('./pages/CustomerSites.jsx'))
 
 function PageLoader() {
   return (
@@ -24,6 +25,8 @@ function App() {
           <Manufacturers />
         ) : activePage === 'Customers' ? (
           <Customers />
+        ) : activePage === 'Customer Sites' ? (
+          <CustomerSites />
         ) : (
           <MachineModels />
         )}
