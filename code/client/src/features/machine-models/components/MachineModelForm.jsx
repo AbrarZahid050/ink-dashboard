@@ -42,9 +42,25 @@ function MachineModelForm({ manufacturers, manufacturersLoading, onCreated }) {
   })
 
   const configuration = useWatch({ control, name: 'configuration' })
+  const manufacturerId = useWatch({ control, name: 'manufacturerId' })
+  const technology = useWatch({ control, name: 'technology' })
+  const modelName = useWatch({ control, name: 'modelName' })
+  const selectedManufacturer = manufacturers.find(
+    (manufacturer) => manufacturer.id === manufacturerId,
+  )
+  const isHpLatex =
+    selectedManufacturer?.name?.trim().toUpperCase() === 'HP' && technology === 'LATEX'
+  const isWhiteVariant = /W$/i.test(modelName.trim())
   const needsRollWidth = configuration === 'ROLL_TO_ROLL' || configuration === 'HYBRID'
   const needsFlatbedDimensions = configuration === 'FLATBED' || configuration === 'HYBRID'
   const submitting = saving || isSubmitting
+
+  const handleWhiteVariantChange = () => {
+    const baseModelName = modelName.trim().replace(/\\s*W$/i, '')
+    const nextModelName = isWhiteVariant ? baseModelName : `${baseModelName}W`
+
+    setValue('modelName', nextModelName, { shouldDirty: true, shouldValidate: true })
+  }
 
   const handleConfigurationChange = (nextConfiguration, onChange) => {
     onChange(nextConfiguration)
@@ -114,6 +130,9 @@ function MachineModelForm({ manufacturers, manufacturersLoading, onCreated }) {
           errors={errors}
           manufacturers={manufacturers}
           disabled={manufacturersLoading}
+          isHpLatex={isHpLatex}
+          isWhiteVariant={isWhiteVariant}
+          onWhiteVariantChange={handleWhiteVariantChange}
           onConfigurationChange={handleConfigurationChange}
         />
 
