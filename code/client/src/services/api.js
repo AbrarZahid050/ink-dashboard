@@ -5,7 +5,7 @@ export const api = createApi({
   baseQuery: fetchBaseQuery({
     baseUrl: '/api/v1',
   }),
-  tagTypes: ['Manufacturer', 'MachineModel', 'Customer'],
+  tagTypes: ['Manufacturer', 'MachineModel', 'Customer', 'CustomerSite'],
   endpoints: (builder) => ({
     getManufacturers: builder.query({
       query: () => '/manufacturers',
@@ -68,6 +68,34 @@ export const api = createApi({
       transformResponse: (response) => response.data ?? [],
       providesTags: ['Customer'],
     }),
+    getCustomerSites: builder.query({
+      query: () => '/customer-sites',
+      transformResponse: (response) => response.data ?? [],
+      providesTags: ['CustomerSite'],
+    }),
+    createCustomerSite: builder.mutation({
+      query: (site) => ({
+        url: '/customer-sites',
+        method: 'POST',
+        body: site,
+      }),
+      invalidatesTags: ['CustomerSite', 'Customer'],
+    }),
+    updateCustomerSite: builder.mutation({
+      query: ({ id, ...site }) => ({
+        url: `/customer-sites/${id}`,
+        method: 'PATCH',
+        body: site,
+      }),
+      invalidatesTags: ['CustomerSite', 'Customer'],
+    }),
+    deleteCustomerSite: builder.mutation({
+      query: (id) => ({
+        url: `/customer-sites/${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['CustomerSite', 'Customer'],
+    }),
     createCustomer: builder.mutation({
       query: (customer) => ({
         url: '/customers',
@@ -107,4 +135,8 @@ export const {
   useCreateCustomerMutation,
   useUpdateCustomerMutation,
   useDeleteCustomerMutation,
+  useGetCustomerSitesQuery,
+  useCreateCustomerSiteMutation,
+  useUpdateCustomerSiteMutation,
+  useDeleteCustomerSiteMutation,
 } = api
