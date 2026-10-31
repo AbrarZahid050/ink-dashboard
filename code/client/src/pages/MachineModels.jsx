@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Controller, useForm } from 'react-hook-form'
+import { Controller, useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import {
   AddRounded,
@@ -79,8 +79,8 @@ function MachineModels() {
   const {
     control,
     register,
-    watch,
     setValue,
+    clearErrors,
     reset,
     handleSubmit,
     formState: { errors, isSubmitting },
@@ -107,7 +107,7 @@ function MachineModels() {
 
   const [createMachineModel, { isLoading: saving }] = useCreateMachineModelMutation()
 
-  const configuration = watch('configuration')
+  const configuration = useWatch({ control, name: 'configuration' })
   const needsRollWidth = configuration === 'ROLL_TO_ROLL' || configuration === 'HYBRID'
   const needsFlatbedDimensions = configuration === 'FLATBED' || configuration === 'HYBRID'
   const loading = manufacturersLoading || modelsLoading
