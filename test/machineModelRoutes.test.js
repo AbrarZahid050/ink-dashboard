@@ -83,8 +83,8 @@ describe("Machine model route validation", () => {
     expect(response.body.errors).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          field: "",
-          message: "At least one field must be provided.",
+          field: "version",
+          message: "Invalid input: expected number, received undefined",
         }),
       ]),
     );
