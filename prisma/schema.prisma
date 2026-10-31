@@ -1,4 +1,3 @@
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -206,6 +205,10 @@ model Machine {
   // Primary key identifying this physical machine in our app.
   id                String        @id @default(uuid()) @db.Uuid
 
+  // OCC version used to detect concurrent modifications.
+  // This value will be incremented after each successful update.
+  version           Int           @default(0)
+
   // Manufacturer-assigned serial number.
   // Unique so the same physical machine cannot be registered twice.
   serialNumber      String        @unique
@@ -228,7 +231,7 @@ model Machine {
   // Defaults to ACTIVE when a record is created.
   status            MachineStatus @default(ACTIVE)
 
-  // Optional notes about this particular physical machine,
+  // Optional notes about this particular machine,
   // not the general model specifications.
   notes             String?
 
@@ -295,7 +298,7 @@ model Machine {
 //   // Roll media dimensions (roll-to-roll and hybrid)
 //   maxRollWidthMm        Int?
 
-//   // Flatbed working dimensions (flatbed and hybrid)
+//   // Flatbed working width (flatbed and hybrid)
 //   flatbedWidthMm        Int?
 //   flatbedLengthMm       Int?
 
