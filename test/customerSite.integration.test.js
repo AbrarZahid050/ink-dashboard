@@ -34,6 +34,7 @@ describe("Customer Site PostgreSQL integration tests", () => {
         message: "Customer site created successfully",
         data: {
           ...siteInput,
+          version: 0,
           customer: { id: customer.id, name: customer.name },
           _count: { machines: 0 },
         },
@@ -43,7 +44,7 @@ describe("Customer Site PostgreSQL integration tests", () => {
         where: { id: response.body.data.id },
       });
 
-      expect(persisted).toMatchObject(siteInput);
+      expect(persisted).toMatchObject({ ...siteInput, version: 0 });
     } finally {
       await testPrisma.customerSite.deleteMany({
         where: { customerId: customer.id },
@@ -76,6 +77,7 @@ describe("Customer Site PostgreSQL integration tests", () => {
           id: site.id,
           customerId: customer.id,
           name: site.name,
+          version: 0,
           customer: { id: customer.id, name: customer.name },
           _count: { machines: 0 },
           machines: [],
@@ -113,6 +115,7 @@ describe("Customer Site PostgreSQL integration tests", () => {
         id: site.id,
         customerId: customer.id,
         name: site.name,
+        version: 0,
         customer: { id: customer.id, name: customer.name },
         _count: { machines: 0 },
       });
@@ -143,7 +146,7 @@ describe("Customer Site PostgreSQL integration tests", () => {
     try {
       const response = await request(app)
         .patch(`/api/v1/customer-sites/${site.id}`)
-        .send(updateInput);
+        .send({ ...updateInput, version: site.version });
 
       expect(response.status).toBe(200);
       expect(response.body).toMatchObject({
@@ -153,6 +156,7 @@ describe("Customer Site PostgreSQL integration tests", () => {
           id: site.id,
           customerId: customer.id,
           ...updateInput,
+          version: 1,
           customer: { id: customer.id, name: customer.name },
           _count: { machines: 0 },
         },
@@ -161,9 +165,77 @@ describe("Customer Site PostgreSQL integration tests", () => {
       const persisted = await testPrisma.customerSite.findUnique({
         where: { id: site.id },
       });
-      expect(persisted).toMatchObject(updateInput);
+      expect(persisted).toMatchObject({ ...updateInput, version: 1 });
     } finally {
       await testPrisma.customerSite.deleteMany({ where: { id: site.id } });
+      await testPrisma.customer.delete({ where: { id: customer.id } });
+    }
+  });
+
+  it("should reject a customer site update when the version is missing", async () => {
+    const customer = await testPrisma.customer.create({
+      data: { name: `Integration Site Missing Version Customer ${randomUUID()}` },
+    });
+    const site = await testPrisma.customerSite.create({
+      data: {
+        customerId: customer.id,
+        name: `Integration Site Missing Version ${randomUUID()}`,
+      },
+    });
+
+    try {
+      const response = await request(app)
+        .patch(`/api/v1/customer-sites/${site.id}`)
+        .send({ name: "Updated without version" });
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toBe("Validation failed");
+      expect(response.body.errors).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ field: "version" }),
+        ]),
+      );
+    } finally {
+      await testPrisma.customerSite.delete({ where: { id: site.id } });
+      await testPrisma.customer.delete({ where: { id: customer.id } });
+    }
+  });
+
+  it("should return 409 when updating a customer site with a stale version", async () => {
+    const customer = await testPrisma.customer.create({
+      data: { name: `Integration Site Stale Version Customer ${randomUUID()}` },
+    });
+    const site = await testPrisma.customerSite.create({
+      data: {
+        customerId: customer.id,
+        name: `Integration Site Stale Version ${randomUUID()}`,
+      },
+    });
+
+    try {
+      const firstUpdate = await request(app)
+        .patch(`/api/v1/customer-sites/${site.id}`)
+        .send({ name: "First update", version: site.version });
+
+      expect(firstUpdate.status).toBe(200);
+      expect(firstUpdate.body.data.version).toBe(1);
+
+      const staleUpdate = await request(app)
+        .patch(`/api/v1/customer-sites/${site.id}`)
+        .send({ name: "Stale update", version: site.version });
+
+      expect(staleUpdate.status).toBe(409);
+      expect(staleUpdate.body.message).toContain("modified by another user");
+
+      const persisted = await testPrisma.customerSite.findUnique({
+        where: { id: site.id },
+      });
+      expect(persisted).toMatchObject({
+        name: "First update",
+        version: 1,
+      });
+    } finally {
+      await testPrisma.customerSite.delete({ where: { id: site.id } });
       await testPrisma.customer.delete({ where: { id: customer.id } });
     }
   });
@@ -212,12 +284,12 @@ describe("Customer Site PostgreSQL integration tests", () => {
   it("should return 404 when updating a nonexistent customer site", async () => {
     const response = await request(app)
       .patch(`/api/v1/customer-sites/${randomUUID()}`)
-      .send({ name: `Missing Customer Site ${randomUUID()}` });
+      .send({ name: `Missing Customer Site ${randomUUID()}`, version: 0 });
 
     expect(response.status).toBe(404);
     expect(response.body).toMatchObject({
       success: false,
-      message: "Requested record not found.",
+      message: "Customer site not found.",
     });
   });
 });
