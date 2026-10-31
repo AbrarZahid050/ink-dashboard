@@ -81,6 +81,9 @@ model MachineModel {
   // Primary key for this model record.
   id                    String                @id @default(uuid()) @db.Uuid
 
+  // OCC version used to detect concurrent modifications.
+  version               Int                   @default(0)
+
   // Foreign key referencing Manufacturer.id.
   // This identifies who makes the machine model.
   manufacturerId        String                @db.Uuid
