@@ -26,6 +26,16 @@ import {
 } from '../../../services/api.js'
 import { getApiErrorMessage } from '../../machine-models/utils/getApiErrorMessage.js'
 
+const defaultValues = {
+  serialNumber: '',
+  machineModelId: '',
+  customerId: '',
+  siteId: '',
+  installationDate: '',
+  status: 'ACTIVE',
+  notes: '',
+}
+
 const machineSchema = z.object({
   serialNumber: z.string().trim().min(1, 'Serial number is required'),
   machineModelId: z.string().uuid('Select a machine model'),
@@ -57,23 +67,15 @@ function MachineForm({ onCreated }) {
     formState: { errors },
   } = useForm({
     resolver: zodResolver(machineSchema),
-    defaultValues: {
-      serialNumber: '',
-      machineModelId: '',
-      customerId: '',
-      siteId: '',
-      installationDate: '',
-      status: 'ACTIVE',
-      notes: '',
-    },
+    defaultValues,
   })
 
   const selectedCustomerId = watch('customerId')
   const customerSites = sites.filter((site) => site.customerId === selectedCustomerId)
 
   const handleCustomerChange = (event) => {
-    setValue('customerId', event.target.value, { shouldDirty: true, shouldValidate: true })
-    setValue('siteId', '', { shouldDirty: true, shouldValidate: true })
+    setValue('customerId', event.target.value, { shouldDirty: true })
+    setValue('siteId', '', { shouldDirty: true, shouldValidate: false })
     clearErrors('siteId')
   }
 
@@ -102,7 +104,9 @@ function MachineForm({ onCreated }) {
       }).unwrap()
       setConfirmationOpen(false)
       setConfirmationData(null)
-      reset()
+      reset(defaultValues)
+      clearErrors()
+      setServerError('')
       onCreated()
     } catch (error) {
       setServerError(getApiErrorMessage(error, 'Unable to register this machine.'))
