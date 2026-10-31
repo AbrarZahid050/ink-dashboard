@@ -20,6 +20,13 @@ export const api = createApi({
       }),
       invalidatesTags: ['Manufacturer'],
     }),
+    deleteManufacturer: builder.mutation({
+      query: (id) => ({
+        url: `/manufacturers/${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['Manufacturer'],
+    }),
     getMachineModels: builder.query({
       query: () => '/machine-models',
       transformResponse: (response) => response.data ?? [],
@@ -39,6 +46,7 @@ export const api = createApi({
 export const {
   useGetManufacturersQuery,
   useCreateManufacturerMutation,
+  useDeleteManufacturerMutation,
   useGetMachineModelsQuery,
   useCreateMachineModelMutation,
 } = api
