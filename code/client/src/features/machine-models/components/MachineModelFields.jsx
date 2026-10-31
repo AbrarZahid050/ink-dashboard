@@ -7,10 +7,21 @@ import {
   MenuItem,
   Select,
   TextField,
+  ToggleButton,
 } from '@mui/material'
 import { configurationOptions, technologyOptions } from '../constants/machineModelOptions.js'
 
-function MachineModelFields({ control, register, errors, manufacturers, disabled, onConfigurationChange }) {
+function MachineModelFields({
+  control,
+  register,
+  errors,
+  manufacturers,
+  disabled,
+  isHpLatex,
+  isWhiteVariant,
+  onWhiteVariantChange,
+  onConfigurationChange,
+}) {
   return (
     <>
       <Grid size={{ xs: 12, md: 6 }}>
@@ -53,6 +64,17 @@ function MachineModelFields({ control, register, errors, manufacturers, disabled
           error={Boolean(errors.modelName)}
           helperText={errors.modelName?.message}
         />
+        {isHpLatex && (
+          <ToggleButton
+            value="white-ink"
+            selected={isWhiteVariant}
+            onChange={onWhiteVariantChange}
+            size="small"
+            sx={{ mt: 1, textTransform: 'none' }}
+          >
+            White ink (700W)
+          </ToggleButton>
+        )}
       </Grid>
 
       <Grid size={{ xs: 12, md: 6 }}>
