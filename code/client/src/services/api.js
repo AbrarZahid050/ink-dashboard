@@ -20,6 +20,14 @@ export const api = createApi({
       }),
       invalidatesTags: ['Manufacturer'],
     }),
+    updateManufacturer: builder.mutation({
+      query: ({ id, ...manufacturer }) => ({
+        url: `/manufacturers/${id}`,
+        method: 'PATCH',
+        body: manufacturer,
+      }),
+      invalidatesTags: ['Manufacturer'],
+    }),
     deleteManufacturer: builder.mutation({
       query: (id) => ({
         url: `/manufacturers/${id}`,
@@ -36,6 +44,14 @@ export const api = createApi({
       query: (machineModel) => ({
         url: '/machine-models',
         method: 'POST',
+        body: machineModel,
+      }),
+      invalidatesTags: ['MachineModel'],
+    }),
+    updateMachineModel: builder.mutation({
+      query: ({ id, ...machineModel }) => ({
+        url: `/machine-models/${id}`,
+        method: 'PATCH',
         body: machineModel,
       }),
       invalidatesTags: ['MachineModel'],
@@ -82,9 +98,11 @@ export const {
   useGetManufacturersQuery,
   useCreateManufacturerMutation,
   useDeleteManufacturerMutation,
+  useUpdateManufacturerMutation,
   useGetMachineModelsQuery,
   useCreateMachineModelMutation,
   useDeleteMachineModelMutation,
+  useUpdateMachineModelMutation,
   useGetCustomersQuery,
   useCreateCustomerMutation,
   useUpdateCustomerMutation,
