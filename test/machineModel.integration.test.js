@@ -212,4 +212,84 @@ describe("Machine Model API - PostgreSQL integration", () => {
       });
     }
   });
+  it("updates an existing machine model through the API and persists the changes in PostgreSQL", async () => {
+    const manufacturer = await prisma.manufacturer.create({
+      data: {
+        name: `Integration Update Manufacturer ${randomUUID()}`,
+      },
+    });
+
+    let machineModel;
+
+    try {
+      machineModel = await prisma.machineModel.create({
+        data: {
+          manufacturerId: manufacturer.id,
+          modelName: `Integration Update Printer ${randomUUID()}`,
+          technology: "UV",
+          configuration: "ROLL_TO_ROLL",
+          maxRollWidthMm: 2500,
+          notes: "Original integration test notes",
+        },
+      });
+
+      const updateInput = {
+        modelName: `Updated Integration Printer ${randomUUID()}`,
+        maxRollWidthMm: 3200,
+        notes: "Updated integration test notes",
+      };
+
+      const response = await request(app)
+        .patch(`/api/v1/machine-models/${machineModel.id}`)
+        .send(updateInput);
+
+      expect(response.status).toBe(200);
+      expect(response.body).toMatchObject({
+        success: true,
+        message: "Machine model updated successfully",
+        data: {
+          id: machineModel.id,
+          manufacturerId: manufacturer.id,
+          modelName: updateInput.modelName,
+          technology: "UV",
+          configuration: "ROLL_TO_ROLL",
+          maxRollWidthMm: updateInput.maxRollWidthMm,
+          notes: updateInput.notes,
+          manufacturer: {
+            id: manufacturer.id,
+            name: manufacturer.name,
+          },
+          _count: {
+            machines: 0,
+          },
+        },
+      });
+
+      // Verify the update independently by reading the record from PostgreSQL.
+      const persistedModel = await prisma.machineModel.findUnique({
+        where: { id: machineModel.id },
+      });
+
+      expect(persistedModel).toMatchObject({
+        id: machineModel.id,
+        manufacturerId: manufacturer.id,
+        modelName: updateInput.modelName,
+        technology: "UV",
+        configuration: "ROLL_TO_ROLL",
+        maxRollWidthMm: updateInput.maxRollWidthMm,
+        notes: updateInput.notes,
+      });
+    } finally {
+      if (machineModel) {
+        await prisma.machineModel.delete({
+          where: { id: machineModel.id },
+        });
+      }
+
+      await prisma.manufacturer.delete({
+        where: { id: manufacturer.id },
+      });
+    }
+  });
+
 });
