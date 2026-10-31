@@ -53,6 +53,7 @@ export const completeMachineModelSchema = createMachineModelSchema;
 
 export const updateMachineModelSchema = z
   .object({
+    version: z.number().int().nonnegative(),
     ...machineModelFields,
     manufacturerId: uuidSchema.optional(),
     modelName: machineModelFields.modelName.optional(),
@@ -61,6 +62,6 @@ export const updateMachineModelSchema = z
   })
   .strict()
   .refine(
-    (data) => Object.keys(data).length > 0,
+    (data) => Object.keys(data).some((key) => key !== "version"),
     "At least one field must be provided.",
   );

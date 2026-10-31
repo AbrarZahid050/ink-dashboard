@@ -1,4 +1,5 @@
 import { prisma } from "../config/database.js";
+import { ApiError } from "../utils/ApiError.js";
 
 export async function findAllCustomers() {
   return prisma.customer.findMany({
@@ -33,10 +34,33 @@ export async function createCustomer(name) {
   });
 }
 
-export async function updateCustomer(id, name) {
-  return prisma.customer.update({
+export async function updateCustomer(id, name, version) {
+  const result = await prisma.customer.updateMany({
+    where: { id, version },
+    data: {
+      name,
+      version: { increment: 1 },
+    },
+  });
+
+  if (result.count === 0) {
+    const customer = await prisma.customer.findUnique({
+      where: { id },
+      select: { id: true },
+    });
+
+    if (!customer) {
+      throw new ApiError(404, "Customer not found.");
+    }
+
+    throw new ApiError(
+      409,
+      "Customer was modified by another user. Please retrieve the latest version and try again.",
+    );
+  }
+
+  return prisma.customer.findUnique({
     where: { id },
-    data: { name },
   });
 }
 

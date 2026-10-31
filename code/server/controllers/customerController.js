@@ -41,9 +41,12 @@ export async function createCustomer(req, res) {
 
 // Update an existing customer by its ID.
 export async function updateCustomer(req, res) {
+  const { version, name } = req.body;
+
   const customer = await customerService.updateCustomer(
     req.params.id,
-    req.body.name,
+    name,
+    version,
   );
 
   return res.status(200).json({

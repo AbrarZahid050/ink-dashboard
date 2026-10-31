@@ -8,6 +8,7 @@ export const createCustomerSchema = z
 
 export const updateCustomerSchema = z
   .object({
+    version: z.number().int().nonnegative(),
     name: z.string().trim().min(1, "Customer name is required"),
   })
   .strict();

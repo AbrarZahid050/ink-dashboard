@@ -1,0 +1,829 @@
+﻿========================================
+FILE: E:\app\code\server\controllers\customerController.js
+========================================
+import * as customerService from "../services/customerService.js";
+
+export async function getAllCustomers(req, res) {
+  const customers = await customerService.findAllCustomers();
+
+  return res.status(200).json({
+    success: true,
+    count: customers.length,
+    data: customers,
+  });
+}
+
+export async function getCustomerById(req, res) {
+  const customer = await customerService.findCustomerById(req.params.id);
+
+  if (!customer) {
+    return res.status(404).json({
+      success: false,
+      message: "Customer not found",
+    });
+  }
+
+  return res.status(200).json({
+    success: true,
+    data: customer,
+  });
+}
+
+export async function createCustomer(req, res) {
+  const customer = await customerService.createCustomer(req.body.name);
+
+  return res.status(201).json({
+    success: true,
+    message: "Customer created successfully",
+    data: customer,
+  });
+}
+
+export async function updateCustomer(req, res) {
+  const customer = await customerService.updateCustomer(
+    req.params.id,
+    req.body.name,
+  );
+
+  return res.status(200).json({
+    success: true,
+    message: "Customer updated successfully",
+    data: customer,
+  });
+}
+
+export async function deleteCustomer(req, res) {
+  await customerService.removeCustomer(req.params.id);
+
+  return res.status(204).end();
+}
+
+========================================
+FILE: E:\app\code\server\controllers\customerSiteController.js
+========================================
+import * as customerSiteService from "../services/customerSiteService.js";
+
+export async function getAllCustomerSites(req, res) {
+  const sites = await customerSiteService.findAllCustomerSites();
+
+  return res.status(200).json({
+    success: true,
+    count: sites.length,
+    data: sites,
+  });
+}
+
+export async function getCustomerSiteById(req, res) {
+  const site = await customerSiteService.findCustomerSiteById(req.params.id);
+
+  if (!site) {
+    return res.status(404).json({
+      success: false,
+      message: "Customer site not found",
+    });
+  }
+
+  return res.status(200).json({
+    success: true,
+    data: site,
+  });
+}
+
+export async function createCustomerSite(req, res) {
+  const site = await customerSiteService.createCustomerSite(req.body);
+
+  return res.status(201).json({
+    success: true,
+    message: "Customer site created successfully",
+    data: site,
+  });
+}
+
+export async function updateCustomerSite(req, res) {
+  const site = await customerSiteService.updateCustomerSite(
+    req.params.id,
+    req.body,
+  );
+
+  return res.status(200).json({
+    success: true,
+    message: "Customer site updated successfully",
+    data: site,
+  });
+}
+
+export async function deleteCustomerSite(req, res) {
+  await customerSiteService.removeCustomerSite(req.params.id);
+
+  return res.status(204).end();
+}
+
+========================================
+FILE: E:\app\code\server\controllers\machineController.js
+========================================
+import * as machineService from "../services/machineService.js";
+
+// GET /api/v1/machines
+export async function getMachines(req, res) {
+  const machines = await machineService.findAllMachines();
+
+  return res.status(200).json({
+    success: true,
+    count: machines.length,
+    data: machines,
+  });
+}
+
+// GET /api/v1/machines/:id
+export async function getMachineById(req, res) {
+  const { id } = req.params;
+
+  const machine = await machineService.findMachineById(id);
+
+  if (!machine) {
+    return res.status(404).json({
+      success: false,
+      message: "Machine not found.",
+    });
+  }
+
+  return res.status(200).json({
+    success: true,
+    data: machine,
+  });
+}
+
+// POST /api/v1/machines
+export async function createMachine(req, res) {
+  const data = {
+    ...req.body,
+    installationDate: new Date(`${req.body.installationDate}T00:00:00.000Z`),
+  };
+
+  const machine = await machineService.createMachine(data);
+
+  return res.status(201).json({
+    success: true,
+    data: machine,
+  });
+}
+
+// PATCH /api/v1/machines/:id
+export async function updateMachine(req, res) {
+  const { id } = req.params;
+
+  const data = { ...req.body };
+
+  if (data.installationDate !== undefined) {
+    data.installationDate = new Date(`${data.installationDate}T00:00:00.000Z`);
+  }
+
+  const machine = await machineService.updateMachine(id, data);
+
+  return res.status(200).json({
+    success: true,
+    data: machine,
+  });
+}
+
+// DELETE /api/v1/machines/:id
+export async function deleteMachine(req, res) {
+  const { id } = req.params;
+
+  await machineService.removeMachine(id);
+
+  return res.status(204).end();
+}
+
+========================================
+FILE: E:\app\code\server\controllers\machineModelController.js
+========================================
+import * as machineModelService from "../services/machineModelService.js";
+
+export async function getAllMachineModels(req, res) {
+  const models = await machineModelService.findAllMachineModels();
+
+  return res.status(200).json({
+    success: true,
+    count: models.length,
+    data: models,
+  });
+}
+
+export async function getMachineModelById(req, res) {
+  const model = await machineModelService.findMachineModelById(req.params.id);
+
+  if (!model) {
+    return res.status(404).json({
+      success: false,
+      message: "Machine model not found",
+    });
+  }
+
+  return res.status(200).json({
+    success: true,
+    data: model,
+  });
+}
+
+export async function createMachineModel(req, res) {
+  const model = await machineModelService.createMachineModel(req.body);
+
+  return res.status(201).json({
+    success: true,
+    message: "Machine model created successfully",
+    data: model,
+  });
+}
+
+export async function updateMachineModel(req, res) {
+  const model = await machineModelService.updateMachineModelValidated(
+    req.params.id,
+    req.body,
+  );
+
+  return res.status(200).json({
+    success: true,
+    message: "Machine model updated successfully",
+    data: model,
+  });
+}
+
+export async function deleteMachineModel(req, res) {
+  await machineModelService.removeMachineModel(req.params.id);
+
+  return res.status(204).end();
+}
+
+========================================
+FILE: E:\app\code\server\controllers\manufacturerController.js
+========================================
+import * as manufacturerService from "../services/manufacturerService.js";
+
+export async function getAllManufacturers(req, res) {
+  const manufacturers = await manufacturerService.findAllManufacturers();
+
+  return res.status(200).json({
+    success: true,
+    count: manufacturers.length,
+    data: manufacturers,
+  });
+}
+
+export async function getManufacturerById(req, res) {
+  const manufacturer = await manufacturerService.findManufacturerById(
+    req.params.id,
+  );
+
+  if (!manufacturer) {
+    return res.status(404).json({
+      success: false,
+      message: "Manufacturer not found",
+    });
+  }
+
+  return res.status(200).json({
+    success: true,
+    data: manufacturer,
+  });
+}
+
+export async function createManufacturer(req, res) {
+  const manufacturer = await manufacturerService.createManufacturer(
+    req.body.name,
+  );
+
+  return res.status(201).json({
+    success: true,
+    message: "Manufacturer created successfully",
+    data: manufacturer,
+  });
+}
+
+export async function updateManufacturer(req, res) {
+  const manufacturer = await manufacturerService.updateManufacturer(
+    req.params.id,
+    req.body.name,
+  );
+
+  return res.status(200).json({
+    success: true,
+    message: "Manufacturer updated successfully",
+    data: manufacturer,
+  });
+}
+
+export async function deleteManufacturer(req, res) {
+  await manufacturerService.removeManufacturer(req.params.id);
+
+  return res.status(204).end();
+}
+
+========================================
+FILE: E:\app\code\server\routes\customerRoutes.js
+========================================
+import { Router } from "express";
+import { validate } from "../middleware/validate.js";
+import { idParamSchema } from "../schemas/commonSchema.js";
+import {
+  createCustomerSchema,
+  updateCustomerSchema,
+} from "../schemas/customerSchema.js";
+import {
+  getAllCustomers,
+  getCustomerById,
+  createCustomer,
+  updateCustomer,
+  deleteCustomer,
+} from "../controllers/customerController.js";
+
+const router = Router();
+
+router.get("/", getAllCustomers);
+router.get("/:id", validate(idParamSchema, "params"), getCustomerById);
+router.post("/", validate(createCustomerSchema), createCustomer);
+router.patch(
+  "/:id",
+  validate(idParamSchema, "params"),
+  validate(updateCustomerSchema),
+  updateCustomer,
+);
+router.delete("/:id", validate(idParamSchema, "params"), deleteCustomer);
+
+export default router;
+
+========================================
+FILE: E:\app\code\server\routes\customerSiteRoutes.js
+========================================
+import { Router } from "express";
+import { validate } from "../middleware/validate.js";
+import { idParamSchema } from "../schemas/commonSchema.js";
+import {
+  createCustomerSiteSchema,
+  updateCustomerSiteSchema,
+} from "../schemas/customerSiteSchema.js";
+import {
+  getAllCustomerSites,
+  getCustomerSiteById,
+  createCustomerSite,
+  updateCustomerSite,
+  deleteCustomerSite,
+} from "../controllers/customerSiteController.js";
+
+const router = Router();
+
+router.get("/", getAllCustomerSites);
+router.get("/:id", validate(idParamSchema, "params"), getCustomerSiteById);
+router.post("/", validate(createCustomerSiteSchema), createCustomerSite);
+router.patch(
+  "/:id",
+  validate(idParamSchema, "params"),
+  validate(updateCustomerSiteSchema),
+  updateCustomerSite,
+);
+router.delete("/:id", validate(idParamSchema, "params"), deleteCustomerSite);
+
+export default router;
+
+========================================
+FILE: E:\app\code\server\routes\index.js
+========================================
+import { Router } from "express";
+import manufacturerRoutes from "./manufacturerRoutes.js";
+import machineRoutes from "./machineRoutes.js";
+import machineModelRoutes from "./machineModelRoutes.js";
+import customerRoutes from "./customerRoutes.js";
+import customerSiteRoutes from "./customerSiteRoutes.js";
+
+const router = Router();
+
+// Resource routers
+router.use("/manufacturers", manufacturerRoutes);
+router.use("/machines", machineRoutes);
+router.use("/machine-models", machineModelRoutes);
+router.use("/customers", customerRoutes);
+router.use("/customer-sites", customerSiteRoutes);
+
+export default router;
+
+========================================
+FILE: E:\app\code\server\routes\machineModelRoutes.js
+========================================
+import { Router } from "express";
+import { validate } from "../middleware/validate.js";
+import { idParamSchema } from "../schemas/commonSchema.js";
+import {
+  createMachineModelSchema,
+  updateMachineModelSchema,
+} from "../schemas/machineModelSchema.js";
+import {
+  getAllMachineModels,
+  getMachineModelById,
+  createMachineModel,
+  updateMachineModel,
+  deleteMachineModel,
+} from "../controllers/machineModelController.js";
+
+const router = Router();
+
+router.get("/", getAllMachineModels);
+router.get("/:id", validate(idParamSchema, "params"), getMachineModelById);
+router.post("/", validate(createMachineModelSchema), createMachineModel);
+router.patch(
+  "/:id",
+  validate(idParamSchema, "params"),
+  validate(updateMachineModelSchema),
+  updateMachineModel,
+);
+router.delete("/:id", validate(idParamSchema, "params"), deleteMachineModel);
+
+export default router;
+
+========================================
+FILE: E:\app\code\server\routes\machineRoutes.js
+========================================
+import { Router } from "express";
+import {
+  getMachines,
+  getMachineById,
+  createMachine,
+  updateMachine,
+  deleteMachine,
+} from "../controllers/machineController.js";
+import { validate } from "../middleware/validate.js";
+import {
+  createMachineSchema,
+  updateMachineSchema,
+} from "../schemas/machineSchema.js";
+import { idParamSchema } from "../schemas/commonSchema.js";
+
+const router = Router();
+
+router.get("/", getMachines);
+router.get("/:id", validate(idParamSchema, "params"), getMachineById);
+router.post("/", validate(createMachineSchema), createMachine);
+router.patch(
+  "/:id",
+  validate(idParamSchema, "params"),
+  validate(updateMachineSchema),
+  updateMachine,
+);
+router.delete("/:id", validate(idParamSchema, "params"), deleteMachine);
+
+export default router;
+
+========================================
+FILE: E:\app\code\server\routes\manufacturerRoutes.js
+========================================
+import { Router } from "express";
+import { validate } from "../middleware/validate.js";
+import { idParamSchema } from "../schemas/commonSchema.js";
+import {
+  createManufacturerSchema,
+  updateManufacturerSchema,
+} from "../schemas/manufacturerSchema.js";
+import {
+  getAllManufacturers,
+  getManufacturerById,
+  createManufacturer,
+  updateManufacturer,
+  deleteManufacturer,
+} from "../controllers/manufacturerController.js";
+
+const router = Router();
+
+router.get("/", getAllManufacturers);
+router.get("/:id", validate(idParamSchema, "params"), getManufacturerById);
+router.post("/", validate(createManufacturerSchema), createManufacturer);
+router.patch(
+  "/:id",
+  validate(idParamSchema, "params"),
+  validate(updateManufacturerSchema),
+  updateManufacturer,
+);
+router.delete("/:id", validate(idParamSchema, "params"), deleteManufacturer);
+
+export default router;
+
+========================================
+FILE: E:\app\code\server\services\customerService.js
+========================================
+import { prisma } from "../config/database.js";
+
+export async function findAllCustomers() {
+  return prisma.customer.findMany({
+    include: {
+      _count: {
+        select: { sites: true },
+      },
+    },
+    orderBy: { name: "asc" },
+  });
+}
+
+export async function findCustomerById(id) {
+  return prisma.customer.findUnique({
+    where: { id },
+    include: {
+      sites: {
+        include: {
+          _count: {
+            select: { machines: true },
+          },
+        },
+        orderBy: { name: "asc" },
+      },
+    },
+  });
+}
+
+export async function createCustomer(name) {
+  return prisma.customer.create({
+    data: { name },
+  });
+}
+
+export async function updateCustomer(id, name) {
+  return prisma.customer.update({
+    where: { id },
+    data: { name },
+  });
+}
+
+export async function removeCustomer(id) {
+  return prisma.customer.delete({
+    where: { id },
+  });
+}
+
+========================================
+FILE: E:\app\code\server\services\customerSiteService.js
+========================================
+import { prisma } from "../config/database.js";
+
+const siteDetails = {
+  customer: true,
+  _count: {
+    select: { machines: true },
+  },
+};
+
+// GET all customer sites
+export async function findAllCustomerSites() {
+  return prisma.customerSite.findMany({
+    include: siteDetails,
+    orderBy: { name: "asc" },
+  });
+}
+
+// GET customer site by ID
+export async function findCustomerSiteById(id) {
+  return prisma.customerSite.findUnique({
+    where: { id },
+    include: {
+      ...siteDetails,
+      machines: {
+        include: {
+          machineModel: {
+            include: { manufacturer: true },
+          },
+        },
+      },
+    },
+  });
+}
+
+// CREATE customer site
+export async function createCustomerSite(data) {
+  return prisma.customerSite.create({
+    data,
+    include: siteDetails,
+  });
+}
+
+// UPDATE customer site
+export async function updateCustomerSite(id, data) {
+  return prisma.customerSite.update({
+    where: { id },
+    data,
+    include: siteDetails,
+  });
+}
+
+// DELETE customer site
+export async function removeCustomerSite(id) {
+  return prisma.customerSite.delete({
+    where: { id },
+  });
+}
+
+========================================
+FILE: E:\app\code\server\services\machineModelService.js
+========================================
+import { prisma } from "../config/database.js";
+import { completeMachineModelSchema } from "../schemas/machineModelSchema.js";
+import { ApiError } from "../utils/ApiError.js";
+
+const modelDetails = {
+  manufacturer: true,
+  _count: {
+    select: { machines: true },
+  },
+};
+
+// GET all machine models
+export async function findAllMachineModels() {
+  return prisma.machineModel.findMany({
+    include: modelDetails,
+    orderBy: [{ manufacturer: { name: "asc" } }, { modelName: "asc" }],
+  });
+}
+
+// GET machine model by ID
+export async function findMachineModelById(id) {
+  return prisma.machineModel.findUnique({
+    where: { id },
+    include: modelDetails,
+  });
+}
+
+// CREATE machine model
+export async function createMachineModel(data) {
+  return prisma.machineModel.create({
+    data,
+    include: modelDetails,
+  });
+}
+
+// GET existing machine model without additional relations
+export async function findMachineModelForUpdate(id) {
+  return prisma.machineModel.findUnique({
+    where: { id },
+  });
+}
+
+// UPDATE machine model
+export async function updateMachineModel(id, data) {
+  return prisma.machineModel.update({
+    where: { id },
+    data,
+    include: modelDetails,
+  });
+}
+
+// DELETE machine model
+export async function removeMachineModel(id) {
+  return prisma.machineModel.delete({
+    where: { id },
+  });
+}
+
+export async function updateMachineModelValidated(id, data) {
+  const existingModel = await findMachineModelForUpdate(id);
+
+  if (!existingModel) {
+    throw new ApiError(404, "Machine model not found");
+  }
+
+  const candidate = {
+    manufacturerId: data.manufacturerId ?? existingModel.manufacturerId,
+    modelName: data.modelName ?? existingModel.modelName,
+    technology: data.technology ?? existingModel.technology,
+    configuration: data.configuration ?? existingModel.configuration,
+
+    maxRollWidthMm: Object.hasOwn(data, "maxRollWidthMm")
+      ? data.maxRollWidthMm
+      : existingModel.maxRollWidthMm,
+
+    flatbedWidthMm: Object.hasOwn(data, "flatbedWidthMm")
+      ? data.flatbedWidthMm
+      : existingModel.flatbedWidthMm,
+
+    flatbedLengthMm: Object.hasOwn(data, "flatbedLengthMm")
+      ? data.flatbedLengthMm
+      : existingModel.flatbedLengthMm,
+
+    notes: Object.hasOwn(data, "notes") ? data.notes : existingModel.notes,
+  };
+
+  const validation = completeMachineModelSchema.safeParse(candidate);
+
+  if (!validation.success) {
+    const errors = validation.error.issues.map((issue) => ({
+      field: issue.path.join("."),
+      message: issue.message,
+    }));
+
+    throw new ApiError(400, "Updated machine model is invalid", errors);
+  }
+
+  const updatedFields = Object.fromEntries(
+    Object.keys(data).map((key) => [key, validation.data[key]]),
+  );
+
+  return updateMachineModel(id, updatedFields);
+}
+
+========================================
+FILE: E:\app\code\server\services\machineService.js
+========================================
+import { prisma } from "../config/database.js";
+
+const machineDetails = {
+  machineModel: {
+    include: {
+      manufacturer: true,
+    },
+  },
+  site: {
+    include: {
+      customer: true,
+    },
+  },
+};
+
+// GET all machines
+export async function findAllMachines() {
+  return prisma.machine.findMany({
+    include: machineDetails,
+    orderBy: { serialNumber: "asc" },
+  });
+}
+
+// GET machine by ID
+export async function findMachineById(id) {
+  return prisma.machine.findUnique({
+    where: { id },
+    include: machineDetails,
+  });
+}
+
+// CREATE machine
+export async function createMachine(data) {
+  return prisma.machine.create({
+    data,
+    include: machineDetails,
+  });
+}
+
+// UPDATE machine
+export async function updateMachine(id, data) {
+  return prisma.machine.update({
+    where: { id },
+    data,
+    include: machineDetails,
+  });
+}
+
+// DELETE machine
+export async function removeMachine(id) {
+  return prisma.machine.delete({
+    where: { id },
+  });
+}
+
+========================================
+FILE: E:\app\code\server\services\manufacturerService.js
+========================================
+import { prisma } from "../config/database.js";
+
+// GET all manufacturers
+export async function findAllManufacturers() {
+  return prisma.manufacturer.findMany({
+    orderBy: { name: "asc" },
+  });
+}
+
+// GET one manufacturer by ID
+export async function findManufacturerById(id) {
+  return prisma.manufacturer.findUnique({
+    where: { id },
+  });
+}
+
+// CREATE manufacturer
+export async function createManufacturer(name) {
+  return prisma.manufacturer.create({
+    data: {
+      name: name.trim(),
+    },
+  });
+}
+
+// UPDATE manufacturer
+export async function updateManufacturer(id, name) {
+  return prisma.manufacturer.update({
+    where: { id },
+    data: {
+      name: name.trim(),
+    },
+  });
+}
+
+// DELETE manufacturer
+export async function removeManufacturer(id) {
+  return prisma.manufacturer.delete({
+    where: { id },
+  });
+}
+

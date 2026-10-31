@@ -49,13 +49,15 @@ export async function createMachine(req, res) {
 export async function updateMachine(req, res) {
   const { id } = req.params;
 
-  const data = { ...req.body };
+  // Separate the OCC version from the fields being updated.
+  const { version, ...data } = req.body;
 
   if (data.installationDate !== undefined) {
     data.installationDate = new Date(`${data.installationDate}T00:00:00.000Z`);
   }
 
-  const machine = await machineService.updateMachine(id, data);
+  // Pass the expected version separately to the service.
+  const machine = await machineService.updateMachine(id, data, version);
 
   return res.status(200).json({
     success: true,

@@ -1,4 +1,5 @@
 import { prisma } from "../config/database.js";
+import { ApiError } from "../utils/ApiError.js";
 
 const siteDetails = {
   customer: true,
@@ -40,11 +41,34 @@ export async function createCustomerSite(data) {
   });
 }
 
-// UPDATE customer site
-export async function updateCustomerSite(id, data) {
-  return prisma.customerSite.update({
+// UPDATE customer site using optimistic concurrency control.
+export async function updateCustomerSite(id, data, version) {
+  const result = await prisma.customerSite.updateMany({
+    where: { id, version },
+    data: {
+      ...data,
+      version: { increment: 1 },
+    },
+  });
+
+  if (result.count === 0) {
+    const site = await prisma.customerSite.findUnique({
+      where: { id },
+      select: { id: true },
+    });
+
+    if (!site) {
+      throw new ApiError(404, "Customer site not found.");
+    }
+
+    throw new ApiError(
+      409,
+      "Customer site was modified by another user. Please retrieve the latest version and try again.",
+    );
+  }
+
+  return prisma.customerSite.findUnique({
     where: { id },
-    data,
     include: siteDetails,
   });
 }

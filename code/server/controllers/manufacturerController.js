@@ -45,9 +45,12 @@ export async function createManufacturer(req, res) {
 
 // Update an existing manufacturer by its ID.
 export async function updateManufacturer(req, res) {
+  const { version, name } = req.body;
+
   const manufacturer = await manufacturerService.updateManufacturer(
     req.params.id,
-    req.body.name,
+    name,
+    version,
   );
 
   return res.status(200).json({

@@ -1,4 +1,5 @@
 import { prisma } from "../config/database.js";
+import { ApiError } from "../utils/ApiError.js";
 
 // GET all manufacturers
 export async function findAllManufacturers() {
@@ -23,13 +24,34 @@ export async function createManufacturer(name) {
   });
 }
 
-// UPDATE manufacturer
-export async function updateManufacturer(id, name) {
-  return prisma.manufacturer.update({
-    where: { id },
+// UPDATE manufacturer using optimistic concurrency control.
+export async function updateManufacturer(id, name, version) {
+  const result = await prisma.manufacturer.updateMany({
+    where: { id, version },
     data: {
       name: name.trim(),
+      version: { increment: 1 },
     },
+  });
+
+  if (result.count === 0) {
+    const manufacturer = await prisma.manufacturer.findUnique({
+      where: { id },
+      select: { id: true },
+    });
+
+    if (!manufacturer) {
+      throw new ApiError(404, "Manufacturer not found.");
+    }
+
+    throw new ApiError(
+      409,
+      "Manufacturer was modified by another user. Please retrieve the latest version and try again.",
+    );
+  }
+
+  return prisma.manufacturer.findUnique({
+    where: { id },
   });
 }
 

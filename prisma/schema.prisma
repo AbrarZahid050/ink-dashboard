@@ -1,4 +1,3 @@
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -53,6 +52,9 @@ model Manufacturer {
   // UUIDs are generated automatically when a record is created.
   id        String   @id @default(uuid()) @db.Uuid
 
+  // OCC version used to detect concurrent modifications.
+  version   Int      @default(0)
+
   // Manufacturer's name must be unique.
   // Application logic should normalize capitalization and
   // whitespace to avoid duplicates such as "Mimaki" and "MIMAKI".
@@ -81,6 +83,9 @@ model Manufacturer {
 model MachineModel {
   // Primary key for this model record.
   id                    String                @id @default(uuid()) @db.Uuid
+
+  // OCC version used to detect concurrent modifications.
+  version               Int                   @default(0)
 
   // Foreign key referencing Manufacturer.id.
   // This identifies who makes the machine model.
@@ -140,6 +145,9 @@ model Customer {
   // Primary key identifying the customer.
   id        String         @id @default(uuid()) @db.Uuid
 
+  // OCC version used to detect concurrent modifications.
+  version   Int            @default(0)
+
   // Customer/company name.
   name      String
 
@@ -164,6 +172,9 @@ model Customer {
 model CustomerSite {
   // Primary key identifying this specific site.
   id         String       @id @default(uuid()) @db.Uuid
+
+  // OCC version used to detect concurrent modifications.
+  version    Int          @default(0)
 
   // Foreign key referencing Customer.id.
   // Determines which customer owns this site record.
@@ -206,6 +217,10 @@ model Machine {
   // Primary key identifying this physical machine in our app.
   id                String        @id @default(uuid()) @db.Uuid
 
+  // OCC version used to detect concurrent modifications.
+  // This value will be incremented after each successful update.
+  version           Int           @default(0)
+
   // Manufacturer-assigned serial number.
   // Unique so the same physical machine cannot be registered twice.
   serialNumber      String        @unique
@@ -228,7 +243,7 @@ model Machine {
   // Defaults to ACTIVE when a record is created.
   status            MachineStatus @default(ACTIVE)
 
-  // Optional notes about this particular physical machine,
+  // Optional notes about this particular machine,
   // not the general model specifications.
   notes             String?
 
@@ -295,7 +310,7 @@ model Machine {
 //   // Roll media dimensions (roll-to-roll and hybrid)
 //   maxRollWidthMm        Int?
 
-//   // Flatbed working dimensions (flatbed and hybrid)
+//   // Flatbed working width (flatbed and hybrid)
 //   flatbedWidthMm        Int?
 //   flatbedLengthMm       Int?
 

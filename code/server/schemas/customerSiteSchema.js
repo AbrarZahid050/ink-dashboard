@@ -14,6 +14,7 @@ export const createCustomerSiteSchema = z
 
 export const updateCustomerSiteSchema = z
   .object({
+    version: z.number().int().nonnegative(),
     customerId: z.string().uuid().optional(),
     name: z.string().trim().min(1, "Site name is required").optional(),
     address: optionalText,
@@ -22,6 +23,6 @@ export const updateCustomerSiteSchema = z
   })
   .strict()
   .refine(
-    (data) => Object.keys(data).length > 0,
-    "At least one field must be provided.",
+    (data) => Object.keys(data).some((key) => key !== "version"),
+    "At least one field besides version must be provided.",
   );

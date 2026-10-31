@@ -1,30 +1,8 @@
-import express from "express";
-import apiRoutes from "./routes/index.js";
+import app from "./app.js";
 import { prisma } from "./config/database.js";
-import pinoHttp from "pino-http";
 import { logger } from "./config/logger.js";
-import { errorHandler } from "./middleware/errorHandler.js";
 
-const app = express();
-const PORT = 3000;
-
-app.use(express.json());
-
-// Log incoming HTTP requests and their responses.
-app.use(pinoHttp({ logger }));
-
-// Root route
-app.get("/", (req, res) => {
-  res.json({
-    message: "Ink Dashboard API is running!",
-  });
-});
-
-// API entry point
-app.use("/api/v1", apiRoutes);
-
-// Error-handling middleware must be last.
-app.use(errorHandler);
+const PORT = process.env.PORT || 3000;
 
 // Start the HTTP server.
 const server = app.listen(PORT, () => {
