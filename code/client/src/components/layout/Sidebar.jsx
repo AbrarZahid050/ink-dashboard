@@ -1,9 +1,4 @@
 import {
-  BuildOutlined,
-  DashboardOutlined,
-  Inventory2Outlined,
-  PeopleAltOutlined,
-  PrecisionManufacturingOutlined,
   SettingsOutlined,
   ViewInArOutlined,
 } from '@mui/icons-material'
@@ -19,15 +14,6 @@ import {
 } from '@mui/material'
 
 const drawerWidth = 256
-
-const navigationItems = [
-  { label: 'Overview', icon: DashboardOutlined },
-  { label: 'Machines', icon: PrecisionManufacturingOutlined },
-  { label: 'Machine Models', icon: ViewInArOutlined },
-  { label: 'Service requests', icon: BuildOutlined },
-  { label: 'Inventory', icon: Inventory2Outlined },
-  { label: 'Customers', icon: PeopleAltOutlined },
-]
 
 function Sidebar({ mobileOpen, onClose, isMobile, activePage, onNavigate }) {
   const drawerContent = (
@@ -53,37 +39,31 @@ function Sidebar({ mobileOpen, onClose, isMobile, activePage, onNavigate }) {
       </Box>
 
       <List sx={{ px: 1.5, pt: 0 }}>
-        {navigationItems.map(({ label, icon: Icon }) => (
-          <ListItemButton
-            key={label}
-            selected={activePage === label}
-            onClick={() => {
-              onNavigate(label)
-              if (isMobile) onClose()
-            }}
-            sx={{
-              minHeight: 46,
-              mb: 0.5,
-              px: 1.5,
-              borderRadius: 2,
-              color: 'rgba(255,255,255,0.72)',
-              '& .MuiListItemIcon-root': { color: 'inherit', minWidth: 38 },
-              '&.Mui-selected': {
-                color: '#FFFFFF',
-                backgroundColor: 'rgba(84,197,188,0.16)',
-                '& .MuiListItemIcon-root': { color: '#54C5BC' },
-              },
-              '&.Mui-selected:hover': { backgroundColor: 'rgba(84,197,188,0.22)' },
-              '&:hover': { backgroundColor: 'rgba(255,255,255,0.07)' },
-            }}
-          >
-            <ListItemIcon><Icon fontSize="small" /></ListItemIcon>
-            <ListItemText
-              primary={label}
-              primaryTypographyProps={{ fontSize: 14, fontWeight: activePage === label ? 600 : 500 }}
-            />
-          </ListItemButton>
-        ))}
+        <ListItemButton
+          selected={activePage === 'Machine Models'}
+          onClick={() => {
+            onNavigate('Machine Models')
+            if (isMobile) onClose()
+          }}
+          sx={{
+            minHeight: 46,
+            mb: 0.5,
+            px: 1.5,
+            borderRadius: 2,
+            color: 'rgba(255,255,255,0.72)',
+            '& .MuiListItemIcon-root': { color: 'inherit', minWidth: 38 },
+            '&.Mui-selected': {
+              color: '#FFFFFF',
+              backgroundColor: 'rgba(84,197,188,0.16)',
+              '& .MuiListItemIcon-root': { color: '#54C5BC' },
+            },
+            '&.Mui-selected:hover': { backgroundColor: 'rgba(84,197,188,0.22)' },
+            '&:hover': { backgroundColor: 'rgba(255,255,255,0.07)' },
+          }}
+        >
+          <ListItemIcon><ViewInArOutlined fontSize="small" /></ListItemIcon>
+          <ListItemText primary="Machine Models" primaryTypographyProps={{ fontSize: 14, fontWeight: 600 }} />
+        </ListItemButton>
       </List>
 
       <Box sx={{ mt: 'auto' }}>
