@@ -67,6 +67,7 @@ describe("Machine schemas", () => {
   describe("updateMachineSchema installationDate", () => {
     it("should accept a valid date in a partial update", () => {
       const result = updateMachineSchema.safeParse({
+        version: 0,
         installationDate: "2024-02-29",
       });
 
@@ -75,6 +76,7 @@ describe("Machine schemas", () => {
 
     it("should reject an invalid date in a partial update", () => {
       const result = updateMachineSchema.safeParse({
+        version: 0,
         installationDate: "2026-02-30",
       });
 
