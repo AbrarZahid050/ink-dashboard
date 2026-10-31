@@ -2,27 +2,34 @@ import { createTheme } from '@mui/material/styles'
 
 const theme = createTheme({
   palette: {
-    mode: 'light',
+    mode: 'dark',
     primary: {
-      main: '#243B64',
-      dark: '#192B49',
-      light: '#E9EEF6',
-      contrastText: '#FFFFFF',
+      main: '#78A9FF',
+      dark: '#4D83D8',
+      light: '#20385E',
+      contrastText: '#081426',
     },
     secondary: {
-      main: '#159A94',
-      light: '#E5F5F3',
-      contrastText: '#FFFFFF',
+      main: '#45C7B8',
+      dark: '#25998F',
+      light: '#173F42',
+      contrastText: '#071A1A',
     },
     background: {
-      default: '#F5F7FB',
-      paper: '#FFFFFF',
+      default: '#0B1220',
+      paper: '#111C2E',
     },
     text: {
-      primary: '#172033',
-      secondary: '#667085',
+      primary: '#E8EEF8',
+      secondary: '#9AAAC0',
+      disabled: '#637189',
     },
-    divider: '#E7EBF2',
+    divider: '#26364D',
+    action: {
+      hover: 'rgba(148, 174, 210, 0.08)',
+      selected: 'rgba(120, 169, 255, 0.14)',
+      disabledBackground: 'rgba(148, 163, 184, 0.12)',
+    },
   },
   shape: {
     borderRadius: 12,
@@ -40,6 +47,7 @@ const theme = createTheme({
       styleOverrides: {
         body: {
           minWidth: 320,
+          backgroundColor: '#0B1220',
         },
       },
     },
@@ -55,6 +63,33 @@ const theme = createTheme({
         root: {
           borderRadius: 9,
           boxShadow: 'none',
+        },
+      },
+    },
+    MuiOutlinedInput: {
+      styleOverrides: {
+        root: {
+          '& .MuiOutlinedInput-notchedOutline': {
+            borderColor: '#34445D',
+          },
+          '&:hover .MuiOutlinedInput-notchedOutline': {
+            borderColor: '#7186A5',
+          },
+          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+            borderColor: '#78A9FF',
+          },
+        },
+      },
+    },
+    MuiTableCell: {
+      styleOverrides: {
+        head: {
+          color: '#AAB9CE',
+          fontWeight: 700,
+          backgroundColor: '#162338',
+        },
+        root: {
+          borderColor: '#26364D',
         },
       },
     },
