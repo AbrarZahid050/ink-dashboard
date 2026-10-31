@@ -41,9 +41,12 @@ export async function createCustomerSite(req, res) {
 
 // Update an existing customer site by its ID.
 export async function updateCustomerSite(req, res) {
+  const { version, ...data } = req.body;
+
   const site = await customerSiteService.updateCustomerSite(
     req.params.id,
-    req.body,
+    data,
+    version,
   );
 
   return res.status(200).json({
