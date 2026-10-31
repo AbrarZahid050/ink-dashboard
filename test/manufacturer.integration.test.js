@@ -101,7 +101,7 @@ describe("Manufacturer PostgreSQL integration tests", () => {
     try {
       const response = await request(app)
         .patch(`/api/v1/manufacturers/${manufacturer.id}`)
-        .send({ name: updatedName });
+        .send({ name: updatedName, version: 0 });
 
       expect(response.status).toBe(200);
       expect(response.body).toMatchObject({
@@ -110,6 +110,7 @@ describe("Manufacturer PostgreSQL integration tests", () => {
         data: {
           id: manufacturer.id,
           name: updatedName,
+          version: 1,
         },
       });
 
@@ -117,6 +118,53 @@ describe("Manufacturer PostgreSQL integration tests", () => {
         where: { id: manufacturer.id },
       });
       expect(persisted.name).toBe(updatedName);
+      expect(persisted.version).toBe(1);
+    } finally {
+      await testPrisma.manufacturer.deleteMany({
+        where: { id: manufacturer.id },
+      });
+    }
+  });
+
+
+  it("should reject a manufacturer update when version is missing", async () => {
+    const response = await request(app)
+      .patch(`/api/v1/manufacturers/${randomUUID()}`)
+      .send({ name: `Missing Version ${randomUUID()}` });
+
+    expect(response.status).toBe(400);
+    expect(response.body.errors).toEqual(
+      expect.arrayContaining([expect.objectContaining({ field: "version" })]),
+    );
+  });
+
+  it("should return 409 when updating a manufacturer with a stale version", async () => {
+    const manufacturer = await testPrisma.manufacturer.create({
+      data: { name: `Integration OCC Manufacturer ${randomUUID()}` },
+    });
+
+    try {
+      const firstUpdate = await request(app)
+        .patch(`/api/v1/manufacturers/${manufacturer.id}`)
+        .send({ name: `First Update ${randomUUID()}`, version: 0 });
+
+      expect(firstUpdate.status).toBe(200);
+      expect(firstUpdate.body.data.version).toBe(1);
+
+      const staleUpdate = await request(app)
+        .patch(`/api/v1/manufacturers/${manufacturer.id}`)
+        .send({ name: `Stale Update ${randomUUID()}`, version: 0 });
+
+      expect(staleUpdate.status).toBe(409);
+      expect(staleUpdate.body.message).toBe(
+        "Manufacturer was modified by another user. Please retrieve the latest version and try again.",
+      );
+
+      const persisted = await testPrisma.manufacturer.findUnique({
+        where: { id: manufacturer.id },
+      });
+      expect(persisted.version).toBe(1);
+      expect(persisted.name).toBe(firstUpdate.body.data.name);
     } finally {
       await testPrisma.manufacturer.deleteMany({
         where: { id: manufacturer.id },
@@ -162,7 +210,7 @@ describe("Manufacturer PostgreSQL integration tests", () => {
 
     const response = await request(app)
       .patch(`/api/v1/manufacturers/${nonexistentId}`)
-      .send({ name: `Missing Manufacturer ${randomUUID()}` });
+      .send({ name: `Missing Manufacturer ${randomUUID()}`, version: 0 });
 
     expect(response.status).toBe(404);
   });
