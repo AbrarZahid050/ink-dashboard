@@ -17,7 +17,7 @@ import {
   Typography,
 } from '@mui/material'
 import { z } from 'zod'
-import { useCreateCustomerSiteMutation, useGetCustomersQuery } from '../../../services/api.js'
+import { useCreateCustomerSiteMutation, useGetCustomerSitesQuery, useGetCustomersQuery } from '../../../services/api.js'
 import { getApiErrorMessage } from '../../machine-models/utils/getApiErrorMessage.js'
 
 const siteSchema = z.object({
@@ -34,6 +34,7 @@ function CustomerSiteForm({ onCreated }) {
   const [serverError, setServerError] = useState('')
   const [createCustomerSite, { isLoading: saving }] = useCreateCustomerSiteMutation()
   const { data: customers = [], isLoading: customersLoading } = useGetCustomersQuery()
+  const { data: sites = [] } = useGetCustomerSitesQuery()
 
   const {
     register,
@@ -48,7 +49,10 @@ function CustomerSiteForm({ onCreated }) {
   })
 
   const handleReview = (values) => {
-    const duplicate = sitesDuplicate(values, [])
+    const duplicate = sites.some((site) =>
+      site.customerId === values.customerId &&
+      site.name?.trim().toLowerCase() === values.name.trim().toLowerCase(),
+    )
     if (duplicate) {
       setError('name', { type: 'manual', message: 'This customer already has a site with this name.' })
       return
@@ -154,11 +158,6 @@ function CustomerSiteForm({ onCreated }) {
       </Dialog>
     </>
   )
-}
-
-function sitesDuplicate(values) {
-  // Duplicate names are scoped to a customer. Existing records are checked in the table and by the API.
-  return false
 }
 
 function BoxSubmit({ disabled }) {
