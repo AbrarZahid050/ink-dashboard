@@ -15,6 +15,7 @@ const { prisma } = vi.hoisted(() => ({
       findUnique: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
+      updateMany: vi.fn(),
       delete: vi.fn(),
     },
     customerSite: {
@@ -166,17 +167,39 @@ describe("Customer service", () => {
     });
   });
 
-  it("should update a customer by ID", async () => {
-    const record = { id: "customer-1", name: "Updated" };
-    prisma.customer.update.mockResolvedValue(record);
+  it("should update a customer by ID and increment its version", async () => {
+    const record = { id: "customer-1", name: "Updated", version: 1 };
+    prisma.customer.updateMany.mockResolvedValue({ count: 1 });
+    prisma.customer.findUnique.mockResolvedValue(record);
 
     await expect(
-      customerService.updateCustomer(record.id, "Updated"),
+      customerService.updateCustomer(record.id, "Updated", 0),
     ).resolves.toBe(record);
-    expect(prisma.customer.update).toHaveBeenCalledWith({
-      where: { id: record.id },
-      data: { name: "Updated" },
+    expect(prisma.customer.updateMany).toHaveBeenCalledWith({
+      where: { id: record.id, version: 0 },
+      data: { name: "Updated", version: { increment: 1 } },
     });
+    expect(prisma.customer.findUnique).toHaveBeenLastCalledWith({
+      where: { id: record.id },
+    });
+  });
+
+  it("should return 404 when updating a nonexistent customer", async () => {
+    prisma.customer.updateMany.mockResolvedValue({ count: 0 });
+    prisma.customer.findUnique.mockResolvedValue(null);
+
+    await expect(
+      customerService.updateCustomer("missing-id", "Updated", 0),
+    ).rejects.toMatchObject({ statusCode: 404, message: "Customer not found." });
+  });
+
+  it("should return 409 when the customer version is stale", async () => {
+    prisma.customer.updateMany.mockResolvedValue({ count: 0 });
+    prisma.customer.findUnique.mockResolvedValue({ id: "customer-1" });
+
+    await expect(
+      customerService.updateCustomer("customer-1", "Updated", 0),
+    ).rejects.toMatchObject({ statusCode: 409 });
   });
 
   it("should delete a customer by ID", async () => {
