@@ -92,13 +92,13 @@ const resources = [
       name: "  Dubai Branch  ",
       address: "  Main Road  ",
     },
-    validUpdateBody: { name: "  Abu Dhabi Branch  " },
+    validUpdateBody: { name: "  Abu Dhabi Branch  ", version: 0 },
     normalizedCreateBody: {
       customerId: validId,
       name: "Dubai Branch",
       address: "Main Road",
     },
-    normalizedUpdateBody: { name: "Abu Dhabi Branch" },
+    normalizedUpdateBody: { name: "Abu Dhabi Branch", version: 0 },
   },
   {
     name: "machine",
