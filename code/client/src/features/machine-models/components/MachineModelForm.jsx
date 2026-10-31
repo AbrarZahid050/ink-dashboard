@@ -56,7 +56,7 @@ function MachineModelForm({ manufacturers, manufacturersLoading, onCreated }) {
   const submitting = saving || isSubmitting
 
   const handleWhiteVariantChange = () => {
-    const baseModelName = modelName.trim().replace(/\\s*W$/i, '')
+    const baseModelName = modelName.trim().replace(/\s*W$/i, '')
     const nextModelName = isWhiteVariant ? baseModelName : `${baseModelName}W`
 
     setValue('modelName', nextModelName, { shouldDirty: true, shouldValidate: true })
