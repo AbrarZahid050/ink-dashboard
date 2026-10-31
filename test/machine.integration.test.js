@@ -401,7 +401,7 @@ describe("Machine PostgreSQL integration tests", () => {
     expect(response.status).toBe(404);
     expect(response.body).toMatchObject({
       success: false,
-      message: "Requested record not found.",
+      message: "Machine not found.",
     });
   });
 });
