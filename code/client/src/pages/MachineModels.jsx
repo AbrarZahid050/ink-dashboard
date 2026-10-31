@@ -1,9 +1,6 @@
 import { useState } from 'react'
-import {
-  useCreateMachineModelMutation,
-  useGetMachineModelsQuery,
-  useGetManufacturersQuery,
-} from '../services/api.js'
+import { Controller, useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
 import {
   AddRounded,
   CloseRounded,
@@ -17,6 +14,7 @@ import {
   CircularProgress,
   Divider,
   FormControl,
+  FormHelperText,
   Grid,
   InputLabel,
   MenuItem,
@@ -33,6 +31,16 @@ import {
   TextField,
   Typography,
 } from '@mui/material'
+import {
+  initialMachineModelValues,
+  machineModelSchema,
+  toMachineModelPayload,
+} from '../features/machine-models/schemas/machineModelSchema.js'
+import {
+  useCreateMachineModelMutation,
+  useGetMachineModelsQuery,
+  useGetManufacturersQuery,
+} from '../services/api.js'
 
 const technologyOptions = [
   { value: 'SOLVENT', label: 'Solvent' },
@@ -47,17 +55,6 @@ const configurationOptions = [
   { value: 'FLATBED', label: 'Flatbed' },
   { value: 'HYBRID', label: 'Hybrid' },
 ]
-
-const initialForm = {
-  manufacturerId: '',
-  modelName: '',
-  technology: '',
-  configuration: '',
-  maxRollWidthMm: '',
-  flatbedWidthMm: '',
-  flatbedLengthMm: '',
-  notes: '',
-}
 
 function getApiErrorMessage(error, fallback) {
   const payload = error?.data
@@ -75,9 +72,21 @@ function getApiErrorMessage(error, fallback) {
 }
 
 function MachineModels() {
-  const [form, setForm] = useState(initialForm)
-  const [formError, setFormError] = useState('')
+  const [serverError, setServerError] = useState('')
   const [notice, setNotice] = useState('')
+
+  const {
+    control,
+    register,
+    watch,
+    setValue,
+    reset,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm({
+    resolver: zodResolver(machineModelSchema),
+    defaultValues: initialMachineModelValues,
+  })
 
   const {
     data: manufacturers = [],
@@ -97,59 +106,44 @@ function MachineModels() {
 
   const [createMachineModel, { isLoading: saving }] = useCreateMachineModelMutation()
 
+  const configuration = watch('configuration')
+  const needsRollWidth = configuration === 'ROLL_TO_ROLL' || configuration === 'HYBRID'
+  const needsFlatbedDimensions = configuration === 'FLATBED' || configuration === 'HYBRID'
   const loading = manufacturersLoading || modelsLoading
   const refreshing = manufacturersFetching || modelsFetching
   const loadError = manufacturersError || modelsError
+
   const handleRefresh = () => {
     refetchManufacturers()
     refetchModels()
   }
 
-  const configuration = form.configuration
-  const needsRollWidth = configuration === 'ROLL_TO_ROLL' || configuration === 'HYBRID'
-  const needsFlatbedDimensions = configuration === 'FLATBED' || configuration === 'HYBRID'
+  const handleConfigurationChange = (nextConfiguration, onChange) => {
+    onChange(nextConfiguration)
 
-  const handleChange = (event) => {
-    const { name, value } = event.target
-    setForm((current) => {
-      const next = { ...current, [name]: value }
-
-      if (name === 'configuration') {
-        if (value === 'ROLL_TO_ROLL') {
-          next.flatbedWidthMm = ''
-          next.flatbedLengthMm = ''
-        } else if (value === 'FLATBED') {
-          next.maxRollWidthMm = ''
-        }
-      }
-
-      return next
-    })
-    setFormError('')
+    if (nextConfiguration === 'ROLL_TO_ROLL') {
+      setValue('flatbedWidthMm', '')
+      setValue('flatbedLengthMm', '')
+    } else if (nextConfiguration === 'FLATBED') {
+      setValue('maxRollWidthMm', '')
+    }
   }
 
-  const handleSubmit = async (event) => {
-    event.preventDefault()
-    setFormError('')
-
-    const payload = {
-      manufacturerId: form.manufacturerId,
-      modelName: form.modelName.trim(),
-      technology: form.technology,
-      configuration: form.configuration,
-      maxRollWidthMm: needsRollWidth ? Number(form.maxRollWidthMm) : null,
-      flatbedWidthMm: needsFlatbedDimensions ? Number(form.flatbedWidthMm) : null,
-      flatbedLengthMm: needsFlatbedDimensions ? Number(form.flatbedLengthMm) : null,
-      notes: form.notes.trim() || null,
-    }
+  const handleFormSubmit = async (values) => {
+    setServerError('')
 
     try {
-      await createMachineModel(payload).unwrap()
-      setForm(initialForm)
+      await createMachineModel(toMachineModelPayload(values)).unwrap()
+      reset(initialMachineModelValues)
       setNotice('Machine model added successfully.')
     } catch (error) {
-      setFormError(getApiErrorMessage(error, 'Unable to save this machine model.'))
+      setServerError(getApiErrorMessage(error, 'Unable to save this machine model.'))
     }
+  }
+
+  const handleClear = () => {
+    reset(initialMachineModelValues)
+    setServerError('')
   }
 
   return (
@@ -187,7 +181,13 @@ function MachineModels() {
         </Alert>
       )}
 
-      <Paper component="form" onSubmit={handleSubmit} variant="outlined" sx={{ p: { xs: 2, sm: 3 }, mb: 3, borderColor: 'divider', borderRadius: 3 }}>
+      <Paper
+        component="form"
+        onSubmit={handleSubmit(handleFormSubmit)}
+        noValidate
+        variant="outlined"
+        sx={{ p: { xs: 2, sm: 3 }, mb: 3, borderColor: 'divider', borderRadius: 3 }}
+      >
         <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 2.5 }}>
           <Box sx={{ width: 40, height: 40, display: 'grid', placeItems: 'center', borderRadius: 2, color: 'primary.main', bgcolor: 'primary.light' }}>
             <AddRounded />
@@ -204,23 +204,30 @@ function MachineModels() {
 
         <Grid container spacing={2.25}>
           <Grid size={{ xs: 12, md: 6 }}>
-            <FormControl fullWidth required>
-              <InputLabel id="manufacturer-label">Manufacturer</InputLabel>
-              <Select
-                labelId="manufacturer-label"
-                name="manufacturerId"
-                value={form.manufacturerId}
-                label="Manufacturer"
-                onChange={handleChange}
-                disabled={loading || manufacturers.length === 0}
-              >
-                {manufacturers.map((manufacturer) => (
-                  <MenuItem key={manufacturer.id} value={manufacturer.id}>
-                    {manufacturer.name}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+            <Controller
+              name="manufacturerId"
+              control={control}
+              render={({ field }) => (
+                <FormControl fullWidth required error={Boolean(errors.manufacturerId)}>
+                  <InputLabel id="manufacturer-label">Manufacturer</InputLabel>
+                  <Select
+                    {...field}
+                    labelId="manufacturer-label"
+                    label="Manufacturer"
+                    disabled={loading || manufacturers.length === 0}
+                  >
+                    {manufacturers.map((manufacturer) => (
+                      <MenuItem key={manufacturer.id} value={manufacturer.id}>
+                        {manufacturer.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                  {errors.manufacturerId && (
+                    <FormHelperText>{errors.manufacturerId.message}</FormHelperText>
+                  )}
+                </FormControl>
+              )}
+            />
             {manufacturers.length === 0 && !loading && (
               <Typography variant="caption" color="text.secondary">
                 Add a manufacturer before registering a machine model.
@@ -230,62 +237,77 @@ function MachineModels() {
 
           <Grid size={{ xs: 12, md: 6 }}>
             <TextField
+              {...register('modelName')}
               fullWidth
               required
               label="Model name"
-              name="modelName"
-              value={form.modelName}
-              onChange={handleChange}
               placeholder="e.g. CJV330-160"
+              error={Boolean(errors.modelName)}
+              helperText={errors.modelName?.message}
             />
           </Grid>
 
           <Grid size={{ xs: 12, md: 6 }}>
-            <FormControl fullWidth required>
-              <InputLabel id="technology-label">Printing technology</InputLabel>
-              <Select
-                labelId="technology-label"
-                name="technology"
-                value={form.technology}
-                label="Printing technology"
-                onChange={handleChange}
-              >
-                {technologyOptions.map((option) => (
-                  <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+            <Controller
+              name="technology"
+              control={control}
+              render={({ field }) => (
+                <FormControl fullWidth required error={Boolean(errors.technology)}>
+                  <InputLabel id="technology-label">Printing technology</InputLabel>
+                  <Select {...field} labelId="technology-label" label="Printing technology">
+                    {technologyOptions.map((option) => (
+                      <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>
+                    ))}
+                  </Select>
+                  {errors.technology && (
+                    <FormHelperText>{errors.technology.message}</FormHelperText>
+                  )}
+                </FormControl>
+              )}
+            />
           </Grid>
 
           <Grid size={{ xs: 12, md: 6 }}>
-            <FormControl fullWidth required>
-              <InputLabel id="configuration-label">Machine configuration</InputLabel>
-              <Select
-                labelId="configuration-label"
-                name="configuration"
-                value={form.configuration}
-                label="Machine configuration"
-                onChange={handleChange}
-              >
-                {configurationOptions.map((option) => (
-                  <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+            <Controller
+              name="configuration"
+              control={control}
+              render={({ field }) => (
+                <FormControl fullWidth required error={Boolean(errors.configuration)}>
+                  <InputLabel id="configuration-label">Machine configuration</InputLabel>
+                  <Select
+                    {...field}
+                    labelId="configuration-label"
+                    label="Machine configuration"
+                    onChange={(event) => handleConfigurationChange(event.target.value, field.onChange)}
+                  >
+                    {configurationOptions.map((option) => (
+                      <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>
+                    ))}
+                  </Select>
+                  {errors.configuration && (
+                    <FormHelperText>{errors.configuration.message}</FormHelperText>
+                  )}
+                </FormControl>
+              )}
+            />
           </Grid>
 
           {needsRollWidth && (
             <Grid size={{ xs: 12, md: 4 }}>
               <TextField
+                {...register('maxRollWidthMm')}
                 fullWidth
                 required
                 type="number"
                 label="Maximum roll width"
-                name="maxRollWidthMm"
-                value={form.maxRollWidthMm}
-                onChange={handleChange}
-                inputProps={{ min: 1, step: 1 }}
-                InputProps={{ endAdornment: <Typography variant="body2" color="text.secondary">mm</Typography> }}
+                error={Boolean(errors.maxRollWidthMm)}
+                helperText={errors.maxRollWidthMm?.message}
+                slotProps={{
+                  htmlInput: { min: 1, step: 1 },
+                  input: {
+                    endAdornment: <Typography variant="body2" color="text.secondary">mm</Typography>,
+                  },
+                }}
               />
             </Grid>
           )}
@@ -294,28 +316,36 @@ function MachineModels() {
             <>
               <Grid size={{ xs: 12, md: 4 }}>
                 <TextField
+                  {...register('flatbedWidthMm')}
                   fullWidth
                   required
                   type="number"
                   label="Flatbed width"
-                  name="flatbedWidthMm"
-                  value={form.flatbedWidthMm}
-                  onChange={handleChange}
-                  inputProps={{ min: 1, step: 1 }}
-                  InputProps={{ endAdornment: <Typography variant="body2" color="text.secondary">mm</Typography> }}
+                  error={Boolean(errors.flatbedWidthMm)}
+                  helperText={errors.flatbedWidthMm?.message}
+                  slotProps={{
+                    htmlInput: { min: 1, step: 1 },
+                    input: {
+                      endAdornment: <Typography variant="body2" color="text.secondary">mm</Typography>,
+                    },
+                  }}
                 />
               </Grid>
               <Grid size={{ xs: 12, md: 4 }}>
                 <TextField
+                  {...register('flatbedLengthMm')}
                   fullWidth
                   required
                   type="number"
                   label="Flatbed length"
-                  name="flatbedLengthMm"
-                  value={form.flatbedLengthMm}
-                  onChange={handleChange}
-                  inputProps={{ min: 1, step: 1 }}
-                  InputProps={{ endAdornment: <Typography variant="body2" color="text.secondary">mm</Typography> }}
+                  error={Boolean(errors.flatbedLengthMm)}
+                  helperText={errors.flatbedLengthMm?.message}
+                  slotProps={{
+                    htmlInput: { min: 1, step: 1 },
+                    input: {
+                      endAdornment: <Typography variant="body2" color="text.secondary">mm</Typography>,
+                    },
+                  }}
                 />
               </Grid>
             </>
@@ -323,40 +353,35 @@ function MachineModels() {
 
           <Grid size={{ xs: 12 }}>
             <TextField
+              {...register('notes')}
               fullWidth
               multiline
               minRows={3}
               label="Notes"
-              name="notes"
-              value={form.notes}
-              onChange={handleChange}
               placeholder="Optional technical details or remarks"
             />
           </Grid>
         </Grid>
 
-        {formError && <Alert severity="error" sx={{ mt: 2 }}>{formError}</Alert>}
+        {serverError && <Alert severity="error" sx={{ mt: 2 }}>{serverError}</Alert>}
 
         <Stack direction="row" justifyContent="flex-end" spacing={1.5} sx={{ mt: 3 }}>
           <Button
             variant="text"
             color="inherit"
             startIcon={<CloseRounded />}
-            onClick={() => {
-              setForm(initialForm)
-              setFormError('')
-            }}
-            disabled={saving}
+            onClick={handleClear}
+            disabled={saving || isSubmitting}
           >
             Clear
           </Button>
           <Button
             type="submit"
             variant="contained"
-            startIcon={saving ? <CircularProgress size={17} color="inherit" /> : <AddRounded />}
-            disabled={saving || loading || manufacturers.length === 0}
+            startIcon={saving || isSubmitting ? <CircularProgress size={17} color="inherit" /> : <AddRounded />}
+            disabled={saving || isSubmitting || loading || manufacturers.length === 0}
           >
-            {saving ? 'Saving...' : 'Add machine model'}
+            {saving || isSubmitting ? 'Saving...' : 'Add machine model'}
           </Button>
         </Stack>
       </Paper>
