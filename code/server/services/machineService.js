@@ -1,4 +1,5 @@
 import { prisma } from "../config/database.js";
+import { ApiError } from "../utils/ApiError.js";
 
 const machineDetails = {
   machineModel: {
@@ -60,10 +61,11 @@ export async function updateMachine(id, data, version) {
     });
 
     if (!machine) {
-      throw new Error("Machine not found.");
+      throw new ApiError(404, "Machine not found.");
     }
 
-    throw new Error(
+    throw new ApiError(
+      409,
       "Machine was modified by another user. Please retrieve the latest version and try again.",
     );
   }
