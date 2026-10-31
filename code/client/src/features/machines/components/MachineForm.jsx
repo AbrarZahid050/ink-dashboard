@@ -32,7 +32,7 @@ const defaultValues = {
   customerId: '',
   siteId: '',
   installationDate: '',
-  status: 'ACTIVE',
+  status: '',
   notes: '',
 }
 
@@ -52,7 +52,7 @@ const machineSchema = z.object({
   installationDate: z.string()
     .min(1, 'Installation date is required')
     .refine((date) => !date || date <= getLocalDateString(), 'Installation date cannot be in the future'),
-  status: z.enum(['ACTIVE', 'INACTIVE', 'DECOMMISSIONED']),
+  status: z.union([z.enum(['ACTIVE', 'INACTIVE', 'DECOMMISSIONED']), z.literal('')]),
   notes: z.string().trim(),
 })
 
@@ -109,9 +109,10 @@ function MachineForm({ onCreated }) {
     if (!confirmationData) return
     setServerError('')
     try {
-      const { customerId, ...machineData } = confirmationData
+      const { customerId, status, ...machineData } = confirmationData
       await createMachine({
         ...machineData,
+        ...(status ? { status } : {}),
         notes: machineData.notes || null,
       }).unwrap()
       setConfirmationOpen(false)
