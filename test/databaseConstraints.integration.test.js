@@ -104,7 +104,7 @@ describe("Database constraint PostgreSQL integration tests", () => {
     try {
       const response = await request(app)
         .patch(`/api/v1/manufacturers/${manufacturers[1].id}`)
-        .send({ name: names[0] });
+        .send({ name: names[0], version: manufacturers[1].version });
 
       expect(response.status).toBe(409);
       expect(response.body.message).toBe(
