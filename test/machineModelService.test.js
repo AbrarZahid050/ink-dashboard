@@ -94,9 +94,10 @@ describe("Machine model service", () => {
     prisma.machineModel.updateMany.mockResolvedValue({ count: 1 });
     prisma.machineModel.findUnique.mockResolvedValue({ ...model, ...changes, version: 1 });
 
-    await expect(updateMachineModel(model.id, changes)).resolves.toEqual({
+    await expect(updateMachineModel(model.id, changes, 0)).resolves.toEqual({
       ...model,
       ...changes,
+      version: 1,
     });
 
     expect(prisma.machineModel.updateMany).toHaveBeenCalledWith({
@@ -146,40 +147,65 @@ describe("Machine model service", () => {
       ]),
     });
 
-    expect(prisma.machineModel.update).not.toHaveBeenCalled();
+    expect(prisma.machineModel.updateMany).not.toHaveBeenCalled();
   });
 
   it("should validate the merged model but update only the supplied fields", async () => {
     const changes = { notes: "Updated printer specifications" };
-    prisma.machineModel.findUnique.mockResolvedValue(model);
+    const updatedModel = { ...model, ...changes, version: 1 };
+    prisma.machineModel.findUnique
+      .mockResolvedValueOnce(model)
+      .mockResolvedValueOnce(updatedModel);
     prisma.machineModel.updateMany.mockResolvedValue({ count: 1 });
-    prisma.machineModel.findUnique.mockResolvedValue({ ...model, ...changes, version: 1 });
 
     await expect(
       updateMachineModelValidated(model.id, changes, 0),
-    ).resolves.toEqual({ ...model, ...changes });
+    ).resolves.toEqual(updatedModel);
 
-    expect(prisma.machineModel.findUnique).toHaveBeenCalledWith({
+    expect(prisma.machineModel.findUnique).toHaveBeenNthCalledWith(1, {
       where: { id: model.id },
     });
     expect(prisma.machineModel.updateMany).toHaveBeenCalledWith({
       where: { id: model.id, version: 0 },
       data: { ...changes, version: { increment: 1 } },
     });
+    expect(prisma.machineModel.findUnique).toHaveBeenNthCalledWith(2, {
+      where: { id: model.id },
+      include: modelDetails,
+    });
   });
-  it("should preserve existing optional fields when they are omitted from an update", async () => {
-    const changes = { modelName: "JV100-160 Plus" };
-    prisma.machineModel.findUnique.mockResolvedValue(model);
-    prisma.machineModel.update.mockResolvedValue({ ...model, ...changes });
+
+  it("should reject a stale version before attempting an update", async () => {
+    prisma.machineModel.findUnique.mockResolvedValue({
+      ...model,
+      version: 1,
+    });
 
     await expect(
-      updateMachineModelValidated(model.id, changes),
-    ).resolves.toEqual({ ...model, ...changes });
+      updateMachineModelValidated(model.id, { notes: "Stale update" }, 0),
+    ).rejects.toMatchObject({
+      statusCode: 409,
+      message: "Machine model was modified by another user. Please retrieve the latest version and try again.",
+    });
 
-    expect(prisma.machineModel.update).toHaveBeenCalledWith({
-      where: { id: model.id },
-      data: changes,
-      include: modelDetails,
+    expect(prisma.machineModel.updateMany).not.toHaveBeenCalled();
+  });
+
+  it("should preserve existing optional fields when they are omitted from an update", async () => {
+    const changes = { modelName: "JV100-160 Plus" };
+    const updatedModel = { ...model, ...changes, version: 1 };
+    prisma.machineModel.findUnique
+      .mockResolvedValueOnce(model)
+      .mockResolvedValueOnce(updatedModel);
+    prisma.machineModel.updateMany.mockResolvedValue({ count: 1 });
+
+    await expect(
+      updateMachineModelValidated(model.id, changes, 0),
+    ).resolves.toEqual(updatedModel);
+
+    expect(prisma.machineModel.updateMany).toHaveBeenCalledWith({
+      where: { id: model.id, version: 0 },
+      data: { ...changes, version: { increment: 1 } },
     });
   });
 
@@ -191,17 +217,19 @@ describe("Machine model service", () => {
       flatbedLengthMm: 2400,
       notes: null,
     };
-    prisma.machineModel.findUnique.mockResolvedValue(model);
-    prisma.machineModel.update.mockResolvedValue({ ...model, ...changes });
+    const updatedModel = { ...model, ...changes, version: 1 };
+    prisma.machineModel.findUnique
+      .mockResolvedValueOnce(model)
+      .mockResolvedValueOnce(updatedModel);
+    prisma.machineModel.updateMany.mockResolvedValue({ count: 1 });
 
     await expect(
-      updateMachineModelValidated(model.id, changes),
-    ).resolves.toEqual({ ...model, ...changes });
+      updateMachineModelValidated(model.id, changes, 0),
+    ).resolves.toEqual(updatedModel);
 
-    expect(prisma.machineModel.update).toHaveBeenCalledWith({
-      where: { id: model.id },
-      data: changes,
-      include: modelDetails,
+    expect(prisma.machineModel.updateMany).toHaveBeenCalledWith({
+      where: { id: model.id, version: 0 },
+      data: { ...changes, version: { increment: 1 } },
     });
   });
 
