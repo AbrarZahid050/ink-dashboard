@@ -1,7 +1,18 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Alert, Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, Grid, TextField, Typography } from '@mui/material'
+import {
+  Alert,
+  Button,
+  CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Grid,
+  TextField,
+  Typography,
+} from '@mui/material'
 import { EditOutlined } from '@mui/icons-material'
 import {
   initialMachineModelValues,
@@ -13,19 +24,29 @@ import { getApiErrorMessage } from '../utils/getApiErrorMessage.js'
 import MachineModelFields from './MachineModelFields.jsx'
 import MachineModelDimensions from './MachineModelDimensions.jsx'
 
-function MachineModelEditDialog({ model, manufacturers, open, onClose }) {
+function MachineModelEditDialog({ model, manufacturers, onClose }) {
+  const [saveError, setSaveError] = useState('')
   const [updateMachineModel, { isLoading: saving }] = useUpdateMachineModelMutation()
   const {
     control,
     register,
     setValue,
     clearErrors,
-    reset,
     handleSubmit,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(machineModelSchema),
-    defaultValues: initialMachineModelValues,
+    defaultValues: {
+      ...initialMachineModelValues,
+      manufacturerId: model.manufacturerId ?? '',
+      modelName: model.modelName ?? '',
+      technology: model.technology ?? '',
+      configuration: model.configuration ?? '',
+      maxRollWidthMm: model.maxRollWidthMm == null ? '' : String(model.maxRollWidthMm),
+      flatbedWidthMm: model.flatbedWidthMm == null ? '' : String(model.flatbedWidthMm),
+      flatbedLengthMm: model.flatbedLengthMm == null ? '' : String(model.flatbedLengthMm),
+      notes: model.notes ?? '',
+    },
   })
 
   const configuration = useWatch({ control, name: 'configuration' })
@@ -40,21 +61,6 @@ function MachineModelEditDialog({ model, manufacturers, open, onClose }) {
   const isWhiteVariant = /W$/i.test(modelName.trim())
   const needsRollWidth = configuration === 'ROLL_TO_ROLL' || configuration === 'HYBRID'
   const needsFlatbedDimensions = configuration === 'FLATBED' || configuration === 'HYBRID'
-
-  useEffect(() => {
-    if (!model) return
-
-    reset({
-      manufacturerId: model.manufacturerId ?? '',
-      modelName: model.modelName ?? '',
-      technology: model.technology ?? '',
-      configuration: model.configuration ?? '',
-      maxRollWidthMm: model.maxRollWidthMm == null ? '' : String(model.maxRollWidthMm),
-      flatbedWidthMm: model.flatbedWidthMm == null ? '' : String(model.flatbedWidthMm),
-      flatbedLengthMm: model.flatbedLengthMm == null ? '' : String(model.flatbedLengthMm),
-      notes: model.notes ?? '',
-    })
-  }, [model, reset])
 
   const handleWhiteVariantChange = () => {
     const baseModelName = modelName.trim().replace(/\s*W$/i, '')
@@ -75,6 +81,8 @@ function MachineModelEditDialog({ model, manufacturers, open, onClose }) {
   }
 
   const handleSave = async (values) => {
+    setSaveError('')
+
     try {
       await updateMachineModel({
         id: model.id,
@@ -83,20 +91,12 @@ function MachineModelEditDialog({ model, manufacturers, open, onClose }) {
       }).unwrap()
       onClose()
     } catch (error) {
-      // Keep the dialog open so the user can review the error and retry.
       setSaveError(getApiErrorMessage(error, 'Unable to update this machine model.'))
     }
   }
 
-  const [saveError, setSaveError] = useState('')
-  useEffect(() => {
-    setSaveError('')
-  }, [model])
-
-  const submitting = saving
-
   return (
-    <Dialog open={open} onClose={() => !submitting && onClose()} fullWidth maxWidth="md">
+    <Dialog open onClose={() => !saving && onClose()} fullWidth maxWidth="md">
       <DialogTitle>Edit machine model</DialogTitle>
       <DialogContent dividers>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2.5 }}>
@@ -134,14 +134,14 @@ function MachineModelEditDialog({ model, manufacturers, open, onClose }) {
         {saveError && <Alert severity="error" sx={{ mt: 2 }}>{saveError}</Alert>}
       </DialogContent>
       <DialogActions sx={{ p: 2 }}>
-        <Button onClick={onClose} color="inherit" disabled={submitting}>Cancel</Button>
+        <Button onClick={onClose} color="inherit" disabled={saving}>Cancel</Button>
         <Button
           onClick={handleSubmit(handleSave)}
           variant="contained"
-          disabled={submitting || manufacturers.length === 0}
-          startIcon={submitting ? <CircularProgress size={17} color="inherit" /> : <EditOutlined />}
+          disabled={saving || manufacturers.length === 0}
+          startIcon={saving ? <CircularProgress size={17} color="inherit" /> : <EditOutlined />}
         >
-          {submitting ? 'Saving...' : 'Save changes'}
+          {saving ? 'Saving...' : 'Save changes'}
         </Button>
       </DialogActions>
     </Dialog>
