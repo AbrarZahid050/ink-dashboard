@@ -8,6 +8,7 @@ const { prisma } = vi.hoisted(() => ({
       findUnique: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
+      updateMany: vi.fn(),
       delete: vi.fn(),
     },
   },
@@ -34,6 +35,7 @@ const model = {
   flatbedWidthMm: null,
   flatbedLengthMm: null,
   notes: null,
+  version: 0,
 };
 
 const modelDetails = {
@@ -89,17 +91,17 @@ describe("Machine model service", () => {
 
   it("should update a machine model with its relations", async () => {
     const changes = { notes: "Updated specifications" };
-    prisma.machineModel.update.mockResolvedValue({ ...model, ...changes });
+    prisma.machineModel.updateMany.mockResolvedValue({ count: 1 });
+    prisma.machineModel.findUnique.mockResolvedValue({ ...model, ...changes, version: 1 });
 
     await expect(updateMachineModel(model.id, changes)).resolves.toEqual({
       ...model,
       ...changes,
     });
 
-    expect(prisma.machineModel.update).toHaveBeenCalledWith({
-      where: { id: model.id },
-      data: changes,
-      include: modelDetails,
+    expect(prisma.machineModel.updateMany).toHaveBeenCalledWith({
+      where: { id: model.id, version: 0 },
+      data: { ...changes, version: { increment: 1 } },
     });
   });
 
@@ -119,13 +121,13 @@ describe("Machine model service", () => {
     prisma.machineModel.findUnique.mockResolvedValue(null);
 
     await expect(
-      updateMachineModelValidated(model.id, { notes: "Updated" }),
+      updateMachineModelValidated(model.id, { notes: "Updated" }, 0),
     ).rejects.toMatchObject({
       statusCode: 404,
       message: "Machine model not found",
     });
 
-    expect(prisma.machineModel.update).not.toHaveBeenCalled();
+    expect(prisma.machineModel.updateMany).not.toHaveBeenCalled();
   });
 
   it("should reject an update that makes the complete model invalid", async () => {
@@ -134,7 +136,7 @@ describe("Machine model service", () => {
     await expect(
       updateMachineModelValidated(model.id, {
         configuration: "FLATBED",
-      }),
+      }, 0),
     ).rejects.toMatchObject({
       statusCode: 400,
       message: "Updated machine model is invalid",
@@ -150,19 +152,19 @@ describe("Machine model service", () => {
   it("should validate the merged model but update only the supplied fields", async () => {
     const changes = { notes: "Updated printer specifications" };
     prisma.machineModel.findUnique.mockResolvedValue(model);
-    prisma.machineModel.update.mockResolvedValue({ ...model, ...changes });
+    prisma.machineModel.updateMany.mockResolvedValue({ count: 1 });
+    prisma.machineModel.findUnique.mockResolvedValue({ ...model, ...changes, version: 1 });
 
     await expect(
-      updateMachineModelValidated(model.id, changes),
+      updateMachineModelValidated(model.id, changes, 0),
     ).resolves.toEqual({ ...model, ...changes });
 
     expect(prisma.machineModel.findUnique).toHaveBeenCalledWith({
       where: { id: model.id },
     });
-    expect(prisma.machineModel.update).toHaveBeenCalledWith({
-      where: { id: model.id },
-      data: changes,
-      include: modelDetails,
+    expect(prisma.machineModel.updateMany).toHaveBeenCalledWith({
+      where: { id: model.id, version: 0 },
+      data: { ...changes, version: { increment: 1 } },
     });
   });
   it("should preserve existing optional fields when they are omitted from an update", async () => {
