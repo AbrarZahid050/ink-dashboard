@@ -71,9 +71,9 @@ const resources = [
     updateHandler: "updateCustomer",
     invalidCreateBody: { name: "" },
     validCreateBody: { name: "  Example Customer  " },
-    validUpdateBody: { name: "  Updated Customer  " },
+    validUpdateBody: { name: "  Updated Customer  ", version: 0 },
     normalizedCreateBody: { name: "Example Customer" },
-    normalizedUpdateBody: { name: "Updated Customer" },
+    normalizedUpdateBody: { name: "Updated Customer", version: 0 },
   },
   {
     name: "customer site",
