@@ -124,7 +124,7 @@ const resources = [
       installationDate: "2026-10-30",
       status: "ACTIVE",
     },
-    validUpdateBody: { status: "INACTIVE" },
+    validUpdateBody: { version: 0, status: "INACTIVE" },
     normalizedCreateBody: {
       serialNumber: "SN-001",
       machineModelId: validId,
@@ -132,7 +132,7 @@ const resources = [
       installationDate: "2026-10-30",
       status: "ACTIVE",
     },
-    normalizedUpdateBody: { status: "INACTIVE" },
+    normalizedUpdateBody: { version: 0, status: "INACTIVE" },
   },
 ];
 
