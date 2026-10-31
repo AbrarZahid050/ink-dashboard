@@ -45,9 +45,17 @@ describe("Machine PostgreSQL integration tests", () => {
   async function cleanupMachineDependencies(dependencies) {
     const { manufacturer, machineModel, customer, site, machine } = dependencies;
 
-    if (machine) {
-      await testPrisma.machine.deleteMany({ where: { id: machine.id } });
-    }
+    // Remove any machine created by the API as well as records created directly
+    // by the test. This also keeps cleanup safe when an assertion fails.
+    await testPrisma.machine.deleteMany({
+      where: {
+        OR: [
+          ...(machine ? [{ id: machine.id }] : []),
+          ...(site ? [{ siteId: site.id }] : []),
+          ...(machineModel ? [{ machineModelId: machineModel.id }] : []),
+        ],
+      },
+    });
 
     if (site) {
       await testPrisma.customerSite.deleteMany({ where: { id: site.id } });
@@ -91,6 +99,7 @@ describe("Machine PostgreSQL integration tests", () => {
         success: true,
         data: {
           ...input,
+          installationDate: "2025-06-15T00:00:00.000Z",
           machineModel: {
             id: dependencies.machineModel.id,
             modelName: dependencies.machineModel.modelName,
@@ -249,6 +258,7 @@ describe("Machine PostgreSQL integration tests", () => {
         data: {
           id: dependencies.machine.id,
           ...updateInput,
+          installationDate: "2024-09-25T00:00:00.000Z",
           machineModel: {
             id: dependencies.machineModel.id,
             manufacturer: { id: dependencies.manufacturer.id },
