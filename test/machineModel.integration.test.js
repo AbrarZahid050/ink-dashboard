@@ -292,4 +292,51 @@ describe("Machine Model API - PostgreSQL integration", () => {
     }
   });
 
+  it("deletes an existing machine model through the API and removes it from PostgreSQL", async () => {
+    const manufacturer = await prisma.manufacturer.create({
+      data: {
+        name: `Integration Delete Manufacturer ${randomUUID()}`,
+      },
+    });
+
+    let machineModel;
+
+    try {
+      machineModel = await prisma.machineModel.create({
+        data: {
+          manufacturerId: manufacturer.id,
+          modelName: `Integration Delete Printer ${randomUUID()}`,
+          technology: "UV",
+          configuration: "ROLL_TO_ROLL",
+          maxRollWidthMm: 3200,
+        },
+      });
+
+      const response = await request(app).delete(
+        `/api/v1/machine-models/${machineModel.id}`,
+      );
+
+      expect(response.status).toBe(204);
+      expect(response.text).toBe("");
+
+      // Verify directly in PostgreSQL that the record was deleted.
+      const deletedModel = await prisma.machineModel.findUnique({
+        where: { id: machineModel.id },
+      });
+
+      expect(deletedModel).toBeNull();
+    } finally {
+      // deleteMany is safe whether the API already deleted the model or not.
+      if (machineModel) {
+        await prisma.machineModel.deleteMany({
+          where: { id: machineModel.id },
+        });
+      }
+
+      await prisma.manufacturer.delete({
+        where: { id: manufacturer.id },
+      });
+    }
+  });
+
 });
