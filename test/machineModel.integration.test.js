@@ -133,4 +133,83 @@ describe("Machine Model API - PostgreSQL integration", () => {
       });
     }
   });
+
+  it("lists machine models and includes their manufacturer relationships", async () => {
+    const manufacturer = await prisma.manufacturer.create({
+      data: {
+        name: `Integration List Manufacturer ${randomUUID()}`,
+      },
+    });
+
+    try {
+      const modelsToCreate = [
+        {
+          modelName: `Integration List Printer A ${randomUUID()}`,
+          technology: "UV",
+          configuration: "ROLL_TO_ROLL",
+          maxRollWidthMm: 3200,
+        },
+        {
+          modelName: `Integration List Printer B ${randomUUID()}`,
+          technology: "LATEX",
+          configuration: "HYBRID",
+          maxRollWidthMm: 2500,
+          flatbedWidthMm: 2000,
+          flatbedLengthMm: 3000,
+        },
+      ];
+
+      const createdModels = await Promise.all(
+        modelsToCreate.map((model) =>
+          prisma.machineModel.create({
+            data: {
+              ...model,
+              manufacturerId: manufacturer.id,
+            },
+          }),
+        ),
+      );
+
+      const response = await request(app).get("/api/v1/machine-models");
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.count).toBe(response.body.data.length);
+
+      const returnedModels = response.body.data.filter((model) =>
+        createdModels.some((created) => created.id === model.id),
+      );
+
+      expect(returnedModels).toHaveLength(2);
+
+      for (const createdModel of createdModels) {
+        const returnedModel = returnedModels.find(
+          (model) => model.id === createdModel.id,
+        );
+
+        expect(returnedModel).toMatchObject({
+          id: createdModel.id,
+          manufacturerId: manufacturer.id,
+          modelName: createdModel.modelName,
+          technology: createdModel.technology,
+          configuration: createdModel.configuration,
+          manufacturer: {
+            id: manufacturer.id,
+            name: manufacturer.name,
+          },
+          _count: {
+            machines: 0,
+          },
+        });
+      }
+    } finally {
+      await prisma.machineModel.deleteMany({
+        where: { manufacturerId: manufacturer.id },
+      });
+
+      await prisma.manufacturer.delete({
+        where: { id: manufacturer.id },
+      });
+    }
+  });
 });
