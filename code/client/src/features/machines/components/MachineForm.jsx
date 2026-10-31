@@ -21,6 +21,7 @@ import {
   useCreateMachineMutation,
   useGetCustomerSitesQuery,
   useGetMachineModelsQuery,
+  useGetMachinesQuery,
 } from '../../../services/api.js'
 import { getApiErrorMessage } from '../../machine-models/utils/getApiErrorMessage.js'
 
@@ -40,6 +41,7 @@ function MachineForm({ onCreated }) {
   const [createMachine, { isLoading: saving }] = useCreateMachineMutation()
   const { data: models = [], isLoading: modelsLoading } = useGetMachineModelsQuery()
   const { data: sites = [], isLoading: sitesLoading } = useGetCustomerSitesQuery()
+  const { data: machines = [] } = useGetMachinesQuery()
 
   const {
     register,
