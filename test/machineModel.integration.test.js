@@ -47,6 +47,7 @@ describe("Machine Model API - PostgreSQL integration", () => {
           technology: modelInput.technology,
           configuration: modelInput.configuration,
           maxRollWidthMm: modelInput.maxRollWidthMm,
+          version: 0,
           manufacturer: {
             id: manufacturer.id,
             name: manufacturer.name,
@@ -66,6 +67,7 @@ describe("Machine Model API - PostgreSQL integration", () => {
       expect(persistedModel).toMatchObject({
         id: createdModelId,
         ...modelInput,
+        version: 0,
       });
     } finally {
       await prisma.machineModel.deleteMany({
@@ -112,6 +114,7 @@ describe("Machine Model API - PostgreSQL integration", () => {
           technology: "UV",
           configuration: "ROLL_TO_ROLL",
           maxRollWidthMm: 3200,
+          version: 0,
           manufacturer: {
             id: manufacturer.id,
             name: manufacturer.name,
@@ -193,6 +196,7 @@ describe("Machine Model API - PostgreSQL integration", () => {
           modelName: createdModel.modelName,
           technology: createdModel.technology,
           configuration: createdModel.configuration,
+          version: 0,
           manufacturer: {
             id: manufacturer.id,
             name: manufacturer.name,
@@ -234,6 +238,7 @@ describe("Machine Model API - PostgreSQL integration", () => {
       });
 
       const updateInput = {
+        version: 0,
         modelName: `Updated Integration Printer ${randomUUID()}`,
         maxRollWidthMm: 3200,
         notes: "Updated integration test notes",
@@ -255,6 +260,7 @@ describe("Machine Model API - PostgreSQL integration", () => {
           configuration: "ROLL_TO_ROLL",
           maxRollWidthMm: updateInput.maxRollWidthMm,
           notes: updateInput.notes,
+          version: 1,
           manufacturer: {
             id: manufacturer.id,
             name: manufacturer.name,
@@ -278,6 +284,7 @@ describe("Machine Model API - PostgreSQL integration", () => {
         configuration: "ROLL_TO_ROLL",
         maxRollWidthMm: updateInput.maxRollWidthMm,
         notes: updateInput.notes,
+        version: 1,
       });
     } finally {
       if (machineModel) {
@@ -339,6 +346,76 @@ describe("Machine Model API - PostgreSQL integration", () => {
     }
   });
 
+  it("returns 400 when an update omits the version", async () => {
+    const response = await request(app)
+      .patch(`/api/v1/machine-models/${randomUUID()}`)
+      .send({ notes: "Updated notes" });
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe("Validation failed");
+    expect(response.body.errors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ field: "version" }),
+      ]),
+    );
+  });
+
+  it("rejects a stale version and preserves the latest machine model data", async () => {
+    const manufacturer = await prisma.manufacturer.create({
+      data: { name: `Integration OCC Manufacturer ${randomUUID()}` },
+    });
+
+    let machineModel;
+
+    try {
+      machineModel = await prisma.machineModel.create({
+        data: {
+          manufacturerId: manufacturer.id,
+          modelName: `Integration OCC Printer ${randomUUID()}`,
+          technology: "UV",
+          configuration: "ROLL_TO_ROLL",
+          maxRollWidthMm: 2500,
+          notes: "Original notes",
+        },
+      });
+
+      const firstUpdate = await request(app)
+        .patch(`/api/v1/machine-models/${machineModel.id}`)
+        .send({ version: 0, notes: "Latest notes" });
+
+      expect(firstUpdate.status).toBe(200);
+      expect(firstUpdate.body.data.version).toBe(1);
+
+      const staleUpdate = await request(app)
+        .patch(`/api/v1/machine-models/${machineModel.id}`)
+        .send({ version: 0, notes: "Stale overwrite attempt" });
+
+      expect(staleUpdate.status).toBe(409);
+      expect(staleUpdate.body).toMatchObject({
+        success: false,
+        message: "Machine model was modified by another user. Please retrieve the latest version and try again.",
+      });
+
+      const persistedModel = await prisma.machineModel.findUnique({
+        where: { id: machineModel.id },
+      });
+
+      expect(persistedModel).toMatchObject({
+        notes: "Latest notes",
+        version: 1,
+      });
+    } finally {
+      if (machineModel) {
+        await prisma.machineModel.deleteMany({
+          where: { id: machineModel.id },
+        });
+      }
+      await prisma.manufacturer.delete({
+        where: { id: manufacturer.id },
+      });
+    }
+  });
+
   it("returns 404 when retrieving a machine model that does not exist", async () => {
     const nonExistentId = randomUUID();
 
@@ -359,6 +436,7 @@ describe("Machine Model API - PostgreSQL integration", () => {
     const response = await request(app)
       .patch(`/api/v1/machine-models/${nonExistentId}`)
       .send({
+        version: 0,
         modelName: "Updated Non-existent Integration Printer",
       });
 
