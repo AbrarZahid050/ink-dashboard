@@ -109,33 +109,6 @@ function MachineModels() {
   const needsRollWidth = configuration === 'ROLL_TO_ROLL' || configuration === 'HYBRID'
   const needsFlatbedDimensions = configuration === 'FLATBED' || configuration === 'HYBRID'
 
-  const loadData = useCallback(async () => {
-    setLoading(true)
-    setLoadError('')
-
-    try {
-      const [manufacturerResponse, modelResponse] = await Promise.all([
-        fetch(`${API_BASE}/manufacturers`),
-        fetch(`${API_BASE}/machine-models`),
-      ])
-      const [manufacturerPayload, modelPayload] = await Promise.all([
-        readApiResponse(manufacturerResponse),
-        readApiResponse(modelResponse),
-      ])
-
-      setManufacturers(manufacturerPayload.data ?? [])
-      setModels(modelPayload.data ?? [])
-    } catch (error) {
-      setLoadError(error.message || 'Unable to load machine model data.')
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
-  useEffect(() => {
-    loadData()
-  }, [loadData])
-
   const handleChange = (event) => {
     const { name, value } = event.target
     setForm((current) => {
@@ -200,7 +173,7 @@ function MachineModels() {
           variant="outlined"
           startIcon={<RefreshRounded />}
           onClick={handleRefresh}
-          disabled={loading}
+          disabled={refreshing}
         >
           Refresh
         </Button>
@@ -208,9 +181,9 @@ function MachineModels() {
 
       {loadError && (
         <Alert severity="error" sx={{ mb: 2 }} action={
-          <Button color="inherit" size="small" onClick={loadData}>Retry</Button>
+          <Button color="inherit" size="small" onClick={handleRefresh}>Retry</Button>
         }>
-          {loadError}. Check that the backend API is running and try again.
+          {getApiErrorMessage(loadError, 'Unable to load machine model data.')}. Check that the backend API is running and try again.
         </Alert>
       )}
 
