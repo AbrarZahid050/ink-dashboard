@@ -10,9 +10,8 @@ describe("Machine Model API - PostgreSQL integration", () => {
     await prisma.$disconnect();
   });
 
-  it("creates and retrieves a machine model through the API", async () => {
-    // Verify the exact database used by the same Prisma client imported by
-    // the application service before performing any writes.
+  it("creates a machine model through the API and persists it in PostgreSQL", async () => {
+    // Guard against accidentally writing to the development database.
     const database = await prisma.$queryRaw`
       SELECT current_database() AS name
     `;
@@ -26,38 +25,49 @@ describe("Machine Model API - PostgreSQL integration", () => {
     });
 
     try {
-      const createResponse = await request(app)
+      const modelInput = {
+        manufacturerId: manufacturer.id,
+        modelName: `Integration Test Printer ${randomUUID()}`,
+        technology: "UV",
+        configuration: "ROLL_TO_ROLL",
+        maxRollWidthMm: 3200,
+      };
+
+      const response = await request(app)
         .post("/api/v1/machine-models")
-        .send({
+        .send(modelInput);
+
+      expect(response.status).toBe(201);
+      expect(response.body).toMatchObject({
+        success: true,
+        message: "Machine model created successfully",
+        data: {
           manufacturerId: manufacturer.id,
-          modelName: `Integration Test Printer ${randomUUID()}`,
-          technology: "UV",
-          configuration: "ROLL_TO_ROLL",
-          maxRollWidthMm: 3200,
-        });
+          modelName: modelInput.modelName,
+          technology: modelInput.technology,
+          configuration: modelInput.configuration,
+          maxRollWidthMm: modelInput.maxRollWidthMm,
+          manufacturer: {
+            id: manufacturer.id,
+            name: manufacturer.name,
+          },
+        },
+      });
 
-      expect(createResponse.status).toBe(201);
-      expect(createResponse.body.success).toBe(true);
+      const createdModelId = response.body.data.id;
+      expect(createdModelId).toBeDefined();
 
-      const createdModel = createResponse.body.data;
+      // Read directly from PostgreSQL to verify persistence independently
+      // of the API response.
+      const persistedModel = await prisma.machineModel.findUnique({
+        where: { id: createdModelId },
+      });
 
-      expect(createdModel.id).toBeDefined();
-      expect(createdModel.manufacturerId).toBe(manufacturer.id);
-      expect(createdModel.manufacturer.name).toBe(manufacturer.name);
-
-      const getResponse = await request(app).get(
-        `/api/v1/machine-models/${createdModel.id}`,
-      );
-
-      expect(getResponse.status).toBe(200);
-      expect(getResponse.body.success).toBe(true);
-      expect(getResponse.body.data.id).toBe(createdModel.id);
-      expect(getResponse.body.data.modelName).toBe(
-        createdModel.modelName,
-      );
-      expect(getResponse.body.data.manufacturer.id).toBe(manufacturer.id);
+      expect(persistedModel).toMatchObject({
+        id: createdModelId,
+        ...modelInput,
+      });
     } finally {
-      // Delete dependent records before deleting their manufacturer.
       await prisma.machineModel.deleteMany({
         where: { manufacturerId: manufacturer.id },
       });
