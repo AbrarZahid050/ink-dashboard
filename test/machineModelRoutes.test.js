@@ -94,6 +94,7 @@ describe("Machine model route validation", () => {
 
   it("should allow a valid partial PATCH request through validation", async () => {
     const updateData = {
+      version: 0,
       notes: "Updated printer specifications",
     };
 
