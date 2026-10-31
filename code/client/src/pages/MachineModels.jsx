@@ -223,7 +223,7 @@ function MachineModels() {
         <Divider sx={{ mb: 3 }} />
 
         <Grid container spacing={2.25}>
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <FormControl fullWidth required>
               <InputLabel id="manufacturer-label">Manufacturer</InputLabel>
               <Select
@@ -248,7 +248,7 @@ function MachineModels() {
             )}
           </Grid>
 
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <TextField
               fullWidth
               required
@@ -260,7 +260,7 @@ function MachineModels() {
             />
           </Grid>
 
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <FormControl fullWidth required>
               <InputLabel id="technology-label">Printing technology</InputLabel>
               <Select
@@ -277,7 +277,7 @@ function MachineModels() {
             </FormControl>
           </Grid>
 
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <FormControl fullWidth required>
               <InputLabel id="configuration-label">Machine configuration</InputLabel>
               <Select
@@ -295,7 +295,7 @@ function MachineModels() {
           </Grid>
 
           {needsRollWidth && (
-            <Grid item xs={12} md={4}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <TextField
                 fullWidth
                 required
@@ -312,7 +312,7 @@ function MachineModels() {
 
           {needsFlatbedDimensions && (
             <>
-              <Grid item xs={12} md={4}>
+              <Grid size={{ xs: 12, md: 4 }}>
                 <TextField
                   fullWidth
                   required
@@ -325,7 +325,7 @@ function MachineModels() {
                   InputProps={{ endAdornment: <Typography variant="body2" color="text.secondary">mm</Typography> }}
                 />
               </Grid>
-              <Grid item xs={12} md={4}>
+              <Grid size={{ xs: 12, md: 4 }}>
                 <TextField
                   fullWidth
                   required
@@ -341,7 +341,7 @@ function MachineModels() {
             </>
           )}
 
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             <TextField
               fullWidth
               multiline
