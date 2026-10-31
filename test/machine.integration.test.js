@@ -315,6 +315,7 @@ describe("Machine PostgreSQL integration tests", () => {
         serialNumber: `INTEGRATION-OCC-${randomUUID()}`,
         machineModelId: dependencies.machineModel.id,
         siteId: dependencies.site.id,
+        installationDate: new Date("2024-01-15T00:00:00.000Z"),
         status: "ACTIVE",
         notes: "Original notes",
       },
