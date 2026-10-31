@@ -142,12 +142,13 @@ function MachineModelsTable({ models, manufacturers, loading }) {
         )}
       </Paper>
 
-      <MachineModelEditDialog
-        model={modelToEdit}
-        manufacturers={manufacturers}
-        open={Boolean(modelToEdit)}
-        onClose={() => setModelToEdit(null)}
-      />
+      {modelToEdit && (
+        <MachineModelEditDialog
+          model={modelToEdit}
+          manufacturers={manufacturers}
+          onClose={() => setModelToEdit(null)}
+        />
+      )}
 
       <Dialog open={Boolean(modelToDelete)} onClose={handleCloseDelete} fullWidth maxWidth="xs">
         <DialogTitle>Delete machine model?</DialogTitle>
