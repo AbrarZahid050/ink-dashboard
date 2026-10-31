@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { CloseRounded, PrecisionManufacturingOutlined } from '@mui/icons-material'
+import { CloseRounded, EditOutlined, PrecisionManufacturingOutlined } from '@mui/icons-material'
 import {
   Alert,
   Box,
@@ -24,8 +24,10 @@ import {
 import { useDeleteMachineModelMutation } from '../../../services/api.js'
 import { configurationOptions, technologyOptions } from '../constants/machineModelOptions.js'
 import { getApiErrorMessage } from '../utils/getApiErrorMessage.js'
+import MachineModelEditDialog from './MachineModelEditDialog.jsx'
 
 function MachineModelsTable({ models, manufacturers, loading }) {
+  const [modelToEdit, setModelToEdit] = useState(null)
   const [modelToDelete, setModelToDelete] = useState(null)
   const [deleteError, setDeleteError] = useState('')
   const [deleteMachineModel, { isLoading: deleting }] = useDeleteMachineModelMutation()
@@ -100,7 +102,7 @@ function MachineModelsTable({ models, manufacturers, loading }) {
                   <TableCell>Technology</TableCell>
                   <TableCell>Configuration</TableCell>
                   <TableCell align="right">Machines</TableCell>
-                  <TableCell align="right" sx={{ width: 72 }}>Actions</TableCell>
+                  <TableCell align="right" sx={{ width: 112 }}>Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -112,6 +114,15 @@ function MachineModelsTable({ models, manufacturers, loading }) {
                     <TableCell>{getOptionLabel(configurationOptions, model.configuration)}</TableCell>
                     <TableCell align="right">{model._count?.machines ?? 0}</TableCell>
                     <TableCell align="right">
+                      <Tooltip title={`Edit ${model.modelName}`}>
+                        <IconButton
+                          aria-label={`Edit ${model.modelName}`}
+                          size="small"
+                          onClick={() => setModelToEdit(model)}
+                        >
+                          <EditOutlined fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
                       <Tooltip title={`Delete ${model.modelName}`}>
                         <IconButton
                           aria-label={`Delete ${model.modelName}`}
@@ -130,6 +141,13 @@ function MachineModelsTable({ models, manufacturers, loading }) {
           </TableContainer>
         )}
       </Paper>
+
+      <MachineModelEditDialog
+        model={modelToEdit}
+        manufacturers={manufacturers}
+        open={Boolean(modelToEdit)}
+        onClose={() => setModelToEdit(null)}
+      />
 
       <Dialog open={Boolean(modelToDelete)} onClose={handleCloseDelete} fullWidth maxWidth="xs">
         <DialogTitle>Delete machine model?</DialogTitle>
