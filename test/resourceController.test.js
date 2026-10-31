@@ -211,8 +211,8 @@ defineCrudControllerTests({
   updateMessage: "Customer updated successfully",
   createInput: { name: " Example Customer " },
   createServiceArgs: [" Example Customer "],
-  updateInput: { name: "Updated Customer" },
-  updateServiceArgs: ["record-1", "Updated Customer"],
+  updateInput: { name: "Updated Customer", version: 0 },
+  updateServiceArgs: ["record-1", "Updated Customer", 0],
 });
 
 defineCrudControllerTests({
