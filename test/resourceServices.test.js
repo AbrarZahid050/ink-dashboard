@@ -28,6 +28,7 @@ const { prisma } = vi.hoisted(() => ({
       findUnique: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
+      updateMany: vi.fn(),
       delete: vi.fn(),
     },
   },
@@ -297,14 +298,18 @@ describe("Machine service", () => {
   it("should update a machine with model and site relations", async () => {
     const data = { status: "INACTIVE" };
     const record = { id: "machine-1", ...data };
-    prisma.machine.update.mockResolvedValue(record);
+    prisma.machine.updateMany.mockResolvedValue({ count: 1 });
+    prisma.machine.findUnique.mockResolvedValue(record);
 
     await expect(
-      machineService.updateMachine("machine-1", data),
+      machineService.updateMachine("machine-1", data, 0),
     ).resolves.toBe(record);
-    expect(prisma.machine.update).toHaveBeenCalledWith({
+    expect(prisma.machine.updateMany).toHaveBeenCalledWith({
+      where: { id: "machine-1", version: 0 },
+      data: { ...data, version: { increment: 1 } },
+    });
+    expect(prisma.machine.findUnique).toHaveBeenCalledWith({
       where: { id: "machine-1" },
-      data,
       include: machineDetails,
     });
   });
