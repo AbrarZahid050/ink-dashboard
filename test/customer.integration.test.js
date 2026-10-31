@@ -31,6 +31,8 @@ describe("Customer PostgreSQL integration tests", () => {
 
     expect(persisted).not.toBeNull();
     expect(persisted.name).toBe(name);
+    expect(persisted.version).toBe(0);
+    expect(response.body.data.version).toBe(0);
 
     await testPrisma.customer.delete({
       where: { id: persisted.id },
@@ -59,6 +61,7 @@ describe("Customer PostgreSQL integration tests", () => {
         data: {
           id: customer.id,
           name: customer.name,
+          version: 0,
           sites: [
             {
               id: site.id,
@@ -121,7 +124,7 @@ describe("Customer PostgreSQL integration tests", () => {
     try {
       const response = await request(app)
         .patch(`/api/v1/customers/${customer.id}`)
-        .send({ name: updatedName });
+        .send({ name: updatedName, version: customer.version });
 
       expect(response.status).toBe(200);
       expect(response.body).toMatchObject({
@@ -130,6 +133,7 @@ describe("Customer PostgreSQL integration tests", () => {
         data: {
           id: customer.id,
           name: updatedName,
+          version: 1,
         },
       });
 
@@ -137,10 +141,54 @@ describe("Customer PostgreSQL integration tests", () => {
         where: { id: customer.id },
       });
       expect(persisted.name).toBe(updatedName);
+      expect(persisted.version).toBe(1);
     } finally {
       await testPrisma.customer.deleteMany({
         where: { id: customer.id },
       });
+    }
+  });
+
+  it("should reject a customer update when version is missing", async () => {
+    const response = await request(app)
+      .patch(`/api/v1/customers/${randomUUID()}`)
+      .send({ name: `Missing Version ${randomUUID()}` });
+
+    expect(response.status).toBe(400);
+    expect(response.body.errors).toEqual(
+      expect.arrayContaining([expect.objectContaining({ field: "version" })]),
+    );
+  });
+
+  it("should return 409 when updating a customer with a stale version", async () => {
+    const customer = await testPrisma.customer.create({
+      data: { name: `Integration OCC Customer ${randomUUID()}` },
+    });
+
+    try {
+      const firstUpdate = await request(app)
+        .patch(`/api/v1/customers/${customer.id}`)
+        .send({ name: `First Update ${randomUUID()}`, version: 0 });
+
+      expect(firstUpdate.status).toBe(200);
+      expect(firstUpdate.body.data.version).toBe(1);
+
+      const staleUpdate = await request(app)
+        .patch(`/api/v1/customers/${customer.id}`)
+        .send({ name: `Stale Update ${randomUUID()}`, version: 0 });
+
+      expect(staleUpdate.status).toBe(409);
+      expect(staleUpdate.body.message).toBe(
+        "Customer was modified by another user. Please retrieve the latest version and try again.",
+      );
+
+      const persisted = await testPrisma.customer.findUnique({
+        where: { id: customer.id },
+      });
+      expect(persisted.version).toBe(1);
+      expect(persisted.name).toBe(firstUpdate.body.data.name);
+    } finally {
+      await testPrisma.customer.deleteMany({ where: { id: customer.id } });
     }
   });
 
@@ -180,7 +228,7 @@ describe("Customer PostgreSQL integration tests", () => {
 
     const response = await request(app)
       .patch(`/api/v1/customers/${nonexistentId}`)
-      .send({ name: `Missing Customer ${randomUUID()}` });
+      .send({ name: `Missing Customer ${randomUUID()}`, version: 0 });
 
     expect(response.status).toBe(404);
   });
