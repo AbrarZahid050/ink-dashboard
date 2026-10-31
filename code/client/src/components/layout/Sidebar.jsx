@@ -33,7 +33,7 @@ function Sidebar({ mobileOpen, onClose, isMobile, activePage, onNavigate }) {
         </Typography>
       </Box>
 
-      <Divider sx={{ borderColor: 'rgba(232,238,248,0.10)'} />
+      <Divider sx={{ borderColor: 'rgba(232,238,248,0.10)' }} />
 
       <Box sx={{ px: 2, pt: 3, pb: 1 }}>
         <Typography
