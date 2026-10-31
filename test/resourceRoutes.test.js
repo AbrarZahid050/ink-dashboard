@@ -54,9 +54,9 @@ const resources = [
     updateHandler: "updateManufacturer",
     invalidCreateBody: { name: "   " },
     validCreateBody: { name: "  Mimaki  " },
-    validUpdateBody: { name: "  Epson  " },
+    validUpdateBody: { name: "  Epson  ", version: 0 },
     normalizedCreateBody: { name: "Mimaki" },
-    normalizedUpdateBody: { name: "Epson" },
+    normalizedUpdateBody: { name: "Epson", version: 0 },
   },
   {
     name: "customer",
