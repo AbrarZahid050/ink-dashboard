@@ -15,6 +15,7 @@ import {
   Divider,
   FormControl,
   FormHelperText,
+  InputAdornment,
   Grid,
   InputLabel,
   MenuItem,
@@ -120,6 +121,7 @@ function MachineModels() {
 
   const handleConfigurationChange = (nextConfiguration, onChange) => {
     onChange(nextConfiguration)
+    clearErrors(['maxRollWidthMm', 'flatbedWidthMm', 'flatbedLengthMm'])
 
     if (nextConfiguration === 'ROLL_TO_ROLL') {
       setValue('flatbedWidthMm', '')
@@ -305,7 +307,7 @@ function MachineModels() {
                 slotProps={{
                   htmlInput: { min: 1, step: 1 },
                   input: {
-                    endAdornment: <Typography variant="body2" color="text.secondary">mm</Typography>,
+                    endAdornment: <InputAdornment position="end">mm</InputAdornment>,
                   },
                 }}
               />
