@@ -185,8 +185,8 @@ defineCrudControllerTests({
   updateMessage: "Manufacturer updated successfully",
   createInput: { name: " Mimaki " },
   createServiceArgs: [" Mimaki "],
-  updateInput: { name: "Epson" },
-  updateServiceArgs: ["record-1", "Epson"],
+  updateInput: { name: "Epson", version: 0 },
+  updateServiceArgs: ["record-1", "Epson", 0],
 });
 
 defineCrudControllerTests({
