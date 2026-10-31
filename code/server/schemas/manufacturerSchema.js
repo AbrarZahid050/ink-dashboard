@@ -8,6 +8,7 @@ export const createManufacturerSchema = z
 
 export const updateManufacturerSchema = z
   .object({
+    version: z.number().int().nonnegative(),
     name: z.string().trim().min(1, "Manufacturer name is required"),
   })
   .strict();
