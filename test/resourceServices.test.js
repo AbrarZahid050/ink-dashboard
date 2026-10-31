@@ -7,6 +7,7 @@ const { prisma } = vi.hoisted(() => ({
       findUnique: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
+      updateMany: vi.fn(),
       delete: vi.fn(),
     },
     customer: {
@@ -78,17 +79,39 @@ describe("Manufacturer service", () => {
     });
   });
 
-  it("should trim a manufacturer name before updating it", async () => {
-    const record = { id: "manufacturer-1", name: "Epson" };
-    prisma.manufacturer.update.mockResolvedValue(record);
+  it("should trim a manufacturer name and increment its version when updating", async () => {
+    const record = { id: "manufacturer-1", name: "Epson", version: 1 };
+    prisma.manufacturer.updateMany.mockResolvedValue({ count: 1 });
+    prisma.manufacturer.findUnique.mockResolvedValue(record);
 
     await expect(
-      manufacturerService.updateManufacturer(record.id, "  Epson  "),
+      manufacturerService.updateManufacturer(record.id, "  Epson  ", 0),
     ).resolves.toBe(record);
-    expect(prisma.manufacturer.update).toHaveBeenCalledWith({
-      where: { id: record.id },
-      data: { name: "Epson" },
+    expect(prisma.manufacturer.updateMany).toHaveBeenCalledWith({
+      where: { id: record.id, version: 0 },
+      data: { name: "Epson", version: { increment: 1 } },
     });
+    expect(prisma.manufacturer.findUnique).toHaveBeenLastCalledWith({
+      where: { id: record.id },
+    });
+  });
+
+  it("should return 404 when updating a nonexistent manufacturer", async () => {
+    prisma.manufacturer.updateMany.mockResolvedValue({ count: 0 });
+    prisma.manufacturer.findUnique.mockResolvedValue(null);
+
+    await expect(
+      manufacturerService.updateManufacturer("missing-id", "Epson", 0),
+    ).rejects.toMatchObject({ statusCode: 404, message: "Manufacturer not found." });
+  });
+
+  it("should return 409 when the manufacturer version is stale", async () => {
+    prisma.manufacturer.updateMany.mockResolvedValue({ count: 0 });
+    prisma.manufacturer.findUnique.mockResolvedValue({ id: "manufacturer-1" });
+
+    await expect(
+      manufacturerService.updateManufacturer("manufacturer-1", "Epson", 0),
+    ).rejects.toMatchObject({ statusCode: 409 });
   });
 
   it("should delete a manufacturer by ID", async () => {
