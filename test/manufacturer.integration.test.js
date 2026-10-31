@@ -15,7 +15,6 @@ describe("Manufacturer PostgreSQL integration tests", () => {
     const name = `Test Manufacturer ${randomUUID()}`;
 
     try {
-      // 1. Create a manufacturer in PostgreSQL.
       const created = await testPrisma.manufacturer.create({
         data: { name },
       });
@@ -23,7 +22,6 @@ describe("Manufacturer PostgreSQL integration tests", () => {
       expect(created.id).toBeDefined();
       expect(created.name).toBe(name);
 
-      // 2. Retrieve the manufacturer from PostgreSQL.
       const found = await testPrisma.manufacturer.findUnique({
         where: { name },
       });
@@ -31,7 +29,6 @@ describe("Manufacturer PostgreSQL integration tests", () => {
       expect(found).not.toBeNull();
       expect(found.name).toBe(name);
     } finally {
-      // 3. Clean up test data.
       await testPrisma.manufacturer.deleteMany({
         where: { name },
       });
@@ -63,5 +60,110 @@ describe("Manufacturer PostgreSQL integration tests", () => {
         where: { id: manufacturer.id },
       });
     }
+  });
+
+  it("should retrieve all manufacturers through the API", async () => {
+    const manufacturers = await testPrisma.manufacturer.createManyAndReturn({
+      data: [
+        { name: `Integration List Manufacturer A ${randomUUID()}` },
+        { name: `Integration List Manufacturer B ${randomUUID()}` },
+      ],
+    });
+
+    try {
+      const response = await request(app).get("/api/v1/manufacturers");
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.count).toBe(response.body.data.length);
+
+      const returnedIds = response.body.data.map((item) => item.id);
+      for (const manufacturer of manufacturers) {
+        expect(returnedIds).toContain(manufacturer.id);
+      }
+    } finally {
+      await testPrisma.manufacturer.deleteMany({
+        where: {
+          id: { in: manufacturers.map((item) => item.id) },
+        },
+      });
+    }
+  });
+
+  it("should update a manufacturer through the API and persist the change", async () => {
+    const manufacturer = await testPrisma.manufacturer.create({
+      data: {
+        name: `Integration Update Manufacturer ${randomUUID()}`,
+      },
+    });
+    const updatedName = `Updated Manufacturer ${randomUUID()}`;
+
+    try {
+      const response = await request(app)
+        .patch(`/api/v1/manufacturers/${manufacturer.id}`)
+        .send({ name: updatedName });
+
+      expect(response.status).toBe(200);
+      expect(response.body).toMatchObject({
+        success: true,
+        message: "Manufacturer updated successfully",
+        data: {
+          id: manufacturer.id,
+          name: updatedName,
+        },
+      });
+
+      const persisted = await testPrisma.manufacturer.findUnique({
+        where: { id: manufacturer.id },
+      });
+      expect(persisted.name).toBe(updatedName);
+    } finally {
+      await testPrisma.manufacturer.deleteMany({
+        where: { id: manufacturer.id },
+      });
+    }
+  });
+
+  it("should delete a manufacturer through the API and remove it from PostgreSQL", async () => {
+    const manufacturer = await testPrisma.manufacturer.create({
+      data: {
+        name: `Integration Delete Manufacturer ${randomUUID()}`,
+      },
+    });
+
+    const response = await request(app).delete(
+      `/api/v1/manufacturers/${manufacturer.id}`,
+    );
+
+    expect(response.status).toBe(204);
+
+    const deleted = await testPrisma.manufacturer.findUnique({
+      where: { id: manufacturer.id },
+    });
+    expect(deleted).toBeNull();
+  });
+
+  it("should return 404 when retrieving a nonexistent manufacturer", async () => {
+    const nonexistentId = randomUUID();
+
+    const response = await request(app).get(
+      `/api/v1/manufacturers/${nonexistentId}`,
+    );
+
+    expect(response.status).toBe(404);
+    expect(response.body).toMatchObject({
+      success: false,
+      message: "Manufacturer not found",
+    });
+  });
+
+  it("should return 404 when updating a nonexistent manufacturer", async () => {
+    const nonexistentId = randomUUID();
+
+    const response = await request(app)
+      .patch(`/api/v1/manufacturers/${nonexistentId}`)
+      .send({ name: `Missing Manufacturer ${randomUUID()}` });
+
+    expect(response.status).toBe(404);
   });
 });
