@@ -40,6 +40,13 @@ export const api = createApi({
       }),
       invalidatesTags: ['MachineModel'],
     }),
+    deleteMachineModel: builder.mutation({
+      query: (id) => ({
+        url: `/machine-models/${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['MachineModel'],
+    }),
   }),
 })
 
@@ -49,4 +56,5 @@ export const {
   useDeleteManufacturerMutation,
   useGetMachineModelsQuery,
   useCreateMachineModelMutation,
+  useDeleteMachineModelMutation,
 } = api
