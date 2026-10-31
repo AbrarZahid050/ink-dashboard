@@ -339,4 +339,18 @@ describe("Machine Model API - PostgreSQL integration", () => {
     }
   });
 
+  it("returns 404 when retrieving a machine model that does not exist", async () => {
+    const nonExistentId = randomUUID();
+
+    const response = await request(app).get(
+      `/api/v1/machine-models/${nonExistentId}`,
+    );
+
+    expect(response.status).toBe(404);
+    expect(response.body).toMatchObject({
+      success: false,
+      message: "Machine model not found",
+    });
+  });
+
 });
