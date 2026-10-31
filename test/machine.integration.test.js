@@ -99,6 +99,7 @@ describe("Machine PostgreSQL integration tests", () => {
         success: true,
         data: {
           ...input,
+          version: 0,
           installationDate: "2025-06-15T00:00:00.000Z",
           machineModel: {
             id: dependencies.machineModel.id,
@@ -130,6 +131,7 @@ describe("Machine PostgreSQL integration tests", () => {
         installationDate: new Date("2025-06-15T00:00:00.000Z"),
         status: "ACTIVE",
         notes: input.notes,
+        version: 0,
       });
     } finally {
       await cleanupMachineDependencies(dependencies);
@@ -159,6 +161,7 @@ describe("Machine PostgreSQL integration tests", () => {
         data: {
           id: dependencies.machine.id,
           serialNumber: dependencies.machine.serialNumber,
+          version: 0,
           machineModel: {
             id: dependencies.machineModel.id,
             modelName: dependencies.machineModel.modelName,
@@ -207,6 +210,7 @@ describe("Machine PostgreSQL integration tests", () => {
       expect(returnedMachine).toMatchObject({
         id: dependencies.machine.id,
         serialNumber: dependencies.machine.serialNumber,
+        version: 0,
         machineModel: {
           id: dependencies.machineModel.id,
           manufacturer: {
@@ -241,6 +245,7 @@ describe("Machine PostgreSQL integration tests", () => {
     });
 
     const updateInput = {
+      version: 0,
       serialNumber: `INTEGRATION-UPDATED-${randomUUID()}`,
       installationDate: "2024-09-25",
       status: "INACTIVE",
@@ -258,6 +263,7 @@ describe("Machine PostgreSQL integration tests", () => {
         data: {
           id: dependencies.machine.id,
           ...updateInput,
+          version: 1,
           installationDate: "2024-09-25T00:00:00.000Z",
           machineModel: {
             id: dependencies.machineModel.id,
@@ -279,6 +285,68 @@ describe("Machine PostgreSQL integration tests", () => {
         installationDate: new Date("2024-09-25T00:00:00.000Z"),
         status: "INACTIVE",
         notes: updateInput.notes,
+        version: 1,
+      });
+    } finally {
+      await cleanupMachineDependencies(dependencies);
+    }
+  });
+
+
+  it("should reject an update request when the OCC version is missing", async () => {
+    const response = await request(app)
+      .patch(`/api/v1/machines/${randomUUID()}`)
+      .send({ status: "INACTIVE" });
+
+    expect(response.status).toBe(400);
+    expect(response.body).toMatchObject({
+      success: false,
+      message: "Validation failed",
+    });
+    expect(response.body.errors).toEqual(
+      expect.arrayContaining([expect.objectContaining({ field: "version" })]),
+    );
+  });
+
+  it("should reject a stale OCC version without overwriting the latest machine data", async () => {
+    const dependencies = await createMachineDependencies();
+    dependencies.machine = await testPrisma.machine.create({
+      data: {
+        serialNumber: `INTEGRATION-OCC-${randomUUID()}`,
+        machineModelId: dependencies.machineModel.id,
+        siteId: dependencies.site.id,
+        status: "ACTIVE",
+        notes: "Original notes",
+      },
+    });
+
+    try {
+      const firstUpdate = await request(app)
+        .patch(`/api/v1/machines/${dependencies.machine.id}`)
+        .send({ version: 0, notes: "Updated notes" });
+
+      expect(firstUpdate.status).toBe(200);
+      expect(firstUpdate.body.data.version).toBe(1);
+      expect(firstUpdate.body.data.notes).toBe("Updated notes");
+
+      const staleUpdate = await request(app)
+        .patch(`/api/v1/machines/${dependencies.machine.id}`)
+        .send({ version: 0, notes: "Stale overwrite attempt" });
+
+      expect(staleUpdate.status).toBe(409);
+      expect(staleUpdate.body).toMatchObject({
+        success: false,
+        message:
+          "Machine was modified by another user. Please retrieve the latest version and try again.",
+      });
+
+      const persisted = await testPrisma.machine.findUnique({
+        where: { id: dependencies.machine.id },
+      });
+
+      expect(persisted).toMatchObject({
+        notes: "Updated notes",
+        version: 1,
       });
     } finally {
       await cleanupMachineDependencies(dependencies);
@@ -328,7 +396,7 @@ describe("Machine PostgreSQL integration tests", () => {
   it("should return 404 when updating a nonexistent machine", async () => {
     const response = await request(app)
       .patch(`/api/v1/machines/${randomUUID()}`)
-      .send({ status: "INACTIVE" });
+      .send({ version: 0, status: "INACTIVE" });
 
     expect(response.status).toBe(404);
     expect(response.body).toMatchObject({
