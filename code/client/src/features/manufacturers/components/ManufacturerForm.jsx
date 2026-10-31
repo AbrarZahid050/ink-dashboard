@@ -16,7 +16,10 @@ import {
   Typography,
 } from '@mui/material'
 import { z } from 'zod'
-import { useCreateManufacturerMutation } from '../../../services/api.js'
+import {
+  useCreateManufacturerMutation,
+  useGetManufacturersQuery,
+} from '../../../services/api.js'
 import { getApiErrorMessage } from '../../machine-models/utils/getApiErrorMessage.js'
 
 const manufacturerSchema = z.object({
@@ -28,11 +31,14 @@ function ManufacturerForm({ onCreated }) {
   const [confirmationName, setConfirmationName] = useState('')
   const [serverError, setServerError] = useState('')
   const [createManufacturer, { isLoading: saving }] = useCreateManufacturerMutation()
+  const { data: manufacturers = [], isLoading: manufacturersLoading } = useGetManufacturersQuery()
 
   const {
     register,
     handleSubmit,
     reset,
+    setError,
+    clearErrors,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(manufacturerSchema),
@@ -40,6 +46,19 @@ function ManufacturerForm({ onCreated }) {
   })
 
   const handleReview = ({ name }) => {
+    const normalizedName = name.trim().toLowerCase()
+    const duplicate = manufacturers.some(
+      (manufacturer) => manufacturer.name?.trim().toLowerCase() === normalizedName,
+    )
+
+    if (duplicate) {
+      setError('name', {
+        type: 'manual',
+        message: 'This manufacturer already exists.',
+      })
+      return
+    }
+
     setServerError('')
     setConfirmationName(name.trim())
     setConfirmationOpen(true)
@@ -74,7 +93,7 @@ function ManufacturerForm({ onCreated }) {
 
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems="flex-start">
           <TextField
-            {...register('name')}
+            {...register('name', { onChange: () => clearErrors('name') })}
             fullWidth
             required
             label="Manufacturer name"
@@ -86,6 +105,7 @@ function ManufacturerForm({ onCreated }) {
             type="submit"
             variant="contained"
             startIcon={<AddRounded />}
+            disabled={manufacturersLoading}
             sx={{ minWidth: 160, minHeight: 56 }}
           >
             Review details
