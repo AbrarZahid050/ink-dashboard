@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { AddRounded } from '@mui/icons-material'
 import {
@@ -58,6 +58,7 @@ function MachineForm({ onCreated }) {
 
   const {
     register,
+    control,
     handleSubmit,
     reset,
     setValue,
@@ -73,8 +74,8 @@ function MachineForm({ onCreated }) {
   const selectedCustomerId = watch('customerId')
   const customerSites = sites.filter((site) => site.customerId === selectedCustomerId)
 
-  const handleCustomerChange = (event) => {
-    setValue('customerId', event.target.value, { shouldDirty: true })
+  const handleCustomerChange = (customerId) => {
+    setValue('customerId', customerId, { shouldDirty: true })
     setValue('siteId', '', { shouldDirty: true, shouldValidate: false })
     clearErrors('siteId')
   }
@@ -152,41 +153,70 @@ function MachineForm({ onCreated }) {
             />
           </Stack>
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-            <TextField
-              {...register('machineModelId')}
-              select fullWidth required label="Machine model"
-              error={Boolean(errors.machineModelId)} helperText={errors.machineModelId?.message}
-              disabled={modelsLoading || models.length === 0}
-            >
-              {models.map((model) => (
-                <MenuItem key={model.id} value={model.id}>
-                  {model.manufacturer?.name} {model.modelName}
-                </MenuItem>
-              ))}
-            </TextField>
-            <TextField
-              {...register('customerId')}
-              onChange={handleCustomerChange}
-              select fullWidth required label="Customer / company"
-              error={Boolean(errors.customerId)} helperText={errors.customerId?.message}
-              disabled={customersLoading || customers.length === 0}
-            >
-              {customers.map((customer) => (
-                <MenuItem key={customer.id} value={customer.id}>{customer.name}</MenuItem>
-              ))}
-            </TextField>
+            <Controller
+              name="machineModelId"
+              control={control}
+              render={({ field }) => (
+                <TextField
+                  {...field}
+                  select
+                  fullWidth
+                  required
+                  label="Machine model"
+                  error={Boolean(errors.machineModelId)}
+                  helperText={errors.machineModelId?.message}
+                  disabled={modelsLoading || models.length === 0}
+                >
+                  {models.map((model) => (
+                    <MenuItem key={model.id} value={model.id}>
+                      {model.manufacturer?.name} {model.modelName}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              )}
+            />
+            <Controller
+              name="customerId"
+              control={control}
+              render={({ field }) => (
+                <TextField
+                  {...field}
+                  onChange={(event) => handleCustomerChange(event.target.value)}
+                  select
+                  fullWidth
+                  required
+                  label="Customer / company"
+                  error={Boolean(errors.customerId)}
+                  helperText={errors.customerId?.message}
+                  disabled={customersLoading || customers.length === 0}
+                >
+                  {customers.map((customer) => (
+                    <MenuItem key={customer.id} value={customer.id}>{customer.name}</MenuItem>
+                  ))}
+                </TextField>
+              )}
+            />
           </Stack>
-          <TextField
-            {...register('siteId')}
-            select fullWidth required label="Customer site"
-            error={Boolean(errors.siteId)}
-            helperText={errors.siteId?.message || (!selectedCustomerId ? 'Select a customer first' : customerSites.length === 0 && !sitesLoading ? 'No sites registered for this customer' : '')}
-            disabled={!selectedCustomerId || sitesLoading || customerSites.length === 0}
-          >
-            {customerSites.map((site) => (
-              <MenuItem key={site.id} value={site.id}>{site.name}</MenuItem>
-            ))}
-          </TextField>
+          <Controller
+            name="siteId"
+            control={control}
+            render={({ field }) => (
+              <TextField
+                {...field}
+                select
+                fullWidth
+                required
+                label="Customer site"
+                error={Boolean(errors.siteId)}
+                helperText={errors.siteId?.message || (!selectedCustomerId ? 'Select a customer first' : customerSites.length === 0 && !sitesLoading ? 'No sites registered for this customer' : '')}
+                disabled={!selectedCustomerId || sitesLoading || customerSites.length === 0}
+              >
+                {customerSites.map((site) => (
+                  <MenuItem key={site.id} value={site.id}>{site.name}</MenuItem>
+                ))}
+              </TextField>
+            )}
+          />
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
             <TextField {...register('status')} select fullWidth label="Status">
               <MenuItem value="ACTIVE">Active</MenuItem>
