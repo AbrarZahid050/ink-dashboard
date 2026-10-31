@@ -5,7 +5,7 @@ export const api = createApi({
   baseQuery: fetchBaseQuery({
     baseUrl: '/api/v1',
   }),
-  tagTypes: ['Manufacturer', 'MachineModel', 'Customer', 'CustomerSite'],
+  tagTypes: ['Manufacturer', 'MachineModel', 'Customer', 'CustomerSite', 'Machine'],
   endpoints: (builder) => ({
     getManufacturers: builder.query({
       query: () => '/manufacturers',
@@ -62,6 +62,34 @@ export const api = createApi({
         method: 'DELETE',
       }),
       invalidatesTags: ['MachineModel'],
+    }),
+    getMachines: builder.query({
+      query: () => '/machines',
+      transformResponse: (response) => response.data ?? [],
+      providesTags: ['Machine'],
+    }),
+    createMachine: builder.mutation({
+      query: (machine) => ({
+        url: '/machines',
+        method: 'POST',
+        body: machine,
+      }),
+      invalidatesTags: ['Machine', 'CustomerSite', 'MachineModel'],
+    }),
+    updateMachine: builder.mutation({
+      query: ({ id, ...machine }) => ({
+        url: `/machines/${id}`,
+        method: 'PATCH',
+        body: machine,
+      }),
+      invalidatesTags: ['Machine', 'CustomerSite', 'MachineModel'],
+    }),
+    deleteMachine: builder.mutation({
+      query: (id) => ({
+        url: `/machines/${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['Machine', 'CustomerSite', 'MachineModel'],
     }),
     getCustomers: builder.query({
       query: () => '/customers',
@@ -131,6 +159,10 @@ export const {
   useCreateMachineModelMutation,
   useDeleteMachineModelMutation,
   useUpdateMachineModelMutation,
+  useGetMachinesQuery,
+  useCreateMachineMutation,
+  useUpdateMachineMutation,
+  useDeleteMachineMutation,
   useGetCustomersQuery,
   useCreateCustomerMutation,
   useUpdateCustomerMutation,
