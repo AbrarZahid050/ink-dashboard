@@ -2,6 +2,7 @@ import {
   BusinessOutlined,
   GroupsOutlined,
   LocationOnOutlined,
+  PrecisionManufacturingOutlined,
   SettingsOutlined,
   ViewInArOutlined,
 } from '@mui/icons-material'
@@ -24,6 +25,7 @@ function Sidebar({ mobileOpen, onClose, isMobile, activePage, onNavigate }) {
     { label: 'Manufacturers', icon: <BusinessOutlined fontSize="small" /> },
     { label: 'Customers', icon: <GroupsOutlined fontSize="small" /> },
     { label: 'Customer Sites', icon: <LocationOnOutlined fontSize="small" /> },
+    { label: 'Machines', icon: <PrecisionManufacturingOutlined fontSize="small" /> },
   ]
 
   const drawerContent = (
