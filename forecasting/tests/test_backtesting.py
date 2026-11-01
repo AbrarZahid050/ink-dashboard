@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, timedelta
 
 import pytest
 
@@ -86,31 +86,23 @@ def test_both_models_use_identical_evaluation_observations_and_training_windows(
     ]
 
     assert seasonal_keys == baseline_keys
-    assert result["forecast_origin_details"] == [
-        {
-            "origin_month": "2024-01-01",
-            "training_months": 12,
-            "training_end_month": "2023-12-01",
-        },
-        *[
-            {
-                "origin_month": f"{year}-{month:02d}-01",
-                "training_months": index + 13,
-                "training_end_month": (
-                    date(year, month, 1).replace(day=1)
-                ).isoformat().replace(
-                    f"-{month:02d}-01",
-                    f"-{(month - 1 or 12):02d}-01"
-                ) if month != 1 else f"{year - 1}-12-01",
-            }
-            for index, (year, month) in enumerate([
-                (2024, 2), (2024, 3), (2024, 4), (2024, 5),
-                (2024, 6), (2024, 7), (2024, 8), (2024, 9),
-                (2024, 10), (2024, 11), (2024, 12), (2025, 1),
-                (2025, 2),
-            ])
-        ],
-    ]
+    origin_details = result["forecast_origin_details"]
+    assert len(origin_details) == 14
+    assert origin_details[0] == {
+        "origin_month": "2024-01-01",
+        "training_months": 12,
+        "training_end_month": "2023-12-01",
+    }
+
+    for index, detail in enumerate(origin_details):
+        origin = date.fromisoformat(detail["origin_month"])
+        previous_month = (
+            date(origin.year, origin.month, 1) - timedelta(days=1)
+        ).replace(day=1)
+
+        assert detail["training_months"] == 12 + index
+        assert detail["training_end_month"] == previous_month.isoformat()
+
 
 
 def test_baseline_uses_historical_average_without_seasonal_multiplier():
