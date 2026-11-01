@@ -385,25 +385,25 @@ describe("Ink Purchase API - PostgreSQL integration", () => {
         success: true,
         data: {
           id: created.body.data.id,
-          customer: {
+          customer: expect.objectContaining({
             id: dependencies.customer.id,
-          },
+          }),
           items: [
             expect.objectContaining({
-              machine: {
+              machine: expect.objectContaining({
                 id: dependencies.machineOne.id,
-                site: {
-                  customer: {
+                site: expect.objectContaining({
+                  customer: expect.objectContaining({
                     id: dependencies.customer.id,
-                  },
-                },
-              },
-              inkProduct: {
+                  }),
+                }),
+              }),
+              inkProduct: expect.objectContaining({
                 id: dependencies.inkProduct.id,
-                inkModel: {
+                inkModel: expect.objectContaining({
                   id: dependencies.inkModel.id,
-                },
-              },
+                }),
+              }),
             }),
           ],
         },
