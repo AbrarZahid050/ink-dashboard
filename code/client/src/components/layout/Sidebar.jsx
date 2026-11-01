@@ -1,5 +1,6 @@
 import {
   BusinessOutlined,
+  ColorLensOutlined,
   GroupsOutlined,
   LocationOnOutlined,
   PrecisionManufacturingOutlined,
@@ -22,6 +23,7 @@ const drawerWidth = 256
 function Sidebar({ mobileOpen, onClose, isMobile, activePage, onNavigate }) {
   const navigationItems = [
     { label: 'Machine Models', icon: <ViewInArOutlined fontSize="small" /> },
+    { label: 'Ink Models', icon: <ColorLensOutlined fontSize="small" /> },
     { label: 'Manufacturers', icon: <BusinessOutlined fontSize="small" /> },
     { label: 'Customers', icon: <GroupsOutlined fontSize="small" /> },
     { label: 'Customer Sites', icon: <LocationOnOutlined fontSize="small" /> },
