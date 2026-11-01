@@ -34,6 +34,15 @@ def make_request(history):
     )
 
 
+def find_observation(observations, month, color, lead_month):
+    return next(
+        item for item in observations
+        if item["month"] == month
+        and item["color"] == color
+        and item["lead_month"] == lead_month
+    )
+
+
 def test_backtest_evaluates_trailing_window_at_every_lead_time():
     request = make_request(make_history(months=26))
 
@@ -51,23 +60,92 @@ def test_backtest_evaluates_trailing_window_at_every_lead_time():
     assert result["forecast_origins"] == 14
     assert result["training_months_at_first_origin"] == 12
     assert result["metrics"]["sample_count"] == 12 * 2 * 3
+    assert result["baseline"]["metrics"]["sample_count"] == 12 * 2 * 3
     assert set(result["metrics_by_lead_month"]) == {"1", "2", "3"}
     assert all(
         result["metrics_by_lead_month"][str(lead)]["sample_count"] == 24
         for lead in (1, 2, 3)
     )
+    assert all(
+        result["baseline"]["metrics_by_lead_month"][str(lead)]["sample_count"] == 24
+        for lead in (1, 2, 3)
+    )
 
 
-def test_backtest_uses_only_records_before_each_forecast_origin():
+def test_both_models_use_identical_evaluation_observations_and_training_windows():
+    request = make_request(make_history(months=26))
+    result = run_backtest(request, evaluation_months=12, horizon_months=3)
+
+    seasonal_keys = [
+        (item["month"], item["color"], item["lead_month"], item["actual_bottles"])
+        for item in result["seasonal"]["observations"]
+    ]
+    baseline_keys = [
+        (item["month"], item["color"], item["lead_month"], item["actual_bottles"])
+        for item in result["baseline"]["observations"]
+    ]
+
+    assert seasonal_keys == baseline_keys
+    assert result["forecast_origin_details"] == [
+        {
+            "origin_month": "2024-01-01",
+            "training_months": 12,
+            "training_end_month": "2023-12-01",
+        },
+        *[
+            {
+                "origin_month": f"{year}-{month:02d}-01",
+                "training_months": index + 13,
+                "training_end_month": (
+                    date(year, month, 1).replace(day=1)
+                ).isoformat().replace(
+                    f"-{month:02d}-01",
+                    f"-{(month - 1 or 12):02d}-01"
+                ) if month != 1 else f"{year - 1}-12-01",
+            }
+            for index, (year, month) in enumerate([
+                (2024, 2), (2024, 3), (2024, 4), (2024, 5),
+                (2024, 6), (2024, 7), (2024, 8), (2024, 9),
+                (2024, 10), (2024, 11), (2024, 12), (2025, 1),
+                (2025, 2),
+            ])
+        ],
+    ]
+
+
+def test_baseline_uses_historical_average_without_seasonal_multiplier():
     history = make_history(months=24)
-    request = make_request(history)
+    result = run_backtest(
+        make_request(history),
+        evaluation_months=1,
+        horizon_months=1,
+    )
 
-    result = run_backtest(request, evaluation_months=3, horizon_months=2)
+    # The last month is December 2024. Training includes January 2023
+    # through November 2024, so the baseline is their unadjusted average.
+    black_training_quantities = [
+        record.quantity
+        for record in history
+        if record.color == "Black"
+        and record.purchased_at < date(2024, 12, 1)
+    ]
+    expected_average = sum(black_training_quantities) / 23
 
-    # The first evaluation month is October 2024. The first origin is
-    # September 2024, so its training set must end in August 2024.
-    assert result["evaluation_start_month"] == "2024-10-01"
-    assert result["training_months_at_first_origin"] == 20
+    baseline = find_observation(
+        result["baseline"]["observations"],
+        "2024-12-01",
+        "Black",
+        1,
+    )
+    seasonal = find_observation(
+        result["seasonal"]["observations"],
+        "2024-12-01",
+        "Black",
+        1,
+    )
+
+    assert baseline["predicted_bottles"] == round(expected_average, 2)
+    assert seasonal["predicted_bottles"] == round(expected_average * 1.4, 2)
 
 
 def test_backtest_counts_a_colour_first_seen_in_evaluation_as_zero_forecast():
@@ -83,11 +161,13 @@ def test_backtest_counts_a_colour_first_seen_in_evaluation_as_zero_forecast():
         horizon_months=1,
     )
 
-    magenta = next(
-        item for item in result["observations"] if item["color"] == "Magenta"
-    )
-    assert magenta["predicted_bottles"] == 0
-    assert magenta["actual_bottles"] == 4
+    for model in ("seasonal", "baseline"):
+        magenta = next(
+            item for item in result[model]["observations"]
+            if item["color"] == "Magenta"
+        )
+        assert magenta["predicted_bottles"] == 0
+        assert magenta["actual_bottles"] == 4
 
 
 def test_backtest_rejects_insufficient_training_history():
@@ -109,3 +189,6 @@ def test_percentage_metrics_handle_zero_actuals():
     assert result["metrics"]["mae"] is not None
     assert result["metrics"]["mape_percent"] is not None
     assert result["metrics"]["wape_percent"] is not None
+    assert result["baseline"]["metrics"]["mae"] is not None
+    assert result["baseline"]["metrics"]["mape_percent"] is not None
+    assert result["baseline"]["metrics"]["wape_percent"] is not None
