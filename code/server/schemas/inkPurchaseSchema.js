@@ -11,7 +11,7 @@ const purchaseItemSchema = z
       .min(0)
       .max(9999999999.99)
       .refine(
-        (value) => /^\d+(\.\d{1,2})?$/.test(String(value)),
+        (value) => /^\\d+(\\.\\d{1,2})?$/.test(String(value)),
         "Unit price must have no more than two decimal places.",
       )
       .nullable()
@@ -34,3 +34,21 @@ export const createInkPurchaseSchema = z
     items: z.array(purchaseItemSchema).min(1),
   })
   .strict();
+
+export const listInkPurchasesQuerySchema = z
+  .object({
+    customerId: z.uuid().optional(),
+    machineId: z.uuid().optional(),
+    inkProductId: z.uuid().optional(),
+    startDate: z.iso.date().optional(),
+    endDate: z.iso.date().optional(),
+  })
+  .strict()
+  .refine(
+    ({ startDate, endDate }) =>
+      !startDate || !endDate || startDate <= endDate,
+    {
+      message: "startDate must be on or before endDate.",
+      path: ["startDate"],
+    },
+  );
