@@ -5,7 +5,5 @@ export default defineConfig({
     env: {
       NODE_ENV: "test",
     },
-    testTimeout: 15000,
-    hookTimeout: 15000,
   },
 });
