@@ -4,6 +4,7 @@ import MainLayout from './components/layout/MainLayout.jsx'
 
 const MachineModels = lazy(() => import('./pages/MachineModels.jsx'))
 const InkModels = lazy(() => import('./pages/InkModels.jsx'))
+const InkProducts = lazy(() => import('./pages/InkProducts.jsx'))
 const Manufacturers = lazy(() => import('./pages/Manufacturers.jsx'))
 const Customers = lazy(() => import('./pages/Customers.jsx'))
 const CustomerSites = lazy(() => import('./pages/CustomerSites.jsx'))
@@ -25,6 +26,8 @@ function App() {
       <Suspense fallback={<PageLoader />}>
         {activePage === 'Ink Models' ? (
           <InkModels />
+        ) : activePage === 'Ink Products' ? (
+          <InkProducts />
         ) : activePage === 'Manufacturers' ? (
           <Manufacturers />
         ) : activePage === 'Customers' ? (
