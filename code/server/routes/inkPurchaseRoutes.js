@@ -1,7 +1,10 @@
 import { Router } from "express";
 import { validate } from "../middleware/validate.js";
 import { idParamSchema } from "../schemas/commonSchema.js";
-import { createInkPurchaseSchema } from "../schemas/inkPurchaseSchema.js";
+import {
+  createInkPurchaseSchema,
+  listInkPurchasesQuerySchema,
+} from "../schemas/inkPurchaseSchema.js";
 import {
   getAllInkPurchases,
   getInkPurchaseById,
@@ -10,8 +13,12 @@ import {
 
 const router = Router();
 
-// GET / - Retrieve all purchase transactions.
-router.get("/", getAllInkPurchases);
+// GET / - Retrieve purchase transactions with optional filters.
+router.get(
+  "/",
+  validate(listInkPurchasesQuerySchema, "query"),
+  getAllInkPurchases,
+);
 // GET /:id - Retrieve one purchase transaction.
 router.get("/:id", validate(idParamSchema, "params"), getInkPurchaseById);
 // POST / - Create a purchase transaction.
