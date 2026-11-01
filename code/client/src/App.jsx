@@ -10,6 +10,7 @@ const Manufacturers = lazy(() => import('./pages/Manufacturers.jsx'))
 const Customers = lazy(() => import('./pages/Customers.jsx'))
 const CustomerSites = lazy(() => import('./pages/CustomerSites.jsx'))
 const Machines = lazy(() => import('./pages/Machines.jsx'))
+const InkForecasts = lazy(() => import('./pages/InkForecasts.jsx'))
 
 function PageLoader() {
   return (
@@ -39,6 +40,8 @@ function App() {
           <CustomerSites />
         ) : activePage === 'Machines' ? (
           <Machines />
+        ) : activePage === 'Ink Forecasts' ? (
+          <InkForecasts />
         ) : (
           <MachineModels />
         )}
