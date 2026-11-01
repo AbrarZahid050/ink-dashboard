@@ -5,7 +5,7 @@ export const api = createApi({
   baseQuery: fetchBaseQuery({
     baseUrl: '/api/v1',
   }),
-  tagTypes: ['Manufacturer', 'MachineModel', 'Customer', 'CustomerSite', 'Machine'],
+  tagTypes: ['Manufacturer', 'MachineModel', 'InkModel', 'Customer', 'CustomerSite', 'Machine'],
   endpoints: (builder) => ({
     getManufacturers: builder.query({
       query: () => '/manufacturers',
@@ -62,6 +62,34 @@ export const api = createApi({
         method: 'DELETE',
       }),
       invalidatesTags: ['MachineModel'],
+    }),
+    getInkModels: builder.query({
+      query: () => '/ink-models',
+      transformResponse: (response) => response.data ?? [],
+      providesTags: ['InkModel'],
+    }),
+    createInkModel: builder.mutation({
+      query: (inkModel) => ({
+        url: '/ink-models',
+        method: 'POST',
+        body: inkModel,
+      }),
+      invalidatesTags: ['InkModel'],
+    }),
+    updateInkModel: builder.mutation({
+      query: ({ id, ...inkModel }) => ({
+        url: `/ink-models/${id}`,
+        method: 'PATCH',
+        body: inkModel,
+      }),
+      invalidatesTags: ['InkModel'],
+    }),
+    deleteInkModel: builder.mutation({
+      query: (id) => ({
+        url: `/ink-models/${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['InkModel'],
     }),
     getMachines: builder.query({
       query: () => '/machines',
@@ -159,6 +187,10 @@ export const {
   useCreateMachineModelMutation,
   useDeleteMachineModelMutation,
   useUpdateMachineModelMutation,
+  useGetInkModelsQuery,
+  useCreateInkModelMutation,
+  useUpdateInkModelMutation,
+  useDeleteInkModelMutation,
   useGetMachinesQuery,
   useCreateMachineMutation,
   useUpdateMachineMutation,
