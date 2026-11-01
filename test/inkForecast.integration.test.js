@@ -173,7 +173,7 @@ describe("Ink Forecast API - PostgreSQL integration", () => {
         const payload = JSON.parse(options.body);
         expect(payload).toMatchObject({
           client_id: deps.customer.id,
-          machine_model: deps.machineModel.modelName,
+          machine_model: `${deps.manufacturer.name} ${deps.machineModel.modelName}`,
           ink_model: deps.inkModel.inkName,
           horizon_months: 3,
         });
