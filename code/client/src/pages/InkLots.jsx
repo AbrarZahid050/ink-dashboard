@@ -145,7 +145,7 @@ function InkLots() {
       setCreateError('Lot number is required.')
       return
     }
-    if (!createValues.expiryDate || !/^\\d{4}-\\d{2}-\\d{2}$/.test(createValues.expiryDate)) {
+    if (!createValues.expiryDate || !/^\d{4}-\d{2}-\d{2}$/.test(createValues.expiryDate)) {
       setCreateError('Enter a valid expiry date.')
       return
     }
@@ -212,7 +212,7 @@ function InkLots() {
       setEditError('Lot number is required.')
       return
     }
-    if (!editValues.expiryDate || !/^\\d{4}-\\d{2}-\\d{2}$/.test(editValues.expiryDate)) {
+    if (!editValues.expiryDate || !/^\d{4}-\d{2}-\d{2}$/.test(editValues.expiryDate)) {
       setEditError('Enter a valid expiry date.')
       return
     }
