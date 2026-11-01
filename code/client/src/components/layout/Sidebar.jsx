@@ -1,6 +1,7 @@
 import {
   BusinessOutlined,
   ColorLensOutlined,
+  Inventory2Outlined,
   GroupsOutlined,
   LocationOnOutlined,
   PrecisionManufacturingOutlined,
@@ -24,6 +25,7 @@ function Sidebar({ mobileOpen, onClose, isMobile, activePage, onNavigate }) {
   const navigationItems = [
     { label: 'Machine Models', icon: <ViewInArOutlined fontSize="small" /> },
     { label: 'Ink Models', icon: <ColorLensOutlined fontSize="small" /> },
+    { label: 'Ink Products', icon: <Inventory2Outlined fontSize="small" /> },
     { label: 'Manufacturers', icon: <BusinessOutlined fontSize="small" /> },
     { label: 'Customers', icon: <GroupsOutlined fontSize="small" /> },
     { label: 'Customer Sites', icon: <LocationOnOutlined fontSize="small" /> },
