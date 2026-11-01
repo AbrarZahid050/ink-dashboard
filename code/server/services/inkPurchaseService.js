@@ -32,9 +32,40 @@ function toDatabaseDate(value) {
   return new Date(`${value}T00:00:00.000Z`);
 }
 
-// Retrieve purchases with their customer, machine and ink-product details.
-export async function findAllInkPurchases() {
+// Retrieve purchases matching any supplied filters.
+export async function findAllInkPurchases(filters = {}) {
+  const {
+    customerId,
+    machineId,
+    inkProductId,
+    startDate,
+    endDate,
+  } = filters;
+
+  const where = {};
+
+  if (customerId) {
+    where.customerId = customerId;
+  }
+
+  if (machineId || inkProductId) {
+    where.items = {
+      some: {
+        ...(machineId && { machineId }),
+        ...(inkProductId && { inkProductId }),
+      },
+    };
+  }
+
+  if (startDate || endDate) {
+    where.purchasedAt = {
+      ...(startDate && { gte: toDatabaseDate(startDate) }),
+      ...(endDate && { lte: toDatabaseDate(endDate) }),
+    };
+  }
+
   return prisma.inkPurchase.findMany({
+    where,
     include: purchaseDetails,
     orderBy: [{ purchasedAt: "desc" }, { createdAt: "desc" }],
   });
