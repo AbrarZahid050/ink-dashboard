@@ -4,6 +4,7 @@ import machineRoutes from "./machineRoutes.js";
 import machineModelRoutes from "./machineModelRoutes.js";
 import customerRoutes from "./customerRoutes.js";
 import customerSiteRoutes from "./customerSiteRoutes.js";
+import inkModelRoutes from "./inkModelRoutes.js";
 
 const router = Router();
 
@@ -13,5 +14,6 @@ router.use("/machines", machineRoutes);
 router.use("/machine-models", machineModelRoutes);
 router.use("/customers", customerRoutes);
 router.use("/customer-sites", customerSiteRoutes);
+router.use("/ink-models", inkModelRoutes);
 
 export default router;
