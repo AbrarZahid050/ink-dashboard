@@ -175,6 +175,13 @@ export const api = createApi({
       }),
       invalidatesTags: ['Machine', 'CustomerSite', 'MachineModel'],
     }),
+    getInkForecast: builder.query({
+      query: ({ customerId, machineModelId, inkModelId, horizonMonths = 3 }) => ({
+        url: '/ink-forecasts',
+        params: { customerId, machineModelId, inkModelId, horizonMonths },
+      }),
+      transformResponse: (response) => response.data ?? null,
+    }),
     getCustomers: builder.query({
       query: () => '/customers',
       transformResponse: (response) => response.data ?? [],
@@ -260,6 +267,7 @@ export const {
   useUpdateMachineMutation,
   useDeleteMachineMutation,
   useGetCustomersQuery,
+  useLazyGetInkForecastQuery,
   useCreateCustomerMutation,
   useUpdateCustomerMutation,
   useDeleteCustomerMutation,
