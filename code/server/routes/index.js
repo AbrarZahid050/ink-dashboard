@@ -8,6 +8,7 @@ import inkModelRoutes from "./inkModelRoutes.js";
 import inkProductRoutes from "./inkProductRoutes.js";
 import inkLotRoutes from "./inkLotRoutes.js";
 import inkPurchaseRoutes from "./inkPurchaseRoutes.js";
+import inkForecastRoutes from "./inkForecastRoutes.js";
 
 const router = Router();
 
@@ -21,5 +22,6 @@ router.use("/ink-models", inkModelRoutes);
 router.use("/ink-products", inkProductRoutes);
 router.use("/ink-lots", inkLotRoutes);
 router.use("/ink-purchases", inkPurchaseRoutes);
+router.use("/ink-forecasts", inkForecastRoutes);
 
 export default router;
