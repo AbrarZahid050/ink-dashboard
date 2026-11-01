@@ -524,7 +524,11 @@ describe("Ink Purchase API - PostgreSQL integration", () => {
 
       const byDateRange = await request(app)
         .get("/api/v1/ink-purchases")
-        .query({ startDate: "2026-10-15", endDate: "2026-10-31" });
+        .query({
+          customerId: dependencies.customer.id,
+          startDate: "2026-10-15",
+          endDate: "2026-10-31",
+        });
       expect(byDateRange.status).toBe(200);
       expect(byDateRange.body.data.map((purchase) => purchase.id)).toEqual(
         expect.arrayContaining([
