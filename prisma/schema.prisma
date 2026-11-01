@@ -39,6 +39,25 @@ enum MachineStatus {
   DECOMMISSIONED
 }
 
+// The printing ink technology.
+enum InkType {
+  UV
+  SOLVENT
+  ECO_SOLVENT
+  SUBLIMATION
+  LATEX
+  OTHER
+}
+
+// The physical packaging format of an ink product.
+enum InkPackagingType {
+  BOTTLE
+  POUCH
+  CARTRIDGE
+  BULK
+  OTHER
+}
+
 
 // ============================================================
 // MANUFACTURER
@@ -69,6 +88,9 @@ model Manufacturer {
   // Relationship: one manufacturer can have many machine models.
   // This is the reverse side of MachineModel.manufacturer.
   models    MachineModel[]
+
+  // One manufacturer can have multiple ink families.
+  inkModels InkModel[]
 }
 
 
@@ -366,3 +388,76 @@ model Machine {
 //   machineModel      MachineModel  @relation(fields: [machineModelId], references: [id])
 //   site              CustomerSite  @relation(fields: [siteId], references: [id])
 // }
+
+
+// ============================================================
+// INK MODEL
+// Represents an ink family, for example Mimaki LUS-120.
+// Individual colours and packaging variants are stored in InkProduct.
+// ============================================================
+
+model InkModel {
+  id             String       @id @default(uuid()) @db.Uuid
+  version        Int          @default(0)
+  manufacturerId String       @db.Uuid
+  inkName        String
+  inkType        InkType
+  notes          String?
+
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  manufacturer   Manufacturer @relation(fields: [manufacturerId], references: [id])
+  products       InkProduct[]
+
+  // An ink name must be unique within its manufacturer.
+  @@unique([manufacturerId, inkName])
+}
+
+
+// ============================================================
+// INK PRODUCT
+// Represents a purchasable colour and packaging configuration.
+// Capacity is stored in millilitres for consistent calculations.
+// ============================================================
+
+model InkProduct {
+  id            String           @id @default(uuid()) @db.Uuid
+  version       Int              @default(0)
+  inkModelId    String           @db.Uuid
+  productCode   String?          @unique
+  color         String
+  packagingType InkPackagingType
+  capacityMl    Int
+
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  inkModel      InkModel         @relation(fields: [inkModelId], references: [id])
+  lots          InkLot[]
+}
+
+
+// ============================================================
+// INK LOT
+// Represents a manufactured batch of an ink product.
+// Expiry date and quantity are tracked at lot level.
+// Quantity represents physical packages, not millilitres.
+// ============================================================
+
+model InkLot {
+  id           String     @id @default(uuid()) @db.Uuid
+  version      Int        @default(0)
+  inkProductId String     @db.Uuid
+  lotNumber    String
+  expiryDate   DateTime   @db.Date
+  quantity     Int        @default(0)
+
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  inkProduct   InkProduct @relation(fields: [inkProductId], references: [id])
+
+  // A lot number must be unique within its ink product.
+  @@unique([inkProductId, lotNumber])
+}
