@@ -3,10 +3,11 @@ from __future__ import annotations
 from collections import defaultdict
 from datetime import date
 
+import numpy as np
 import pandas as pd
 
 from .forecasting import generate_forecast
-from .schemas import ForecastRequest, PurchaseRecord
+from .schemas import ForecastRequest
 
 
 def _metrics(observations: list[dict]) -> dict:
@@ -61,19 +62,101 @@ def _metrics(observations: list[dict]) -> dict:
     }
 
 
+def _metrics_by_lead(observations: list[dict], horizon_months: int) -> dict:
+    return {
+        str(lead): _metrics([
+            item for item in observations if item["lead_month"] == lead
+        ])
+        for lead in range(1, horizon_months + 1)
+    }
+
+
+def _metrics_by_color(observations: list[dict], colours: list[str]) -> dict:
+    return {
+        color: _metrics([
+            item for item in observations if item["color"] == color
+        ])
+        for color in colours
+    }
+
+
+def _generate_unseasonal_predictions(
+    training_request: ForecastRequest,
+    colours: list[str],
+) -> dict:
+    """Calculate monthly-average predictions without seasonal multipliers."""
+    frame = pd.DataFrame([
+        {
+            "purchased_at": record.purchased_at,
+            "color": record.color,
+            "quantity": record.quantity,
+        }
+        for record in training_request.history
+    ])
+    frame["month"] = pd.to_datetime(
+        frame["purchased_at"]
+    ).dt.to_period("M")
+
+    first_history_month = frame["month"].min()
+    last_history_month = frame["month"].max()
+    history_index = pd.period_range(
+        first_history_month, last_history_month, freq="M"
+    )
+    monthly_totals = frame.groupby(["color", "month"])["quantity"].sum()
+
+    forecast_start = pd.Period(
+        training_request.forecast_start_month, freq="M"
+    )
+    forecast_periods = pd.period_range(
+        start=forecast_start,
+        periods=training_request.horizon_months,
+        freq="M",
+    )
+
+    predictions = {}
+    for color in colours:
+        if color in monthly_totals.index.get_level_values("color"):
+            colour_history = monthly_totals.xs(
+                color, level="color"
+            ).reindex(history_index, fill_value=0)
+            average = float(np.mean(colour_history.to_numpy(dtype=float)))
+        else:
+            average = 0.0
+
+        for period in forecast_periods:
+            predictions[(period, color)] = average
+
+    return predictions
+
+
+def _build_model_result(
+    observations: list[dict],
+    colours: list[str],
+    horizon_months: int,
+) -> dict:
+    return {
+        "metrics": _metrics(observations),
+        "metrics_by_lead_month": _metrics_by_lead(
+            observations, horizon_months
+        ),
+        "metrics_by_color": _metrics_by_color(observations, colours),
+        "observations": observations,
+    }
+
+
 def run_backtest(
     request: ForecastRequest,
     evaluation_months: int = 12,
     horizon_months: int = 3,
     min_training_months: int = 12,
 ) -> dict:
-    """Evaluate rolling forecasts against a trailing window of actual purchases.
+    """Compare seasonal and unseasonal rolling forecasts on identical data.
 
     Each evaluation month receives one-, two-, and three-month-ahead
     predictions. Forecast origins begin horizon_months - 1 months before
     the evaluation window so every evaluation month has every lead time.
     Only purchase records dated before a forecast origin are used to train
-    that origin's forecast.
+    that origin's forecasts. Both models receive the exact same records.
     """
     if evaluation_months < 1:
         raise ValueError("evaluation_months must be at least 1.")
@@ -98,7 +181,7 @@ def run_backtest(
     last_history_month = history_frame["month"].max()
     evaluation_start = last_history_month - (evaluation_months - 1)
     first_origin = evaluation_start - (horizon_months - 1)
-    available_training_months = (first_origin - first_history_month).n + 0
+    available_training_months = (first_origin - first_history_month).n
 
     if available_training_months < min_training_months:
         raise ValueError(
@@ -112,7 +195,9 @@ def run_backtest(
         history_frame.groupby(["month", "color"])["quantity"].sum().to_dict()
     )
 
-    observations = []
+    seasonal_observations = []
+    baseline_observations = []
+    origin_details = []
     forecast_origins = pd.period_range(
         start=first_origin, end=last_history_month, freq="M"
     )
@@ -123,9 +208,7 @@ def run_backtest(
             for record in request.history
             if pd.Period(record.purchased_at, freq="M") < origin
         ]
-        training_months = (
-            origin - first_history_month
-        ).n
+        training_months = (origin - first_history_month).n
 
         if training_months < min_training_months:
             raise ValueError(
@@ -138,15 +221,29 @@ def run_backtest(
             "horizon_months": horizon_months,
             "forecast_start_month": date(origin.year, origin.month, 1),
         })
-        forecast = generate_forecast(training_request)
 
-        predictions = {}
-        for colour_result in forecast["colours"]:
+        # Seasonal model: use the existing production forecasting function.
+        seasonal_forecast = generate_forecast(training_request)
+        seasonal_predictions = {}
+        for colour_result in seasonal_forecast["colours"]:
             for month_result in colour_result["forecast"]:
-                predictions[
-                    (pd.Period(month_result["month"], freq="M"),
-                     colour_result["color"])
+                seasonal_predictions[
+                    (
+                        pd.Period(month_result["month"], freq="M"),
+                        colour_result["color"],
+                    )
                 ] = month_result["predicted_bottles"]
+
+        # Baseline model: same training records, without seasonal factors.
+        baseline_predictions = _generate_unseasonal_predictions(
+            training_request, colours
+        )
+
+        origin_details.append({
+            "origin_month": origin.to_timestamp().date().isoformat(),
+            "training_months": training_months,
+            "training_end_month": (origin - 1).to_timestamp().date().isoformat(),
+        })
 
         for lead_month in range(1, horizon_months + 1):
             target_month = origin + (lead_month - 1)
@@ -155,39 +252,62 @@ def run_backtest(
 
             for color in colours:
                 actual = monthly_actuals.get((target_month, color), 0)
-                predicted = predictions.get((target_month, color), 0.0)
-                observations.append({
-                    "month": target_month.to_timestamp().date().isoformat(),
-                    "color": color,
-                    "lead_month": lead_month,
-                    "predicted_bottles": round(float(predicted), 2),
-                    "actual_bottles": int(actual),
-                    "error_bottles": round(float(predicted) - actual, 2),
-                })
 
-    by_lead = {
-        str(lead): _metrics([
-            item for item in observations if item["lead_month"] == lead
-        ])
-        for lead in range(1, horizon_months + 1)
-    }
-    by_color = {
-        color: _metrics([
-            item for item in observations if item["color"] == color
-        ])
-        for color in colours
-    }
+                for observations, predictions in (
+                    (seasonal_observations, seasonal_predictions),
+                    (baseline_observations, baseline_predictions),
+                ):
+                    predicted = predictions.get((target_month, color), 0.0)
+                    observations.append({
+                        "month": target_month.to_timestamp().date().isoformat(),
+                        "color": color,
+                        "lead_month": lead_month,
+                        "predicted_bottles": round(float(predicted), 2),
+                        "actual_bottles": int(actual),
+                        "error_bottles": round(float(predicted) - actual, 2),
+                    })
 
+    seasonal_result = _build_model_result(
+        seasonal_observations, colours, horizon_months
+    )
+    baseline_result = _build_model_result(
+        baseline_observations, colours, horizon_months
+    )
+
+    seasonal_wape = seasonal_result["metrics"]["wape_percent"]
+    baseline_wape = baseline_result["metrics"]["wape_percent"]
+    if seasonal_wape is None or baseline_wape is None:
+        lower_wape_model = None
+        wape_difference = None
+    else:
+        wape_difference = round(baseline_wape - seasonal_wape, 2)
+        lower_wape_model = (
+            "seasonal"
+            if seasonal_wape < baseline_wape
+            else "baseline"
+            if baseline_wape < seasonal_wape
+            else "tie"
+        )
+
+    # Keep the original top-level seasonal metric keys for compatibility
+    # with scripts that used the first version of this backtesting tool.
     return {
-        "method": "rolling_origin_backtest",
+        "method": "rolling_origin_model_comparison",
         "evaluation_start_month": evaluation_start.to_timestamp().date().isoformat(),
         "evaluation_end_month": last_history_month.to_timestamp().date().isoformat(),
         "evaluation_months": evaluation_months,
         "horizon_months": horizon_months,
         "forecast_origins": len(forecast_origins),
         "training_months_at_first_origin": available_training_months,
-        "metrics": _metrics(observations),
-        "metrics_by_lead_month": by_lead,
-        "metrics_by_color": by_color,
-        "observations": observations,
+        "forecast_origin_details": origin_details,
+        "seasonal": seasonal_result,
+        "baseline": baseline_result,
+        "comparison": {
+            "wape_difference_percentage_points": wape_difference,
+            "lower_wape_model": lower_wape_model,
+        },
+        "metrics": seasonal_result["metrics"],
+        "metrics_by_lead_month": seasonal_result["metrics_by_lead_month"],
+        "metrics_by_color": seasonal_result["metrics_by_color"],
+        "observations": seasonal_result["observations"],
     }
