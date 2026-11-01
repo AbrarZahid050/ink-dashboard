@@ -9,7 +9,13 @@
   "scripts": {
     "start": "node code/server/server.js",
     "test": "vitest run",
-    "db:generate": "prisma generate"
+    "pretest": "npm run db:migrate:test",
+    "db:generate": "prisma generate",
+    "db:migrate:dev": "node scripts/database.js migrate dev",
+    "db:migrate:test": "node scripts/database.js migrate test",
+    "db:migrate:all": "npm run db:migrate:dev && npm run db:migrate:test",
+    "db:status:dev": "node scripts/database.js status dev",
+    "db:status:test": "node scripts/database.js status test"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.10.1",
