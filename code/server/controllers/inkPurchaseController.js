@@ -2,7 +2,7 @@ import * as inkPurchaseService from "../services/inkPurchaseService.js";
 
 // Retrieve purchase transactions matching query filters.
 export async function getAllInkPurchases(req, res) {
-  const purchases = await inkPurchaseService.findAllInkPurchases(req.query);
+  const purchases = await inkPurchaseService.findAllInkPurchases(req.inkPurchaseFilters);
 
   return res.status(200).json({
     success: true,
