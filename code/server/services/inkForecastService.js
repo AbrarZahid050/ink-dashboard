@@ -71,7 +71,7 @@ export async function generateInkForecast({
   // quantities by month and colour, including lines from multiple machines.
   const payload = {
     client_id: customerId,
-    machine_model: machineModel.modelName,
+    machine_model: `${machineModel.manufacturer.name} ${machineModel.modelName}`,
     ink_model: inkModel.inkName,
     horizon_months: horizonMonths,
     history: purchaseItems.map((item) => ({
