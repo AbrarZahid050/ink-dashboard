@@ -11,7 +11,7 @@ const purchaseItemSchema = z
       .min(0)
       .max(9999999999.99)
       .refine(
-        (value) => /^\\d+(\\.\\d{1,2})?$/.test(String(value)),
+        (value) => /^[0-9]+([.][0-9]{1,2})?$/.test(String(value)),
         "Unit price must have no more than two decimal places.",
       )
       .nullable()
