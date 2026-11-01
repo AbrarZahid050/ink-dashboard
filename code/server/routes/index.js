@@ -6,6 +6,7 @@ import customerRoutes from "./customerRoutes.js";
 import customerSiteRoutes from "./customerSiteRoutes.js";
 import inkModelRoutes from "./inkModelRoutes.js";
 import inkProductRoutes from "./inkProductRoutes.js";
+import inkLotRoutes from "./inkLotRoutes.js";
 
 const router = Router();
 
@@ -17,5 +18,6 @@ router.use("/customers", customerRoutes);
 router.use("/customer-sites", customerSiteRoutes);
 router.use("/ink-models", inkModelRoutes);
 router.use("/ink-products", inkProductRoutes);
+router.use("/ink-lots", inkLotRoutes);
 
 export default router;
