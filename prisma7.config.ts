@@ -3,12 +3,40 @@
 import "dotenv/config";
 import { defineConfig } from "prisma/config";
 
+const isTestEnvironment = process.env.NODE_ENV === "test";
+
+// Never fall back to the development database when running test migrations.
+const databaseUrl = isTestEnvironment
+  ? process.env.TEST_DATABASE_URL
+  : process.env.DATABASE_URL;
+
+if (!databaseUrl) {
+  throw new Error(
+    isTestEnvironment
+      ? "TEST_DATABASE_URL is not configured."
+      : "DATABASE_URL is not configured.",
+  );
+}
+
+// Keep Prisma CLI operations inside the dedicated test database.
+if (isTestEnvironment) {
+  const databaseName = decodeURIComponent(
+    new URL(databaseUrl).pathname.slice(1),
+  );
+
+  if (databaseName !== "ink_dashboard_test") {
+    throw new Error(
+      `Refusing to run test migrations against unexpected database: ${databaseName}`,
+    );
+  }
+}
+
 export default defineConfig({
   schema: "prisma/schema.prisma",
   migrations: {
     path: "prisma/migrations",
   },
   datasource: {
-    url: process.env["DATABASE_URL"],
+    url: databaseUrl,
   },
 });
