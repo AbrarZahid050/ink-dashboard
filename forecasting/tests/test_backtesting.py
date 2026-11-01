@@ -35,7 +35,7 @@ def make_request(history):
 
 
 def test_backtest_evaluates_trailing_window_at_every_lead_time():
-    request = make_request(make_history(months=24))
+    request = make_request(make_history(months=26))
 
     result = run_backtest(
         request,
@@ -44,12 +44,12 @@ def test_backtest_evaluates_trailing_window_at_every_lead_time():
         min_training_months=12,
     )
 
-    assert result["evaluation_start_month"] == "2024-01-01"
-    assert result["evaluation_end_month"] == "2024-12-01"
+    assert result["evaluation_start_month"] == "2024-03-01"
+    assert result["evaluation_end_month"] == "2025-02-01"
     assert result["evaluation_months"] == 12
     assert result["horizon_months"] == 3
     assert result["forecast_origins"] == 14
-    assert result["training_months_at_first_origin"] == 10 + 2
+    assert result["training_months_at_first_origin"] == 12
     assert result["metrics"]["sample_count"] == 12 * 2 * 3
     assert set(result["metrics_by_lead_month"]) == {"1", "2", "3"}
     assert all(
