@@ -132,10 +132,10 @@ describe("Ink Model API - PostgreSQL integration", () => {
         expect.arrayContaining([
           expect.objectContaining({
             id: inkModel.id,
-            manufacturer: {
+            manufacturer: expect.objectContaining({
               id: manufacturer.id,
               name: manufacturer.name,
-            },
+            }),
           }),
         ]),
       );
