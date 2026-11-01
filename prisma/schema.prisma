@@ -25,15 +25,6 @@ enum MachineTechnology {
   OTHER
 }
 
-// The technology/formulation family of an ink model.
-enum InkTechnology {
-  SOLVENT
-  LATEX
-  UV
-  SUBLIMATION
-  OTHER
-}
-
 // The physical configuration of a machine model.
 enum MachineConfiguration {
   ROLL_TO_ROLL
@@ -78,9 +69,6 @@ model Manufacturer {
   // Relationship: one manufacturer can have many machine models.
   // This is the reverse side of MachineModel.manufacturer.
   models    MachineModel[]
-
-  // One manufacturer can produce multiple ink models.
-  inkModels InkModel[]
 }
 
 
@@ -152,45 +140,6 @@ model MachineModel {
 // A customer can have multiple sites or branches.
 // Example: ABC Printing LLC.
 // ============================================================
-
-// ============================================================
-// INK MODEL
-// Stores specifications shared by ink products in the same
-// ink family. Examples: Mimaki LUS-120, SS21, and LUS-150.
-// Individual colours, product codes, and bottle sizes can be
-// stored as separate InkProduct records in a later phase.
-// ============================================================
-
-model InkModel {
-  // Primary key identifying this ink model.
-  id             String        @id @default(uuid()) @db.Uuid
-
-  // OCC version used to detect concurrent modifications.
-  version        Int           @default(0)
-
-  // Manufacturer that produces this ink model.
-  manufacturerId String        @db.Uuid
-
-  // Manufacturer's ink model/family name, e.g. LUS-120.
-  modelName      String
-
-  // Ink technology/formulation family.
-  technology     InkTechnology
-
-  // Optional notes about this ink model.
-  notes          String?
-
-  // Creation and modification timestamps.
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-
-  // Relationship to the manufacturer.
-  manufacturer   Manufacturer  @relation(fields: [manufacturerId], references: [id])
-
-  // Prevent duplicate ink model names for the same manufacturer.
-  @@unique([manufacturerId, modelName])
-}
-
 
 model Customer {
   // Primary key identifying the customer.
