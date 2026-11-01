@@ -5,7 +5,7 @@ export const api = createApi({
   baseQuery: fetchBaseQuery({
     baseUrl: '/api/v1',
   }),
-  tagTypes: ['Manufacturer', 'MachineModel', 'InkModel', 'InkProduct', 'Customer', 'CustomerSite', 'Machine'],
+  tagTypes: ['Manufacturer', 'MachineModel', 'InkModel', 'InkProduct', 'InkLot', 'Customer', 'CustomerSite', 'Machine'],
   endpoints: (builder) => ({
     getManufacturers: builder.query({
       query: () => '/manufacturers',
@@ -119,6 +119,34 @@ export const api = createApi({
       }),
       invalidatesTags: ['InkProduct', 'InkModel'],
     }),
+    getInkLots: builder.query({
+      query: () => '/ink-lots',
+      transformResponse: (response) => response.data ?? [],
+      providesTags: ['InkLot'],
+    }),
+    createInkLot: builder.mutation({
+      query: (inkLot) => ({
+        url: '/ink-lots',
+        method: 'POST',
+        body: inkLot,
+      }),
+      invalidatesTags: ['InkLot', 'InkProduct'],
+    }),
+    updateInkLot: builder.mutation({
+      query: ({ id, ...inkLot }) => ({
+        url: `/ink-lots/${id}`,
+        method: 'PATCH',
+        body: inkLot,
+      }),
+      invalidatesTags: ['InkLot', 'InkProduct'],
+    }),
+    deleteInkLot: builder.mutation({
+      query: (id) => ({
+        url: `/ink-lots/${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['InkLot', 'InkProduct'],
+    }),
     getMachines: builder.query({
       query: () => '/machines',
       transformResponse: (response) => response.data ?? [],
@@ -223,6 +251,10 @@ export const {
   useCreateInkProductMutation,
   useUpdateInkProductMutation,
   useDeleteInkProductMutation,
+  useGetInkLotsQuery,
+  useCreateInkLotMutation,
+  useUpdateInkLotMutation,
+  useDeleteInkLotMutation,
   useGetMachinesQuery,
   useCreateMachineMutation,
   useUpdateMachineMutation,
