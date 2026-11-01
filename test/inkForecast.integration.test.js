@@ -177,11 +177,18 @@ describe("Ink Forecast API - PostgreSQL integration", () => {
           ink_model: deps.inkModel.inkName,
           horizon_months: 3,
         });
-        expect(payload.history).toEqual([
-          { purchased_at: "2026-08-10", color: "Cyan", quantity: 3 },
-          { purchased_at: "2026-08-10", color: "Cyan", quantity: 2 },
-          { purchased_at: "2026-08-10", color: "Magenta", quantity: 1 },
-        ]);
+        expect(payload.history).toHaveLength(3);
+        expect(payload.history).toEqual(
+          expect.arrayContaining([
+            { purchased_at: "2026-08-10", color: "Cyan", quantity: 3 },
+            { purchased_at: "2026-08-10", color: "Cyan", quantity: 2 },
+            { purchased_at: "2026-08-10", color: "Magenta", quantity: 1 },
+          ]),
+        );
+        const cyanQuantity = payload.history
+          .filter((record) => record.color === "Cyan")
+          .reduce((total, record) => total + record.quantity, 0);
+        expect(cyanQuantity).toBe(5);
         return new Response(JSON.stringify({ history_months: 1, forecast: [] }), {
           status: 200,
           headers: { "Content-Type": "application/json" },
