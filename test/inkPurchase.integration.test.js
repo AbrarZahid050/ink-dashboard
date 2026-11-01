@@ -94,6 +94,15 @@ describe("Ink Purchase API - PostgreSQL integration", () => {
       },
     });
 
+    const inkProductTwo = await testPrisma.inkProduct.create({
+      data: {
+        inkModelId: inkModel.id,
+        color: "Magenta",
+        packagingType: "BOTTLE",
+        capacityMl: 1000,
+      },
+    });
+
     return {
       manufacturer,
       machineModel,
@@ -106,6 +115,7 @@ describe("Ink Purchase API - PostgreSQL integration", () => {
       otherMachine,
       inkModel,
       inkProduct,
+      inkProductTwo,
     };
   }
 
@@ -122,6 +132,7 @@ describe("Ink Purchase API - PostgreSQL integration", () => {
       otherMachine,
       inkModel,
       inkProduct,
+      inkProductTwo,
     } = dependencies;
 
     const purchases = await testPrisma.inkPurchase.findMany({
@@ -155,7 +166,7 @@ describe("Ink Purchase API - PostgreSQL integration", () => {
       where: { id: { in: [customer.id, otherCustomer.id] } },
     });
     await testPrisma.inkProduct.deleteMany({
-      where: { id: inkProduct.id },
+      where: { id: { in: [inkProduct.id, inkProductTwo.id] } },
     });
     await testPrisma.inkModel.deleteMany({
       where: { id: inkModel.id },
@@ -439,6 +450,121 @@ describe("Ink Purchase API - PostgreSQL integration", () => {
     } finally {
       await cleanupDependencies(dependencies);
     }
+  });
+
+  it("filters purchases by customer, machine, ink product and inclusive date range", async () => {
+    const dependencies = await createDependencies();
+
+    try {
+      const createPurchase = (input) =>
+        request(app).post("/api/v1/ink-purchases").send(input);
+
+      const customerMachineOne = await createPurchase(
+        purchaseInput(dependencies, {
+          purchasedAt: "2026-10-15",
+        }),
+      );
+      const customerMachineTwo = await createPurchase(
+        purchaseInput(dependencies, {
+          purchasedAt: "2026-10-31",
+          items: [
+            {
+              machineId: dependencies.machineTwo.id,
+              inkProductId: dependencies.inkProductTwo.id,
+              quantity: 2,
+            },
+          ],
+        }),
+      );
+      const otherCustomerPurchase = await createPurchase(
+        purchaseInput(dependencies, {
+          customerId: dependencies.otherCustomer.id,
+          purchasedAt: "2026-09-20",
+          items: [
+            {
+              machineId: dependencies.otherMachine.id,
+              inkProductId: dependencies.inkProduct.id,
+              quantity: 1,
+            },
+          ],
+        }),
+      );
+
+      expect(customerMachineOne.status).toBe(201);
+      expect(customerMachineTwo.status).toBe(201);
+      expect(otherCustomerPurchase.status).toBe(201);
+
+      const byCustomer = await request(app)
+        .get("/api/v1/ink-purchases")
+        .query({ customerId: dependencies.customer.id });
+      expect(byCustomer.status).toBe(200);
+      expect(byCustomer.body.data.map((purchase) => purchase.id)).toEqual(
+        expect.arrayContaining([
+          customerMachineOne.body.data.id,
+          customerMachineTwo.body.data.id,
+        ]),
+      );
+      expect(byCustomer.body.data).toHaveLength(2);
+
+      const byMachine = await request(app)
+        .get("/api/v1/ink-purchases")
+        .query({ machineId: dependencies.machineTwo.id });
+      expect(byMachine.status).toBe(200);
+      expect(byMachine.body.data.map((purchase) => purchase.id)).toEqual([
+        customerMachineTwo.body.data.id,
+      ]);
+
+      const byInkProduct = await request(app)
+        .get("/api/v1/ink-purchases")
+        .query({ inkProductId: dependencies.inkProductTwo.id });
+      expect(byInkProduct.status).toBe(200);
+      expect(byInkProduct.body.data.map((purchase) => purchase.id)).toEqual([
+        customerMachineTwo.body.data.id,
+      ]);
+
+      const byDateRange = await request(app)
+        .get("/api/v1/ink-purchases")
+        .query({ startDate: "2026-10-15", endDate: "2026-10-31" });
+      expect(byDateRange.status).toBe(200);
+      expect(byDateRange.body.data.map((purchase) => purchase.id)).toEqual(
+        expect.arrayContaining([
+          customerMachineOne.body.data.id,
+          customerMachineTwo.body.data.id,
+        ]),
+      );
+      expect(byDateRange.body.data).toHaveLength(2);
+
+      const combined = await request(app)
+        .get("/api/v1/ink-purchases")
+        .query({
+          customerId: dependencies.customer.id,
+          machineId: dependencies.machineTwo.id,
+          inkProductId: dependencies.inkProductTwo.id,
+          startDate: "2026-10-15",
+          endDate: "2026-10-31",
+        });
+      expect(combined.status).toBe(200);
+      expect(combined.body.data.map((purchase) => purchase.id)).toEqual([
+        customerMachineTwo.body.data.id,
+      ]);
+    } finally {
+      await cleanupDependencies(dependencies);
+    }
+  });
+
+  it("rejects invalid purchase-list query parameters", async () => {
+    const invalidId = await request(app)
+      .get("/api/v1/ink-purchases")
+      .query({ customerId: "not-a-uuid" });
+    expect(invalidId.status).toBe(400);
+
+    const invalidRange = await request(app)
+      .get("/api/v1/ink-purchases")
+      .query({
+        startDate: "2026-11-01",
+        endDate: "2026-10-01",
+      });
+    expect(invalidRange.status).toBe(400);
   });
 
   it("returns 404 when retrieving a purchase that does not exist", async () => {
