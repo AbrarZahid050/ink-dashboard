@@ -3,6 +3,9 @@ import { Box, CircularProgress } from '@mui/material'
 import MainLayout from './components/layout/MainLayout.jsx'
 
 const MachineModels = lazy(() => import('./pages/MachineModels.jsx'))
+const InkModels = lazy(() => import('./pages/InkModels.jsx'))
+const InkProducts = lazy(() => import('./pages/InkProducts.jsx'))
+const InkLots = lazy(() => import('./pages/InkLots.jsx'))
 const Manufacturers = lazy(() => import('./pages/Manufacturers.jsx'))
 const Customers = lazy(() => import('./pages/Customers.jsx'))
 const CustomerSites = lazy(() => import('./pages/CustomerSites.jsx'))
@@ -22,7 +25,13 @@ function App() {
   return (
     <MainLayout activePage={activePage} onNavigate={setActivePage}>
       <Suspense fallback={<PageLoader />}>
-        {activePage === 'Manufacturers' ? (
+        {activePage === 'Ink Models' ? (
+          <InkModels />
+        ) : activePage === 'Ink Products' ? (
+          <InkProducts />
+        ) : activePage === 'Ink Lots' ? (
+          <InkLots />
+        ) : activePage === 'Manufacturers' ? (
           <Manufacturers />
         ) : activePage === 'Customers' ? (
           <Customers />

@@ -20,3 +20,24 @@ coverage/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Python virtual environments
+.venv/
+venv/
+env/
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Python testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Python tooling caches
+.mypy_cache/
+.ruff_cache/
+
+# Python packaging
+*.egg-info/
