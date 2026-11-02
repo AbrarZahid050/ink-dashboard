@@ -24,7 +24,7 @@ function Header({ onMenuClick, isMobile }) {
         ml: { md: '256px' },
         borderBottom: 1,
         borderColor: 'divider',
-        backgroundColor: 'rgba(255,255,255,0.88)',
+        backgroundColor: 'rgba(15, 22, 39, 0.88)',
         backdropFilter: 'blur(16px)',
       }}
     >
@@ -44,14 +44,14 @@ function Header({ onMenuClick, isMobile }) {
             px: 1.5,
             py: 0.9,
             border: 1,
-            borderColor: '#E6EAF1',
+            borderColor: '#303B54',
             borderRadius: 2.5,
             color: 'text.secondary',
-            backgroundColor: '#F7F8FC',
+            backgroundColor: '#111A2C',
             transition: 'border-color 160ms ease, background-color 160ms ease',
             '&:focus-within': {
               borderColor: 'primary.main',
-              backgroundColor: '#FFFFFF',
+              backgroundColor: '#151F34',
             },
           }}
         >
@@ -66,7 +66,7 @@ function Header({ onMenuClick, isMobile }) {
               '& input::placeholder': { color: 'text.secondary', opacity: 1 },
             }}
           />
-          <Typography variant="caption" sx={{ color: '#98A3B7', border: '1px solid #E1E6EF', borderRadius: 1, px: 0.7, py: 0.15 }}>
+          <Typography variant="caption" sx={{ color: '#77849D', border: '1px solid #35415B', borderRadius: 1, px: 0.7, py: 0.15 }}>
             /
           </Typography>
         </Box>
@@ -78,16 +78,16 @@ function Header({ onMenuClick, isMobile }) {
           sx={{
             mr: 1.25,
             color: 'text.secondary',
-            border: '1px solid #E9EDF4',
+            border: '1px solid #303B54',
             borderRadius: 2.5,
             width: 38,
             height: 38,
-            '&:hover': { backgroundColor: '#F4F6FA' },
+            '&:hover': { backgroundColor: '#1A263D' },
           }}
         >
           <NotificationsNoneRounded fontSize="small" />
         </IconButton>
-        <Avatar sx={{ width: 36, height: 36, bgcolor: '#E8ECFF', color: '#4059D8', fontSize: 13, fontWeight: 750 }}>
+        <Avatar sx={{ width: 36, height: 36, bgcolor: '#29345D', color: '#B8C2FF', fontSize: 13, fontWeight: 750 }}>
           A
         </Avatar>
         <Box sx={{ display: { xs: 'none', sm: 'block' }, ml: 1.25 }}>
