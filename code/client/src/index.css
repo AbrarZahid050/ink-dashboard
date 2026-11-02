@@ -5,8 +5,8 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
-  color: #E8EEF8;
-  background: #0B1220;
+  color: #17233B;
+  background: #F4F6FA;
 }
 
 * {
@@ -23,4 +23,5 @@ body,
 
 body {
   min-height: 100vh;
+  background: #F4F6FA;
 }
