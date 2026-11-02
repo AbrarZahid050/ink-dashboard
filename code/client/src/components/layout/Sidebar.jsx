@@ -37,21 +37,21 @@ function Sidebar({ mobileOpen, onClose, isMobile, activePage, onNavigate }) {
 
   const drawerContent = (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      <Box sx={{ px: 3, py: 3 }}>
-        <Typography variant="h5" sx={{ color: '#FFFFFF', fontWeight: 800, letterSpacing: '-0.04em' }}>
-          ink<span style={{ color: '#45C7B8' }}>.</span>
+      <Box sx={{ px: 3, py: 3.1 }}>
+        <Typography variant="h5" sx={{ color: '#FFFFFF', fontWeight: 800, letterSpacing: '-0.05em' }}>
+          ink<span style={{ color: '#5EEAD4' }}>.</span>
         </Typography>
-        <Typography variant="caption" sx={{ color: 'rgba(232,238,248,0.58)' }}>
+        <Typography variant="caption" sx={{ color: 'rgba(226,232,240,0.58)', letterSpacing: '0.015em' }}>
           Equipment management
         </Typography>
       </Box>
 
-      <Divider sx={{ borderColor: 'rgba(232,238,248,0.10)' }} />
+      <Divider sx={{ borderColor: 'rgba(226,232,240,0.10)' }} />
 
       <Box sx={{ px: 2, pt: 3, pb: 1 }}>
         <Typography
           variant="overline"
-          sx={{ px: 1.5, color: 'rgba(232,238,248,0.48)', fontWeight: 700, letterSpacing: '0.1em' }}
+          sx={{ px: 1.5, color: 'rgba(226,232,240,0.42)', fontWeight: 750, letterSpacing: '0.13em', fontSize: 10 }}
         >
           WORKSPACE
         </Typography>
@@ -68,45 +68,47 @@ function Sidebar({ mobileOpen, onClose, isMobile, activePage, onNavigate }) {
             }}
             sx={{
               minHeight: 46,
-              mb: 0.5,
+              mb: 0.55,
               px: 1.5,
-              borderRadius: 2,
-              color: 'rgba(232,238,248,0.72)',
+              borderRadius: 2.5,
+              color: 'rgba(226,232,240,0.68)',
+              transition: 'background-color 150ms ease, color 150ms ease',
               '& .MuiListItemIcon-root': { color: 'inherit', minWidth: 38 },
               '&.Mui-selected': {
                 color: '#FFFFFF',
-                backgroundColor: 'rgba(69,199,184,0.15)',
-                '& .MuiListItemIcon-root': { color: '#45C7B8' },
+                backgroundColor: 'rgba(94,234,212,0.13)',
+                boxShadow: 'inset 3px 0 0 #5EEAD4',
+                '& .MuiListItemIcon-root': { color: '#5EEAD4' },
               },
-              '&.Mui-selected:hover': { backgroundColor: 'rgba(69,199,184,0.22)' },
-              '&:hover': { backgroundColor: 'rgba(232,238,248,0.07)' },
+              '&.Mui-selected:hover': { backgroundColor: 'rgba(94,234,212,0.18)' },
+              '&:hover': { backgroundColor: 'rgba(226,232,240,0.07)', color: '#FFFFFF' },
             }}
           >
             <ListItemIcon>{item.icon}</ListItemIcon>
             <ListItemText
               primary={item.label}
-              primaryTypographyProps={{ fontSize: 14, fontWeight: 600 }}
+              primaryTypographyProps={{ fontSize: 13.5, fontWeight: 600 }}
             />
           </ListItemButton>
         ))}
       </List>
 
       <Box sx={{ mt: 'auto' }}>
-        <Divider sx={{ borderColor: 'rgba(232,238,248,0.10)' }} />
+        <Divider sx={{ borderColor: 'rgba(226,232,240,0.10)' }} />
         <List sx={{ px: 1.5, py: 2 }}>
           <ListItemButton
             onClick={isMobile ? onClose : undefined}
             sx={{
               minHeight: 46,
               px: 1.5,
-              borderRadius: 2,
-              color: 'rgba(232,238,248,0.72)',
+              borderRadius: 2.5,
+              color: 'rgba(226,232,240,0.68)',
               '& .MuiListItemIcon-root': { color: 'inherit', minWidth: 38 },
-              '&:hover': { backgroundColor: 'rgba(232,238,248,0.07)' },
+              '&:hover': { backgroundColor: 'rgba(226,232,240,0.07)', color: '#FFFFFF' },
             }}
           >
             <ListItemIcon><SettingsOutlined fontSize="small" /></ListItemIcon>
-            <ListItemText primary="Settings" primaryTypographyProps={{ fontSize: 14, fontWeight: 500 }} />
+            <ListItemText primary="Settings" primaryTypographyProps={{ fontSize: 13.5, fontWeight: 550 }} />
           </ListItemButton>
         </List>
       </Box>
@@ -126,8 +128,9 @@ function Sidebar({ mobileOpen, onClose, isMobile, activePage, onNavigate }) {
           width: drawerWidth,
           boxSizing: 'border-box',
           border: 0,
-          backgroundColor: '#0D192B',
+          background: 'linear-gradient(180deg, #17243B 0%, #111D31 100%)',
           color: '#FFFFFF',
+          boxShadow: '4px 0 24px rgba(16, 29, 49, 0.08)',
         },
       }}
     >
