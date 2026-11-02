@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { BusinessOutlined, CloseRounded, EditOutlined } from '@mui/icons-material'
 import {
   Alert,
+  Avatar,
   Box,
   Button,
   CircularProgress,
@@ -27,6 +28,47 @@ import {
   useUpdateManufacturerMutation,
 } from '../../../services/api.js'
 import { getApiErrorMessage } from '../../machine-models/utils/getApiErrorMessage.js'
+
+const MANUFACTURER_LOGOS = [
+  {
+    names: ['mimaki'],
+    url: 'https://commons.wikimedia.org/wiki/Special:FilePath/Mimaki_Engineering_logo.svg',
+  },
+  {
+    names: ['roland', 'roland dg', 'roland digital group'],
+    url: 'https://commons.wikimedia.org/wiki/Special:FilePath/Roland_Digital_Group_logo.svg',
+  },
+  {
+    names: ['epson', 'seiko epson'],
+    url: 'https://commons.wikimedia.org/wiki/Special:FilePath/Epson_logo.svg',
+  },
+  {
+    names: ['hp', 'hewlett-packard', 'hewlett packard'],
+    url: 'https://commons.wikimedia.org/wiki/Special:FilePath/HP_logo_2025.svg',
+  },
+  {
+    names: ['canon'],
+    url: 'https://commons.wikimedia.org/wiki/Special:FilePath/Canon_wordmark.svg',
+  },
+  {
+    names: ['mutoh', 'mutoh industries'],
+    url: 'https://commons.wikimedia.org/wiki/Special:FilePath/Mutoh_logo.svg',
+  },
+]
+
+function getManufacturerLogoUrl(name) {
+  const normalizedName = name?.trim().toLowerCase()
+  return MANUFACTURER_LOGOS.find(({ names }) => names.includes(normalizedName))?.url
+}
+
+function getManufacturerInitials(name) {
+  return name
+    ?.trim()
+    .split(/\\s+/)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join('') || '?'
+}
 
 function ManufacturersTable({ manufacturers, loading }) {
   const [manufacturerToEdit, setManufacturerToEdit] = useState(null)
@@ -131,6 +173,7 @@ function ManufacturersTable({ manufacturers, loading }) {
             <Table>
               <TableHead>
                 <TableRow>
+                  <TableCell sx={{ width: 88 }}>Logo</TableCell>
                   <TableCell>Manufacturer</TableCell>
                   <TableCell align="right" sx={{ width: 112 }}>Actions</TableCell>
                 </TableRow>
@@ -138,6 +181,24 @@ function ManufacturersTable({ manufacturers, loading }) {
               <TableBody>
                 {manufacturers.map((manufacturer) => (
                   <TableRow key={manufacturer.id} hover>
+                    <TableCell>
+                      <Avatar
+                        src={getManufacturerLogoUrl(manufacturer.name)}
+                        alt={`${manufacturer.name} logo`}
+                        variant="rounded"
+                        sx={{
+                          width: 52,
+                          height: 42,
+                          bgcolor: 'action.hover',
+                          color: 'text.secondary',
+                          fontSize: 13,
+                          fontWeight: 700,
+                          '& img': { objectFit: 'contain', p: 0.5 },
+                        }}
+                      >
+                        {getManufacturerInitials(manufacturer.name)}
+                      </Avatar>
+                    </TableCell>
                     <TableCell sx={{ fontWeight: 600 }}>{manufacturer.name}</TableCell>
                     <TableCell align="right">
                       <Tooltip title={`Edit ${manufacturer.name}`}>
