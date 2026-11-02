@@ -39,19 +39,19 @@ function Sidebar({ mobileOpen, onClose, isMobile, activePage, onNavigate }) {
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <Box sx={{ px: 3, py: 3.1 }}>
         <Typography variant="h5" sx={{ color: '#FFFFFF', fontWeight: 800, letterSpacing: '-0.05em' }}>
-          ink<span style={{ color: '#5EEAD4' }}>.</span>
+          ink<span style={{ color: '#55D6C2' }}>.</span>
         </Typography>
-        <Typography variant="caption" sx={{ color: 'rgba(226,232,240,0.58)', letterSpacing: '0.015em' }}>
+        <Typography variant="caption" sx={{ color: 'rgba(226,232,240,0.52)', letterSpacing: '0.015em' }}>
           Equipment management
         </Typography>
       </Box>
 
-      <Divider sx={{ borderColor: 'rgba(226,232,240,0.10)' }} />
+      <Divider sx={{ borderColor: 'rgba(226,232,240,0.09)' }} />
 
       <Box sx={{ px: 2, pt: 3, pb: 1 }}>
         <Typography
           variant="overline"
-          sx={{ px: 1.5, color: 'rgba(226,232,240,0.42)', fontWeight: 750, letterSpacing: '0.13em', fontSize: 10 }}
+          sx={{ px: 1.5, color: 'rgba(226,232,240,0.38)', fontWeight: 750, letterSpacing: '0.13em', fontSize: 10 }}
         >
           WORKSPACE
         </Typography>
@@ -71,17 +71,17 @@ function Sidebar({ mobileOpen, onClose, isMobile, activePage, onNavigate }) {
               mb: 0.55,
               px: 1.5,
               borderRadius: 2.5,
-              color: 'rgba(226,232,240,0.68)',
+              color: 'rgba(226,232,240,0.62)',
               transition: 'background-color 150ms ease, color 150ms ease',
               '& .MuiListItemIcon-root': { color: 'inherit', minWidth: 38 },
               '&.Mui-selected': {
-                color: '#FFFFFF',
-                backgroundColor: 'rgba(94,234,212,0.13)',
-                boxShadow: 'inset 3px 0 0 #5EEAD4',
-                '& .MuiListItemIcon-root': { color: '#5EEAD4' },
+                color: '#F5F7FF',
+                backgroundColor: 'rgba(85,214,194,0.12)',
+                boxShadow: 'inset 3px 0 0 #55D6C2',
+                '& .MuiListItemIcon-root': { color: '#55D6C2' },
               },
-              '&.Mui-selected:hover': { backgroundColor: 'rgba(94,234,212,0.18)' },
-              '&:hover': { backgroundColor: 'rgba(226,232,240,0.07)', color: '#FFFFFF' },
+              '&.Mui-selected:hover': { backgroundColor: 'rgba(85,214,194,0.17)' },
+              '&:hover': { backgroundColor: 'rgba(226,232,240,0.065)', color: '#FFFFFF' },
             }}
           >
             <ListItemIcon>{item.icon}</ListItemIcon>
@@ -94,7 +94,7 @@ function Sidebar({ mobileOpen, onClose, isMobile, activePage, onNavigate }) {
       </List>
 
       <Box sx={{ mt: 'auto' }}>
-        <Divider sx={{ borderColor: 'rgba(226,232,240,0.10)' }} />
+        <Divider sx={{ borderColor: 'rgba(226,232,240,0.09)' }} />
         <List sx={{ px: 1.5, py: 2 }}>
           <ListItemButton
             onClick={isMobile ? onClose : undefined}
@@ -102,9 +102,9 @@ function Sidebar({ mobileOpen, onClose, isMobile, activePage, onNavigate }) {
               minHeight: 46,
               px: 1.5,
               borderRadius: 2.5,
-              color: 'rgba(226,232,240,0.68)',
+              color: 'rgba(226,232,240,0.62)',
               '& .MuiListItemIcon-root': { color: 'inherit', minWidth: 38 },
-              '&:hover': { backgroundColor: 'rgba(226,232,240,0.07)', color: '#FFFFFF' },
+              '&:hover': { backgroundColor: 'rgba(226,232,240,0.065)', color: '#FFFFFF' },
             }}
           >
             <ListItemIcon><SettingsOutlined fontSize="small" /></ListItemIcon>
@@ -128,9 +128,9 @@ function Sidebar({ mobileOpen, onClose, isMobile, activePage, onNavigate }) {
           width: drawerWidth,
           boxSizing: 'border-box',
           border: 0,
-          background: 'linear-gradient(180deg, #17243B 0%, #111D31 100%)',
+          background: 'linear-gradient(180deg, #0D1425 0%, #090F1D 100%)',
           color: '#FFFFFF',
-          boxShadow: '4px 0 24px rgba(16, 29, 49, 0.08)',
+          boxShadow: '4px 0 28px rgba(0, 0, 0, 0.22)',
         },
       }}
     >
