@@ -1,11 +1,11 @@
 import { useMemo, useState } from 'react'
 import {
-  AddRounded, ArrowDownwardRounded, ArrowUpwardRounded, ReceiptLongRounded,
+  AddRounded, ArrowUpwardRounded, ReceiptLongRounded,
   RefreshRounded, RemoveCircleOutlineRounded, SearchRounded, ShoppingCartCheckoutRounded,
 } from '@mui/icons-material'
 import {
-  Alert, Box, Button, Chip, CircularProgress, Divider, FormControl, Grid,
-  IconButton, InputAdornment, MenuItem, Paper, Select, Snackbar, Stack,
+  Alert, Box, Button, Chip, CircularProgress, Divider, Grid,
+  IconButton, InputAdornment, MenuItem, Paper, Snackbar, Stack,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField,
   Typography,
 } from '@mui/material'
@@ -50,7 +50,6 @@ function Sales() {
   const [search, setSearch] = useState('')
   const [notice, setNotice] = useState('')
   const [formError, setFormError] = useState('')
-  const [historyError, setHistoryError] = useState('')
   const { data: customers = [], isLoading: customersLoading } = useGetCustomersQuery()
   const { data: products = [], isLoading: productsLoading } = useGetInkProductsQuery()
   const { data: machines = [], isLoading: machinesLoading } = useGetMachinesQuery()
