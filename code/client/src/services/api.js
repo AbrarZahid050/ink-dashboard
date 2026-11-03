@@ -280,6 +280,8 @@ export const {
   useUpdateMachineMutation,
   useDeleteMachineMutation,
   useGetCustomersQuery,
+  useGetInkPurchasesQuery,
+  useCreateInkPurchaseMutation,
   useLazyGetInkForecastQuery,
   useCreateCustomerMutation,
   useUpdateCustomerMutation,
