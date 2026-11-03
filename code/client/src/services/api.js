@@ -5,7 +5,7 @@ export const api = createApi({
   baseQuery: fetchBaseQuery({
     baseUrl: '/api/v1',
   }),
-  tagTypes: ['Manufacturer', 'MachineModel', 'InkModel', 'InkProduct', 'InkLot', 'Customer', 'CustomerSite', 'Machine'],
+  tagTypes: ['Manufacturer', 'MachineModel', 'InkModel', 'InkProduct', 'InkLot', 'Customer', 'CustomerSite', 'Machine', 'InkPurchase'],
   endpoints: (builder) => ({
     getManufacturers: builder.query({
       query: () => '/manufacturers',
@@ -174,6 +174,19 @@ export const api = createApi({
         method: 'DELETE',
       }),
       invalidatesTags: ['Machine', 'CustomerSite', 'MachineModel'],
+    }),
+    getInkPurchases: builder.query({
+      query: (filters = {}) => ({ url: '/ink-purchases', params: filters }),
+      transformResponse: (response) => response.data ?? [],
+      providesTags: ['InkPurchase'],
+    }),
+    createInkPurchase: builder.mutation({
+      query: (purchase) => ({
+        url: '/ink-purchases',
+        method: 'POST',
+        body: purchase,
+      }),
+      invalidatesTags: ['InkPurchase'],
     }),
     getInkForecast: builder.query({
       query: ({ customerId, machineModelId, inkModelId, horizonMonths = 3 }) => ({
