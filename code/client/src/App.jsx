@@ -11,6 +11,7 @@ const Customers = lazy(() => import('./pages/Customers.jsx'))
 const CustomerSites = lazy(() => import('./pages/CustomerSites.jsx'))
 const Machines = lazy(() => import('./pages/Machines.jsx'))
 const InkForecasts = lazy(() => import('./pages/InkForecasts.jsx'))
+const Sales = lazy(() => import('./pages/Sales.jsx'))
 
 function PageLoader() {
   return (
