@@ -94,16 +94,11 @@ function Sales() {
     if (items.some((item) => item.unitPrice !== '' && (!Number.isFinite(Number(item.unitPrice)) || Number(item.unitPrice) < 0))) {
       return setFormError('Unit prices must be zero or greater.')
     }
-    // The current API schema requires a machine on every line. Keep this guard
-    // explicit until the backend supports customer purchases without machines.
-    if (items.some((item) => !item.machineId)) {
-      return setFormError('The current purchase API requires a machine for every line. Backend support is needed for customer-only ink purchases.')
-    }
     try {
       await createPurchase({
         customerId, purchasedAt, reference: reference.trim() || null, currencyCode,
         items: items.map(({ inkProductId, machineId, quantity, unitPrice }) => ({
-          inkProductId, machineId, quantity: Number(quantity),
+          inkProductId, machineId: machineId || null, quantity: Number(quantity),
           unitPrice: unitPrice === '' ? null : Number(Number(unitPrice).toFixed(2)),
         })),
       }).unwrap()
