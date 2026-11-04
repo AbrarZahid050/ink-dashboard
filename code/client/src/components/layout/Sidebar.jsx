@@ -1,6 +1,7 @@
 import {
   BusinessOutlined,
   ColorLensOutlined,
+  DashboardOutlined,
   Inventory2Outlined,
   GroupsOutlined,
   LocationOnOutlined,
@@ -25,6 +26,7 @@ const drawerWidth = 256
 
 function Sidebar({ mobileOpen, onClose, isMobile, activePage, onNavigate }) {
   const navigationItems = [
+    { label: 'Dashboard', icon: <DashboardOutlined fontSize="small" /> },
     { label: 'Machine Models', icon: <ViewInArOutlined fontSize="small" /> },
     { label: 'Ink Models', icon: <ColorLensOutlined fontSize="small" /> },
     { label: 'Ink Products', icon: <Inventory2Outlined fontSize="small" /> },
