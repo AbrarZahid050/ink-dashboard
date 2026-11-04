@@ -43,6 +43,8 @@ function App() {
           <Machines />
         ) : activePage === 'Ink Forecasts' ? (
           <InkForecasts />
+        ) : activePage === 'Sales' ? (
+          <Sales />
         ) : (
           <MachineModels />
         )}
