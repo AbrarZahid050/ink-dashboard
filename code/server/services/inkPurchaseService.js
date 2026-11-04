@@ -91,8 +91,8 @@ export async function createInkPurchase(data) {
       throw new ApiError(404, "Customer not found.");
     }
 
-    const machineIds = [...new Set(data.items.map((item) => item.machineId))];
-    const machines = await tx.machine.findMany({
+    const machineIds = [...new Set(data.items.map((item) => item.machineId).filter(Boolean))];
+    const machines = machineIds.length === 0 ? [] : await tx.machine.findMany({
       where: { id: { in: machineIds } },
       select: {
         id: true,
@@ -137,7 +137,7 @@ export async function createInkPurchase(data) {
         currencyCode: data.currencyCode,
         items: {
           create: data.items.map((item) => ({
-            machineId: item.machineId,
+            machineId: item.machineId ?? null,
             inkProductId: item.inkProductId,
             quantity: item.quantity,
             unitPrice: item.unitPrice,
