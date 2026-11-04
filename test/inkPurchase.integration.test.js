@@ -260,6 +260,42 @@ describe("Ink Purchase API - PostgreSQL integration", () => {
     }
   });
 
+  it("creates a purchase for a customer without assigning ink to a machine", async () => {
+    const dependencies = await createDependencies();
+
+    try {
+      const response = await request(app)
+        .post("/api/v1/ink-purchases")
+        .send(
+          purchaseInput(dependencies, {
+            items: [
+              {
+                inkProductId: dependencies.inkProduct.id,
+                quantity: 4,
+                unitPrice: 125.5,
+              },
+            ],
+          }),
+        );
+
+      expect(response.status).toBe(201);
+      expect(response.body.data.items).toHaveLength(1);
+      expect(response.body.data.items[0]).toMatchObject({
+        machineId: null,
+        machine: null,
+        inkProductId: dependencies.inkProduct.id,
+        quantity: 4,
+      });
+
+      const persisted = await testPrisma.inkPurchaseItem.findFirst({
+        where: { inkPurchaseId: response.body.data.id },
+      });
+      expect(persisted.machineId).toBeNull();
+    } finally {
+      await cleanupDependencies(dependencies);
+    }
+  });
+
   it("rejects the entire purchase when one line references another customer's machine", async () => {
     const dependencies = await createDependencies();
 
