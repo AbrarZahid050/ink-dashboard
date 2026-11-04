@@ -2,6 +2,7 @@ import { lazy, Suspense, useState } from 'react'
 import { Box, CircularProgress } from '@mui/material'
 import MainLayout from './components/layout/MainLayout.jsx'
 
+const Dashboard = lazy(() => import('./pages/Dashboard.jsx'))
 const MachineModels = lazy(() => import('./pages/MachineModels.jsx'))
 const InkModels = lazy(() => import('./pages/InkModels.jsx'))
 const InkProducts = lazy(() => import('./pages/InkProducts.jsx'))
@@ -22,12 +23,14 @@ function PageLoader() {
 }
 
 function App() {
-  const [activePage, setActivePage] = useState('Machine Models')
+  const [activePage, setActivePage] = useState('Dashboard')
 
   return (
     <MainLayout activePage={activePage} onNavigate={setActivePage}>
       <Suspense fallback={<PageLoader />}>
-        {activePage === 'Ink Models' ? (
+        {activePage === 'Dashboard' ? (
+          <Dashboard />
+        ) : activePage === 'Ink Models' ? (
           <InkModels />
         ) : activePage === 'Ink Products' ? (
           <InkProducts />
