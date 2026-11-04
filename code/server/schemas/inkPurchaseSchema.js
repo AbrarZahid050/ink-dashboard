@@ -2,7 +2,7 @@ import { z } from "zod";
 
 const purchaseItemSchema = z
   .object({
-    machineId: z.uuid(),
+    machineId: z.uuid().nullable().optional(),
     inkProductId: z.uuid(),
     quantity: z.number().int().positive(),
     unitPrice: z
