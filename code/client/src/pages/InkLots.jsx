@@ -42,12 +42,17 @@ import {
 } from '../services/api.js'
 import { getApiErrorMessage } from '../features/machine-models/utils/getApiErrorMessage.js'
 
-const initialValues = {
+const generateLotNumber = () => {
+  const randomPart = Math.random().toString(36).slice(2, 8).toUpperCase()
+  return `LOT-${new Date().getFullYear()}-${randomPart}`
+}
+
+const getInitialValues = () => ({
   inkProductId: '',
-  lotNumber: '',
+  lotNumber: generateLotNumber(),
   expiryDate: '',
   quantity: '0',
-}
+})
 
 const getProductLabel = (product) => {
   const manufacturer = product.inkModel?.manufacturer?.name ?? 'Unknown manufacturer'
@@ -76,7 +81,7 @@ const getExpiryStatus = (value) => {
 }
 
 function InkLots() {
-  const [createValues, setCreateValues] = useState(initialValues)
+  const [createValues, setCreateValues] = useState(getInitialValues)
   const [confirmationValues, setConfirmationValues] = useState(null)
   const [confirmationOpen, setConfirmationOpen] = useState(false)
   const [createError, setCreateError] = useState('')
@@ -174,7 +179,7 @@ function InkLots() {
       await createInkLot(confirmationValues).unwrap()
       setConfirmationOpen(false)
       setConfirmationValues(null)
-      setCreateValues(initialValues)
+      setCreateValues(getInitialValues())
       setNotice('Ink lot added successfully.')
     } catch (error) {
       setCreateError(getApiErrorMessage(error, 'Unable to add this ink lot.'))
@@ -351,7 +356,8 @@ function InkLots() {
               label="Lot number"
               value={createValues.lotNumber}
               onChange={(event) => handleCreateField('lotNumber', event.target.value)}
-              placeholder="Enter manufacturer lot number"
+              placeholder="Generated automatically"
+              helperText="A random lot number is generated automatically. You can edit it if needed."
             />
           </Grid>
           <Grid size={{ xs: 12, md: 4 }}>
@@ -386,7 +392,7 @@ function InkLots() {
             type="button"
             color="inherit"
             onClick={() => {
-              setCreateValues(initialValues)
+              setCreateValues(getInitialValues())
               setCreateError('')
             }}
             disabled={creating}
