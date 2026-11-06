@@ -47,11 +47,16 @@ const generateLotNumber = () => {
   return `LOT-${new Date().getFullYear()}-${randomPart}`
 }
 
-const getInitialValues = () => ({
+const emptyValues = {
   inkProductId: '',
-  lotNumber: generateLotNumber(),
+  lotNumber: '',
   expiryDate: '',
   quantity: '0',
+}
+
+const getInitialValues = () => ({
+  ...emptyValues,
+  lotNumber: generateLotNumber(),
 })
 
 const getProductLabel = (product) => {
@@ -87,7 +92,7 @@ function InkLots() {
   const [createError, setCreateError] = useState('')
   const [notice, setNotice] = useState('')
   const [lotToEdit, setLotToEdit] = useState(null)
-  const [editValues, setEditValues] = useState(initialValues)
+  const [editValues, setEditValues] = useState(emptyValues)
   const [editError, setEditError] = useState('')
   const [lotToDelete, setLotToDelete] = useState(null)
   const [deleteError, setDeleteError] = useState('')
