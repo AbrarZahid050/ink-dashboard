@@ -187,18 +187,18 @@ function Sales() {
                 <IconButton size="small" color="error" aria-label={`Remove item ${index + 1}`} onClick={() => removeLine(item.key)} disabled={items.length === 1}><RemoveCircleOutlineRounded fontSize="small" /></IconButton>
               </Stack>
               <Grid container spacing={1.5}>
-                <Grid size={{ xs: 12, md: 4 }}>
+                <Grid size={{ xs: 12, md: 3 }}>
                   <TextField select fullWidth required label="Ink product" value={item.inkProductId} onChange={(event) => setItems((current) => current.map((line) => line.key === item.key ? { ...line, inkProductId: event.target.value, inkLotId: '' } : line))} disabled={productsLoading}>
                     {products.map((product) => <MenuItem key={product.id} value={product.id}>{productName(product)} · {product.packagingType}</MenuItem>)}
                   </TextField>
                 </Grid>
-                <Grid size={{ xs: 12, md: 4 }}>
+                <Grid size={{ xs: 12, md: 3 }}>
                   <TextField select fullWidth required label="Ink lot number" value={item.inkLotId} onChange={(event) => updateLine(item.key, 'inkLotId', event.target.value)} disabled={!item.inkProductId || lotsLoading}>
                     {lots.filter((lot) => lot.inkProductId === item.inkProductId && Number(lot.quantity) > 0).map((lot) => <MenuItem key={lot.id} value={lot.id}>{lot.lotNumber} · {lot.quantity} available · Expires {dateLabel(lot.expiryDate)}</MenuItem>)}
                     {item.inkProductId && !lots.some((lot) => lot.inkProductId === item.inkProductId && Number(lot.quantity) > 0) && <MenuItem disabled value="">No available stock for this product</MenuItem>}
                   </TextField>
                 </Grid>
-                <Grid size={{ xs: 12, md: 4 }}>
+                <Grid size={{ xs: 12, md: 3 }}>
                   <TextField select fullWidth label="Machine" value={item.machineId} onChange={(event) => updateLine(item.key, 'machineId', event.target.value)} disabled={!customerId || machinesLoading}>
                     <MenuItem value="">Not assigned / no machine</MenuItem>
                     {customerMachines.map((machine) => <MenuItem key={machine.id} value={machine.id}>{machine.serialNumber} · {machine.machineModel?.manufacturer?.name} {machine.machineModel?.modelName}</MenuItem>)}
