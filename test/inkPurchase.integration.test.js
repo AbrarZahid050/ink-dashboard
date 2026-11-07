@@ -306,11 +306,18 @@ describe("Ink Purchase API - PostgreSQL integration", () => {
       const response = await request(app)
         .post("/api/v1/ink-purchases")
         .send(purchaseInput(dependencies, {
-          items: [{
-            inkProductId: dependencies.inkProduct.id,
-            inkLotId: dependencies.inkLot.id,
-            quantity: 21,
-          }],
+          items: [
+            {
+              inkProductId: dependencies.inkProduct.id,
+              inkLotId: dependencies.inkLot.id,
+              quantity: 10,
+            },
+            {
+              inkProductId: dependencies.inkProduct.id,
+              inkLotId: dependencies.inkLot.id,
+              quantity: 11,
+            },
+          ],
         }));
 
       expect(response.status).toBe(409);
