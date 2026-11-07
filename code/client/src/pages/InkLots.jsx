@@ -139,9 +139,47 @@ function InkLots() {
     )
   }
 
+  const findExistingLot = (inkProductId, lotNumber, excludedId) => {
+    const normalized = lotNumber.trim().toLowerCase()
+    if (!inkProductId || !normalized) return null
+
+    return inkLots.find((lot) =>
+      lot.id !== excludedId &&
+      lot.inkProductId === inkProductId &&
+      lot.lotNumber.trim().toLowerCase() === normalized,
+    ) ?? null
+  }
+
   const handleCreateField = (field, value) => {
-    setCreateValues((current) => ({ ...current, [field]: value }))
+    setCreateValues((current) => {
+      const nextValues = { ...current, [field]: value }
+
+      if (field === 'lotNumber' || field === 'inkProductId') {
+        const existingLot = findExistingLot(nextValues.inkProductId, nextValues.lotNumber)
+        nextValues.expiryDate = existingLot ? String(existingLot.expiryDate).slice(0, 10) : ''
+      }
+
+      return nextValues
+    })
     setCreateError('')
+  }
+
+  const handleEditField = (field, value) => {
+    setEditValues((current) => {
+      const nextValues = { ...current, [field]: value }
+
+      if (field === 'lotNumber' || field === 'inkProductId') {
+        const existingLot = findExistingLot(nextValues.inkProductId, nextValues.lotNumber, lotToEdit?.id)
+        nextValues.expiryDate = existingLot
+          ? String(existingLot.expiryDate).slice(0, 10)
+          : field === 'lotNumber' || field === 'inkProductId'
+            ? ''
+            : current.expiryDate
+      }
+
+      return nextValues
+    })
+    setEditError('')
   }
 
   const handleReview = (event) => {
@@ -362,7 +400,7 @@ function InkLots() {
               value={createValues.lotNumber}
               onChange={(event) => handleCreateField('lotNumber', event.target.value)}
               placeholder="Generated automatically"
-              helperText="A random lot number is generated automatically. You can edit it if needed."
+              helperText="A random lot number is generated automatically. Existing lot numbers will reuse their saved expiry date."
             />
           </Grid>
           <Grid size={{ xs: 12, md: 4 }}>
@@ -374,6 +412,11 @@ function InkLots() {
               value={createValues.expiryDate}
               onChange={(event) => handleCreateField('expiryDate', event.target.value)}
               slotProps={{ inputLabel: { shrink: true } }}
+              helperText={
+                findExistingLot(createValues.inkProductId, createValues.lotNumber)
+                  ? 'Using the expiry date saved for this lot number.'
+                  : 'Enter the expiry date for this new lot.'
+              }
             />
           </Grid>
           <Grid size={{ xs: 12, md: 4 }}>
@@ -550,7 +593,7 @@ function InkLots() {
                 required
                 label="Ink product"
                 value={editValues.inkProductId}
-                onChange={(event) => setEditValues((current) => ({ ...current, inkProductId: event.target.value }))}
+                onChange={(event) => handleEditField('inkProductId', event.target.value)}
               >
                 {inkProducts.map((product) => (
                   <MenuItem key={product.id} value={product.id}>{getProductLabel(product)}</MenuItem>
@@ -563,7 +606,7 @@ function InkLots() {
                 required
                 label="Lot number"
                 value={editValues.lotNumber}
-                onChange={(event) => setEditValues((current) => ({ ...current, lotNumber: event.target.value }))}
+                onChange={(event) => handleEditField('lotNumber', event.target.value)}
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 4 }}>
@@ -573,8 +616,13 @@ function InkLots() {
                 type="date"
                 label="Expiry date"
                 value={editValues.expiryDate}
-                onChange={(event) => setEditValues((current) => ({ ...current, expiryDate: event.target.value }))}
+                onChange={(event) => handleEditField('expiryDate', event.target.value)}
                 slotProps={{ inputLabel: { shrink: true } }}
+                helperText={
+                  findExistingLot(editValues.inkProductId, editValues.lotNumber, lotToEdit?.id)
+                    ? 'Using the expiry date saved for this lot number.'
+                    : 'Enter the expiry date for this lot.'
+                }
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 4 }}>
