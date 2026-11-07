@@ -194,7 +194,7 @@ function Sales() {
                 </Grid>
                 <Grid size={{ xs: 12, md: 3 }}>
                   <TextField select fullWidth required label="Ink lot number" value={item.inkLotId} onChange={(event) => updateLine(item.key, 'inkLotId', event.target.value)} disabled={!item.inkProductId || lotsLoading}>
-                    {lots.filter((lot) => lot.inkProductId === item.inkProductId && Number(lot.quantity) > 0).map((lot) => <MenuItem key={lot.id} value={lot.id}>LOT #{lot.lotNumber} · {lot.quantity} available · Expires {dateLabel(lot.expiryDate)}</MenuItem>)}
+                    {lots.filter((lot) => lot.inkProductId === item.inkProductId && Number(lot.quantity) > 0).map((lot) => <MenuItem key={lot.id} value={lot.id}>{lot.lotNumber}</MenuItem>)}
                     {item.inkProductId && !lots.some((lot) => lot.inkProductId === item.inkProductId && Number(lot.quantity) > 0) && <MenuItem disabled value="">No available stock for this product</MenuItem>}
                   </TextField>
                 </Grid>
