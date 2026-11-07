@@ -497,6 +497,7 @@ describe("Ink Purchase API - PostgreSQL integration", () => {
               {
                 machineId: dependencies.machineOne.id,
                 inkProductId: randomUUID(),
+                inkLotId: dependencies.inkLot.id,
                 quantity: 1,
               },
             ],
