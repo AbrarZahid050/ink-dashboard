@@ -10,6 +10,7 @@ import {
   ReceiptLongRounded,
   SettingsOutlined,
   ViewInArOutlined,
+  WarehouseOutlined,
 } from '@mui/icons-material'
 import {
   Box,
@@ -31,6 +32,7 @@ function Sidebar({ mobileOpen, onClose, isMobile, activePage, onNavigate }) {
     { label: 'Ink Models', icon: <ColorLensOutlined fontSize="small" /> },
     { label: 'Ink Products', icon: <Inventory2Outlined fontSize="small" /> },
     { label: 'Ink Lots', icon: <Inventory2Outlined fontSize="small" /> },
+    { label: 'Ink Inventory', icon: <WarehouseOutlined fontSize="small" /> },
     { label: 'Manufacturers', icon: <BusinessOutlined fontSize="small" /> },
     { label: 'Customers', icon: <GroupsOutlined fontSize="small" /> },
     { label: 'Customer Sites', icon: <LocationOnOutlined fontSize="small" /> },
