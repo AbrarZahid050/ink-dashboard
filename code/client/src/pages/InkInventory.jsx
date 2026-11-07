@@ -375,7 +375,6 @@ function InkInventory() {
         )}
       </Paper>
 
-      <Snackbar open={false} autoHideDuration={3000} message="Inventory refreshed" />
     </Box>
   )
 }
