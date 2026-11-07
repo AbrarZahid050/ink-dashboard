@@ -186,7 +186,7 @@ export const api = createApi({
         method: 'POST',
         body: purchase,
       }),
-      invalidatesTags: ['InkPurchase'],
+      invalidatesTags: ['InkPurchase', 'InkLot', 'InkProduct'],
     }),
     getInkForecast: builder.query({
       query: ({ customerId, machineModelId, inkModelId, horizonMonths = 3 }) => ({
