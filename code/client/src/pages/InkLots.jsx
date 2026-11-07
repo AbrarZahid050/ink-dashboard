@@ -170,11 +170,7 @@ function InkLots() {
 
       if (field === 'lotNumber' || field === 'inkProductId') {
         const existingLot = findExistingLot(nextValues.inkProductId, nextValues.lotNumber, lotToEdit?.id)
-        nextValues.expiryDate = existingLot
-          ? String(existingLot.expiryDate).slice(0, 10)
-          : field === 'lotNumber' || field === 'inkProductId'
-            ? ''
-            : current.expiryDate
+        nextValues.expiryDate = existingLot ? String(existingLot.expiryDate).slice(0, 10) : ''
       }
 
       return nextValues
