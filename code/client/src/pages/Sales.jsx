@@ -92,6 +92,14 @@ function Sales() {
     if (items.some((item) => !item.inkProductId || !item.inkLotId || !Number.isInteger(Number(item.quantity)) || Number(item.quantity) < 1)) {
       return setFormError('Choose an ink product, an available lot number, and a whole-number quantity for every line.')
     }
+    const requestedByLot = items.reduce((totals, item) => {
+      totals.set(item.inkLotId, (totals.get(item.inkLotId) ?? 0) + Number(item.quantity))
+      return totals
+    }, new Map())
+    const overdrawnLot = lots.find((lot) => (requestedByLot.get(lot.id) ?? 0) > Number(lot.quantity))
+    if (overdrawnLot) {
+      return setFormError(`Lot ${overdrawnLot.lotNumber} has only ${overdrawnLot.quantity} package(s) available.`)
+    }
     if (items.some((item) => item.unitPrice !== '' && (!Number.isFinite(Number(item.unitPrice)) || Number(item.unitPrice) < 0))) {
       return setFormError('Unit prices must be zero or greater.')
     }
