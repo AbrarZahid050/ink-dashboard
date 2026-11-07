@@ -11,12 +11,12 @@ import {
 } from '@mui/material'
 import {
   useCreateInkPurchaseMutation, useGetCustomersQuery, useGetInkProductsQuery,
-  useGetInkPurchasesQuery, useGetMachinesQuery,
+  useGetInkPurchasesQuery, useGetMachinesQuery, useGetInkLotsQuery,
 } from '../services/api.js'
 import { getApiErrorMessage } from '../features/machine-models/utils/getApiErrorMessage.js'
 
 const today = new Date().toISOString().slice(0, 10)
-const emptyLine = () => ({ key: crypto.randomUUID(), inkProductId: '', machineId: '', quantity: '1', unitPrice: '' })
+const emptyLine = () => ({ key: crypto.randomUUID(), inkProductId: '', inkLotId: '', machineId: '', quantity: '1', unitPrice: '' })
 const money = (value, currency = 'AED') => new Intl.NumberFormat('en-AE', {
   style: 'currency', currency, minimumFractionDigits: 2, maximumFractionDigits: 2,
 }).format(Number(value) || 0)
@@ -52,6 +52,7 @@ function Sales() {
   const [formError, setFormError] = useState('')
   const { data: customers = [], isLoading: customersLoading } = useGetCustomersQuery()
   const { data: products = [], isLoading: productsLoading } = useGetInkProductsQuery()
+  const { data: lots = [], isLoading: lotsLoading } = useGetInkLotsQuery()
   const { data: machines = [], isLoading: machinesLoading } = useGetMachinesQuery()
   const { data: purchases = [], isLoading: purchasesLoading, isFetching, refetch } = useGetInkPurchasesQuery()
   const [createPurchase, { isLoading: saving }] = useCreateInkPurchaseMutation()
@@ -88,8 +89,8 @@ function Sales() {
     setFormError('')
     if (!customerId) return setFormError('Select a customer before creating the invoice.')
     if (!purchasedAt) return setFormError('Select the invoice date.')
-    if (items.some((item) => !item.inkProductId || !Number.isInteger(Number(item.quantity)) || Number(item.quantity) < 1)) {
-      return setFormError('Choose an ink product and enter a whole-number quantity for every line.')
+    if (items.some((item) => !item.inkProductId || !item.inkLotId || !Number.isInteger(Number(item.quantity)) || Number(item.quantity) < 1)) {
+      return setFormError('Choose an ink product, an available lot number, and a whole-number quantity for every line.')
     }
     if (items.some((item) => item.unitPrice !== '' && (!Number.isFinite(Number(item.unitPrice)) || Number(item.unitPrice) < 0))) {
       return setFormError('Unit prices must be zero or greater.')
@@ -97,8 +98,8 @@ function Sales() {
     try {
       await createPurchase({
         customerId, purchasedAt, reference: reference.trim() || null, currencyCode,
-        items: items.map(({ inkProductId, machineId, quantity, unitPrice }) => ({
-          inkProductId, machineId: machineId || null, quantity: Number(quantity),
+        items: items.map(({ inkProductId, inkLotId, machineId, quantity, unitPrice }) => ({
+          inkProductId, inkLotId, machineId: machineId || null, quantity: Number(quantity),
           unitPrice: unitPrice === '' ? null : Number(Number(unitPrice).toFixed(2)),
         })),
       }).unwrap()
@@ -178,9 +179,15 @@ function Sales() {
                 <IconButton size="small" color="error" aria-label={`Remove item ${index + 1}`} onClick={() => removeLine(item.key)} disabled={items.length === 1}><RemoveCircleOutlineRounded fontSize="small" /></IconButton>
               </Stack>
               <Grid container spacing={1.5}>
-                <Grid size={{ xs: 12, md: 5 }}>
-                  <TextField select fullWidth required label="Ink product" value={item.inkProductId} onChange={(event) => updateLine(item.key, 'inkProductId', event.target.value)} disabled={productsLoading}>
+                <Grid size={{ xs: 12, md: 4 }}>
+                  <TextField select fullWidth required label="Ink product" value={item.inkProductId} onChange={(event) => setItems((current) => current.map((line) => line.key === item.key ? { ...line, inkProductId: event.target.value, inkLotId: '' } : line))} disabled={productsLoading}>
                     {products.map((product) => <MenuItem key={product.id} value={product.id}>{productName(product)} · {product.packagingType}</MenuItem>)}
+                  </TextField>
+                </Grid>
+                <Grid size={{ xs: 12, md: 4 }}>
+                  <TextField select fullWidth required label="Ink lot number" value={item.inkLotId} onChange={(event) => updateLine(item.key, 'inkLotId', event.target.value)} disabled={!item.inkProductId || lotsLoading}>
+                    {lots.filter((lot) => lot.inkProductId === item.inkProductId && Number(lot.quantity) > 0).map((lot) => <MenuItem key={lot.id} value={lot.id}>{lot.lotNumber} · {lot.quantity} available · Expires {dateLabel(lot.expiryDate)}</MenuItem>)}
+                    {item.inkProductId && !lots.some((lot) => lot.inkProductId === item.inkProductId && Number(lot.quantity) > 0) && <MenuItem disabled value="">No available stock for this product</MenuItem>}
                   </TextField>
                 </Grid>
                 <Grid size={{ xs: 12, md: 4 }}>
@@ -203,7 +210,7 @@ function Sales() {
           ))}
         </Stack>
         <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems={{ xs: 'stretch', sm: 'center' }} spacing={2} sx={{ mt: 2.5 }}>
-          <Typography variant="body2" color="text.secondary">Prices are optional for purchase-history tracking; no tax or payment status is calculated yet.</Typography>
+          <Typography variant="body2" color="text.secondary">Select the exact lot number for each item. Available package quantities are shown in the lot list.</Typography>
           <Paper variant="outlined" sx={{ p: 2, minWidth: 230, borderRadius: 2.5, borderColor: 'divider' }}>
             <Typography variant="caption" color="text.secondary">Invoice total</Typography>
             <Typography variant="h4">{money(total, currencyCode)}</Typography>
@@ -211,7 +218,7 @@ function Sales() {
         </Stack>
         {formError && <Alert severity="error" sx={{ mt: 2 }}>{formError}</Alert>}
         <Stack direction="row" justifyContent="flex-end" sx={{ mt: 2.5 }}>
-          <Button type="submit" variant="contained" disabled={saving || customersLoading || productsLoading || !products.length} startIcon={saving ? <CircularProgress size={17} color="inherit" /> : <ShoppingCartCheckoutRounded />}>
+          <Button type="submit" variant="contained" disabled={saving || customersLoading || productsLoading || lotsLoading || !products.length} startIcon={saving ? <CircularProgress size={17} color="inherit" /> : <ShoppingCartCheckoutRounded />}>
             {saving ? 'Saving invoice…' : 'Save invoice'}
           </Button>
         </Stack>
@@ -243,7 +250,7 @@ function Sales() {
                     <TableCell><Typography variant="body2" fontWeight={650}>{purchase.reference || '—'}</Typography></TableCell>
                     <TableCell>{purchase.customer?.name ?? '—'}</TableCell>
                     <TableCell sx={{ minWidth: 240 }}>
-                      <Stack spacing={0.35}>{(purchase.items ?? []).slice(0, 2).map((line) => <Typography key={line.id} variant="body2">{line.inkProduct?.color} · {line.inkProduct?.inkModel?.inkName}</Typography>)}
+                      <Stack spacing={0.35}>{(purchase.items ?? []).slice(0, 2).map((line) => <Typography key={line.id} variant="body2">{line.inkProduct?.color} · {line.inkProduct?.inkModel?.inkName} · Lot {line.lot?.lotNumber ?? '—'}</Typography>)}
                         {purchase.items?.length > 2 && <Typography variant="caption" color="text.secondary">+{purchase.items.length - 2} more</Typography>}</Stack>
                     </TableCell>
                     <TableCell align="right">{quantity.toLocaleString()}</TableCell>
