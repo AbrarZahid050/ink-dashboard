@@ -139,13 +139,12 @@ function InkLots() {
     )
   }
 
-  const findExistingLot = (inkProductId, lotNumber, excludedId) => {
+  const findExistingLot = (lotNumber, excludedId) => {
     const normalized = lotNumber.trim().toLowerCase()
-    if (!inkProductId || !normalized) return null
+    if (!normalized) return null
 
     return inkLots.find((lot) =>
       lot.id !== excludedId &&
-      lot.inkProductId === inkProductId &&
       lot.lotNumber.trim().toLowerCase() === normalized,
     ) ?? null
   }
@@ -155,7 +154,7 @@ function InkLots() {
       const nextValues = { ...current, [field]: value }
 
       if (field === 'lotNumber' || field === 'inkProductId') {
-        const existingLot = findExistingLot(nextValues.inkProductId, nextValues.lotNumber)
+        const existingLot = findExistingLot(nextValues.lotNumber)
         nextValues.expiryDate = existingLot ? String(existingLot.expiryDate).slice(0, 10) : ''
       }
 
@@ -169,7 +168,7 @@ function InkLots() {
       const nextValues = { ...current, [field]: value }
 
       if (field === 'lotNumber' || field === 'inkProductId') {
-        const existingLot = findExistingLot(nextValues.inkProductId, nextValues.lotNumber, lotToEdit?.id)
+        const existingLot = findExistingLot(nextValues.lotNumber, lotToEdit?.id)
         nextValues.expiryDate = existingLot ? String(existingLot.expiryDate).slice(0, 10) : ''
       }
 
@@ -409,7 +408,7 @@ function InkLots() {
               onChange={(event) => handleCreateField('expiryDate', event.target.value)}
               slotProps={{ inputLabel: { shrink: true } }}
               helperText={
-                findExistingLot(createValues.inkProductId, createValues.lotNumber)
+                findExistingLot(createValues.lotNumber)
                   ? 'Using the expiry date saved for this lot number.'
                   : 'Enter the expiry date for this new lot.'
               }
@@ -615,7 +614,7 @@ function InkLots() {
                 onChange={(event) => handleEditField('expiryDate', event.target.value)}
                 slotProps={{ inputLabel: { shrink: true } }}
                 helperText={
-                  findExistingLot(editValues.inkProductId, editValues.lotNumber, lotToEdit?.id)
+                  findExistingLot(editValues.lotNumber, lotToEdit?.id)
                     ? 'Using the expiry date saved for this lot number.'
                     : 'Enter the expiry date for this lot.'
                 }
