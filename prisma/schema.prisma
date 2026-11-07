@@ -459,7 +459,8 @@ model InkLot {
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 
-  inkProduct   InkProduct @relation(fields: [inkProductId], references: [id])
+  inkProduct   InkProduct       @relation(fields: [inkProductId], references: [id])
+  purchaseItems InkPurchaseItem[]
 
   // A lot number must be unique within its ink product.
   @@unique([inkProductId, lotNumber])
@@ -503,6 +504,7 @@ model InkPurchaseItem {
   inkPurchaseId String      @db.Uuid
   machineId     String?     @db.Uuid
   inkProductId  String      @db.Uuid
+  inkLotId      String?     @db.Uuid
   quantity      Int
   unitPrice     Decimal?    @db.Decimal(12, 2)
 
@@ -512,8 +514,10 @@ model InkPurchaseItem {
   inkPurchase   InkPurchase @relation(fields: [inkPurchaseId], references: [id])
   machine       Machine?    @relation(fields: [machineId], references: [id])
   inkProduct    InkProduct  @relation(fields: [inkProductId], references: [id])
+  inkLot        InkLot?     @relation(fields: [inkLotId], references: [id])
 
   @@index([inkPurchaseId])
   @@index([machineId])
   @@index([inkProductId])
+  @@index([inkLotId])
 }
