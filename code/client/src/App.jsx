@@ -7,6 +7,7 @@ const MachineModels = lazy(() => import('./pages/MachineModels.jsx'))
 const InkModels = lazy(() => import('./pages/InkModels.jsx'))
 const InkProducts = lazy(() => import('./pages/InkProducts.jsx'))
 const InkLots = lazy(() => import('./pages/InkLots.jsx'))
+const InkInventory = lazy(() => import('./pages/InkInventory.jsx'))
 const Manufacturers = lazy(() => import('./pages/Manufacturers.jsx'))
 const Customers = lazy(() => import('./pages/Customers.jsx'))
 const CustomerSites = lazy(() => import('./pages/CustomerSites.jsx'))
@@ -36,6 +37,8 @@ function App() {
           <InkProducts />
         ) : activePage === 'Ink Lots' ? (
           <InkLots />
+        ) : activePage === 'Ink Inventory' ? (
+          <InkInventory />
         ) : activePage === 'Manufacturers' ? (
           <Manufacturers />
         ) : activePage === 'Customers' ? (
