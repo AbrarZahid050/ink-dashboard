@@ -16,6 +16,7 @@ const purchaseDetails = {
           },
         },
       },
+      lot: true,
       inkProduct: {
         include: {
           inkModel: {
@@ -129,6 +130,39 @@ export async function createInkPurchase(data) {
       throw new ApiError(404, "One or more ink products were not found.");
     }
 
+    // Deduct the selected lot inside the same transaction as invoice creation.
+    // The conditional update prevents concurrent sales from overselling stock.
+    for (const item of data.items) {
+      const lot = await tx.inkLot.findUnique({
+        where: { id: item.inkLotId },
+        select: { id: true, inkProductId: true },
+      });
+
+      if (!lot) {
+        throw new ApiError(404, "One or more selected ink lots were not found.");
+      }
+
+      if (lot.inkProductId !== item.inkProductId) {
+        throw new ApiError(400, "The selected ink lot does not belong to the selected ink product.");
+      }
+
+      const stockUpdate = await tx.inkLot.updateMany({
+        where: {
+          id: item.inkLotId,
+          inkProductId: item.inkProductId,
+          quantity: { gte: item.quantity },
+        },
+        data: {
+          quantity: { decrement: item.quantity },
+          version: { increment: 1 },
+        },
+      });
+
+      if (stockUpdate.count !== 1) {
+        throw new ApiError(409, "Insufficient stock in the selected ink lot.");
+      }
+    }
+
     return tx.inkPurchase.create({
       data: {
         customerId: data.customerId,
@@ -139,6 +173,7 @@ export async function createInkPurchase(data) {
           create: data.items.map((item) => ({
             machineId: item.machineId ?? null,
             inkProductId: item.inkProductId,
+            inkLotId: item.inkLotId,
             quantity: item.quantity,
             unitPrice: item.unitPrice,
           })),
