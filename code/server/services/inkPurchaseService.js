@@ -16,7 +16,7 @@ const purchaseDetails = {
           },
         },
       },
-      lot: true,
+      inkLot: true,
       inkProduct: {
         include: {
           inkModel: {
