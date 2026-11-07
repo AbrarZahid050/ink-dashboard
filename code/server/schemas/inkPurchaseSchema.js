@@ -4,6 +4,7 @@ const purchaseItemSchema = z
   .object({
     machineId: z.uuid().nullable().optional(),
     inkProductId: z.uuid(),
+    inkLotId: z.uuid(),
     quantity: z.number().int().positive(),
     unitPrice: z
       .number()
