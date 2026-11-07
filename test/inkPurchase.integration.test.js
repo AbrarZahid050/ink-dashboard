@@ -290,7 +290,7 @@ describe("Ink Purchase API - PostgreSQL integration", () => {
         where: { id: dependencies.inkLot.id },
       });
       expect(remainingLot.quantity).toBe(15);
-      expect(response.body.data.items[0].lot).toMatchObject({
+      expect(response.body.data.items[0].inkLot).toMatchObject({
         id: dependencies.inkLot.id,
         lotNumber: dependencies.inkLot.lotNumber,
       });
