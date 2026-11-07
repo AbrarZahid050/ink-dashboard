@@ -460,6 +460,31 @@ describe("Ink Purchase API - PostgreSQL integration", () => {
     }
   });
 
+  it("requires a lot number on every new sales invoice line", async () => {
+    const dependencies = await createDependencies();
+
+    try {
+      const response = await request(app)
+        .post("/api/v1/ink-purchases")
+        .send(purchaseInput(dependencies, {
+          items: [{
+            inkProductId: dependencies.inkProduct.id,
+            quantity: 1,
+          }],
+        }));
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toBe("Validation failed");
+
+      const purchases = await testPrisma.inkPurchase.findMany({
+        where: { customerId: dependencies.customer.id },
+      });
+      expect(purchases).toHaveLength(0);
+    } finally {
+      await cleanupDependencies(dependencies);
+    }
+  });
+
   it("returns 404 when an ink product does not exist", async () => {
     const dependencies = await createDependencies();
 
