@@ -684,7 +684,6 @@ describe("Ink Purchase API - PostgreSQL integration", () => {
           customerId: dependencies.customer.id,
           machineId: dependencies.machineTwo.id,
           inkProductId: dependencies.inkProductTwo.id,
-              inkLotId: dependencies.inkLotTwo.id,
           startDate: "2026-10-15",
           endDate: "2026-10-31",
         });
