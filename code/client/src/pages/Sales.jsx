@@ -189,7 +189,7 @@ function Sales() {
               <Grid container spacing={1.5}>
                 <Grid size={{ xs: 12, md: 3 }}>
                   <TextField select fullWidth required label="Ink product" value={item.inkProductId} onChange={(event) => setItems((current) => current.map((line) => line.key === item.key ? { ...line, inkProductId: event.target.value, inkLotId: '' } : line))} disabled={productsLoading}>
-                    {products.map((product) => <MenuItem key={product.id} value={product.id}>{productName(product)} · {product.packagingType}</MenuItem>)}
+                    {products.filter((product) => lots.some((lot) => lot.inkProductId === product.id && Number(lot.quantity) > 0)).map((product) => <MenuItem key={product.id} value={product.id}>{productName(product)} · {product.packagingType}</MenuItem>)}
                   </TextField>
                 </Grid>
                 <Grid size={{ xs: 12, md: 3 }}>
