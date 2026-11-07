@@ -285,6 +285,73 @@ describe("Ink Purchase API - PostgreSQL integration", () => {
       expect(persisted.items).toHaveLength(2);
       expect(persisted.items.reduce((total, item) => total + item.quantity, 0))
         .toBe(5);
+
+      const remainingLot = await testPrisma.inkLot.findUnique({
+        where: { id: dependencies.inkLot.id },
+      });
+      expect(remainingLot.quantity).toBe(15);
+      expect(response.body.data.items[0].lot).toMatchObject({
+        id: dependencies.inkLot.id,
+        lotNumber: dependencies.inkLot.lotNumber,
+      });
+    } finally {
+      await cleanupDependencies(dependencies);
+    }
+  });
+
+  it("rejects a sale when the selected lot does not have enough stock and leaves the invoice unsaved", async () => {
+    const dependencies = await createDependencies();
+
+    try {
+      const response = await request(app)
+        .post("/api/v1/ink-purchases")
+        .send(purchaseInput(dependencies, {
+          items: [{
+            inkProductId: dependencies.inkProduct.id,
+            inkLotId: dependencies.inkLot.id,
+            quantity: 21,
+          }],
+        }));
+
+      expect(response.status).toBe(409);
+      expect(response.body.message).toBe("Insufficient stock in the selected ink lot.");
+
+      const [purchaseCount, lot] = await Promise.all([
+        testPrisma.inkPurchase.count({ where: { customerId: dependencies.customer.id } }),
+        testPrisma.inkLot.findUnique({ where: { id: dependencies.inkLot.id } }),
+      ]);
+      expect(purchaseCount).toBe(0);
+      expect(lot.quantity).toBe(20);
+    } finally {
+      await cleanupDependencies(dependencies);
+    }
+  });
+
+  it("rejects a lot that belongs to a different ink product", async () => {
+    const dependencies = await createDependencies();
+
+    try {
+      const response = await request(app)
+        .post("/api/v1/ink-purchases")
+        .send(purchaseInput(dependencies, {
+          items: [{
+            inkProductId: dependencies.inkProduct.id,
+            inkLotId: dependencies.inkLotTwo.id,
+            quantity: 1,
+          }],
+        }));
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toBe(
+        "The selected ink lot does not belong to the selected ink product.",
+      );
+
+      const [purchaseCount, lot] = await Promise.all([
+        testPrisma.inkPurchase.count({ where: { customerId: dependencies.customer.id } }),
+        testPrisma.inkLot.findUnique({ where: { id: dependencies.inkLotTwo.id } }),
+      ]);
+      expect(purchaseCount).toBe(0);
+      expect(lot.quantity).toBe(10);
     } finally {
       await cleanupDependencies(dependencies);
     }
