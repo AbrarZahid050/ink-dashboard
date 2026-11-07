@@ -232,14 +232,14 @@ describe("Ink Purchase API - PostgreSQL integration", () => {
           {
             machineId: dependencies.machineOne.id,
             inkProductId: dependencies.inkProduct.id,
-          inkLotId: dependencies.inkLot.id,
+            inkLotId: dependencies.inkLot.id,
             quantity: 3,
             unitPrice: 125.5,
           },
           {
             machineId: dependencies.machineTwo.id,
             inkProductId: dependencies.inkProduct.id,
-          inkLotId: dependencies.inkLot.id,
+            inkLotId: dependencies.inkLot.id,
             quantity: 2,
             unitPrice: 125.5,
           },
@@ -264,13 +264,13 @@ describe("Ink Purchase API - PostgreSQL integration", () => {
             expect.objectContaining({
               machineId: dependencies.machineOne.id,
               inkProductId: dependencies.inkProduct.id,
-          inkLotId: dependencies.inkLot.id,
+              inkLotId: dependencies.inkLot.id,
               quantity: 3,
             }),
             expect.objectContaining({
               machineId: dependencies.machineTwo.id,
               inkProductId: dependencies.inkProduct.id,
-          inkLotId: dependencies.inkLot.id,
+              inkLotId: dependencies.inkLot.id,
               quantity: 2,
             }),
           ]),
@@ -368,7 +368,7 @@ describe("Ink Purchase API - PostgreSQL integration", () => {
             items: [
               {
                 inkProductId: dependencies.inkProduct.id,
-          inkLotId: dependencies.inkLot.id,
+                inkLotId: dependencies.inkLot.id,
                 quantity: 4,
                 unitPrice: 125.5,
               },
@@ -382,7 +382,7 @@ describe("Ink Purchase API - PostgreSQL integration", () => {
         machineId: null,
         machine: null,
         inkProductId: dependencies.inkProduct.id,
-          inkLotId: dependencies.inkLot.id,
+        inkLotId: dependencies.inkLot.id,
         quantity: 4,
       });
 
@@ -407,13 +407,13 @@ describe("Ink Purchase API - PostgreSQL integration", () => {
               {
                 machineId: dependencies.machineOne.id,
                 inkProductId: dependencies.inkProduct.id,
-          inkLotId: dependencies.inkLot.id,
+                inkLotId: dependencies.inkLot.id,
                 quantity: 3,
               },
               {
                 machineId: dependencies.otherMachine.id,
                 inkProductId: dependencies.inkProduct.id,
-          inkLotId: dependencies.inkLot.id,
+                inkLotId: dependencies.inkLot.id,
                 quantity: 2,
               },
             ],
@@ -492,7 +492,7 @@ describe("Ink Purchase API - PostgreSQL integration", () => {
               {
                 machineId: dependencies.machineOne.id,
                 inkProductId: dependencies.inkProduct.id,
-          inkLotId: dependencies.inkLot.id,
+                inkLotId: dependencies.inkLot.id,
                 quantity: 0,
                 unitPrice: -1,
               },
@@ -623,7 +623,7 @@ describe("Ink Purchase API - PostgreSQL integration", () => {
             {
               machineId: dependencies.otherMachine.id,
               inkProductId: dependencies.inkProduct.id,
-          inkLotId: dependencies.inkLot.id,
+              inkLotId: dependencies.inkLot.id,
               quantity: 1,
             },
           ],
