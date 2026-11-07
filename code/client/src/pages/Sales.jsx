@@ -250,7 +250,7 @@ function Sales() {
                     <TableCell><Typography variant="body2" fontWeight={650}>{purchase.reference || '—'}</Typography></TableCell>
                     <TableCell>{purchase.customer?.name ?? '—'}</TableCell>
                     <TableCell sx={{ minWidth: 240 }}>
-                      <Stack spacing={0.35}>{(purchase.items ?? []).slice(0, 2).map((line) => <Typography key={line.id} variant="body2">{line.inkProduct?.color} · {line.inkProduct?.inkModel?.inkName} · Lot {line.lot?.lotNumber ?? '—'}</Typography>)}
+                      <Stack spacing={0.35}>{(purchase.items ?? []).slice(0, 2).map((line) => <Typography key={line.id} variant="body2">{line.inkProduct?.color} · {line.inkProduct?.inkModel?.inkName} · Lot {line.inkLot?.lotNumber ?? '—'}</Typography>)}
                         {purchase.items?.length > 2 && <Typography variant="caption" color="text.secondary">+{purchase.items.length - 2} more</Typography>}</Stack>
                     </TableCell>
                     <TableCell align="right">{quantity.toLocaleString()}</TableCell>
