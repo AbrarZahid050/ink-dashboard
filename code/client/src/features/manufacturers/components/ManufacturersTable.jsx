@@ -13,12 +13,6 @@ import {
   Divider,
   IconButton,
   Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   TextField,
   Tooltip,
   Typography,
@@ -27,6 +21,7 @@ import {
   useDeleteManufacturerMutation,
   useUpdateManufacturerMutation,
 } from '../../../services/api.js'
+import DataTable from '../../../components/common/DataTable.jsx'
 import { getApiErrorMessage } from '../../machine-models/utils/getApiErrorMessage.js'
 
 const MANUFACTURER_LOGOS = [
@@ -158,75 +153,53 @@ function ManufacturersTable({ manufacturers, loading }) {
         </Box>
         <Divider />
 
-        {loading ? (
-          <Box sx={{ display: 'grid', placeItems: 'center', minHeight: 150 }}>
-            <CircularProgress size={28} />
-          </Box>
-        ) : manufacturers.length === 0 ? (
-          <Box sx={{ display: 'grid', placeItems: 'center', textAlign: 'center', minHeight: 150, px: 2 }}>
-            <Typography variant="body2" color="text.secondary">
-              No manufacturers have been added yet.
-            </Typography>
-          </Box>
-        ) : (
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell sx={{ width: 88 }}>Logo</TableCell>
-                  <TableCell>Manufacturer</TableCell>
-                  <TableCell align="right" sx={{ width: 112 }}>Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {manufacturers.map((manufacturer) => (
-                  <TableRow key={manufacturer.id} hover>
-                    <TableCell>
-                      <Avatar
-                        src={getManufacturerLogoUrl(manufacturer.name)}
-                        alt={`${manufacturer.name} logo`}
-                        variant="rounded"
-                        sx={{
-                          width: 52,
-                          height: 42,
-                          bgcolor: 'action.hover',
-                          color: 'text.secondary',
-                          fontSize: 13,
-                          fontWeight: 700,
-                          '& img': { objectFit: 'contain', p: 0.5 },
-                        }}
-                      >
-                        {getManufacturerInitials(manufacturer.name)}
-                      </Avatar>
-                    </TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>{manufacturer.name}</TableCell>
-                    <TableCell align="right">
-                      <Tooltip title={`Edit ${manufacturer.name}`}>
-                        <IconButton
-                          aria-label={`Edit ${manufacturer.name}`}
-                          size="small"
-                          onClick={() => handleOpenEdit(manufacturer)}
-                        >
-                          <EditOutlined fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title={`Delete ${manufacturer.name}`}>
-                        <IconButton
-                          aria-label={`Delete ${manufacturer.name}`}
-                          color="error"
-                          size="small"
-                          onClick={() => handleOpenDelete(manufacturer)}
-                        >
-                          <CloseRounded fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        )}
+        <DataTable
+          rows={manufacturers}
+          columns={[
+            {
+              field: 'logo',
+              headerName: 'Logo',
+              width: 88,
+              renderCell: (manufacturer) => (
+                <Avatar
+                  src={getManufacturerLogoUrl(manufacturer.name)}
+                  alt={`${manufacturer.name} logo`}
+                  variant="rounded"
+                  sx={{
+                    width: 52, height: 42, bgcolor: 'action.hover',
+                    color: 'text.secondary', fontSize: 13, fontWeight: 700,
+                    '& img': { objectFit: 'contain', p: 0.5 },
+                  }}
+                >
+                  {getManufacturerInitials(manufacturer.name)}
+                </Avatar>
+              ),
+            },
+            { field: 'name', headerName: 'Manufacturer', cellSx: { fontWeight: 600 } },
+            {
+              field: 'actions',
+              headerName: 'Actions',
+              align: 'right',
+              width: 112,
+              renderCell: (manufacturer) => (
+                <>
+                  <Tooltip title={`Edit ${manufacturer.name}`}>
+                    <IconButton aria-label={`Edit ${manufacturer.name}`} size="small" onClick={() => handleOpenEdit(manufacturer)}>
+                      <EditOutlined fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title={`Delete ${manufacturer.name}`}>
+                    <IconButton aria-label={`Delete ${manufacturer.name}`} color="error" size="small" onClick={() => handleOpenDelete(manufacturer)}>
+                      <CloseRounded fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                </>
+              ),
+            },
+          ]}
+          loading={loading}
+          emptyMessage="No manufacturers have been added yet."
+        />
       </Paper>
 
       <Dialog open={Boolean(manufacturerToEdit)} onClose={handleCloseEdit} fullWidth maxWidth="xs">

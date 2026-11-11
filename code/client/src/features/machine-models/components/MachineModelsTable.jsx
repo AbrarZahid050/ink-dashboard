@@ -12,17 +12,12 @@ import {
   Divider,
   IconButton,
   Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   Tooltip,
   Typography,
 } from '@mui/material'
 import { useDeleteMachineModelMutation } from '../../../services/api.js'
 import { configurationOptions, technologyOptions } from '../constants/machineModelOptions.js'
+import DataTable from '../../../components/common/DataTable.jsx'
 import { getApiErrorMessage } from '../utils/getApiErrorMessage.js'
 import MachineModelEditDialog from './MachineModelEditDialog.jsx'
 
@@ -82,64 +77,38 @@ function MachineModelsTable({ models, manufacturers, loading }) {
 
         <Divider />
 
-        {loading ? (
-          <Box sx={{ display: 'grid', placeItems: 'center', minHeight: 150 }}>
-            <CircularProgress size={28} />
-          </Box>
-        ) : models.length === 0 ? (
-          <Box sx={{ display: 'grid', placeItems: 'center', textAlign: 'center', minHeight: 150, px: 2 }}>
-            <Typography variant="body2" color="text.secondary">
-              No machine models have been registered yet.
-            </Typography>
-          </Box>
-        ) : (
-          <TableContainer>
-            <Table size="medium">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Manufacturer</TableCell>
-                  <TableCell>Model</TableCell>
-                  <TableCell>Technology</TableCell>
-                  <TableCell>Configuration</TableCell>
-                  <TableCell align="right">Machines</TableCell>
-                  <TableCell align="right" sx={{ width: 112 }}>Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {models.map((model) => (
-                  <TableRow key={model.id} hover>
-                    <TableCell>{getManufacturerName(model)}</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>{model.modelName}</TableCell>
-                    <TableCell>{getOptionLabel(technologyOptions, model.technology)}</TableCell>
-                    <TableCell>{getOptionLabel(configurationOptions, model.configuration)}</TableCell>
-                    <TableCell align="right">{model._count?.machines ?? 0}</TableCell>
-                    <TableCell align="right">
-                      <Tooltip title={`Edit ${model.modelName}`}>
-                        <IconButton
-                          aria-label={`Edit ${model.modelName}`}
-                          size="small"
-                          onClick={() => setModelToEdit(model)}
-                        >
-                          <EditOutlined fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title={`Delete ${model.modelName}`}>
-                        <IconButton
-                          aria-label={`Delete ${model.modelName}`}
-                          color="error"
-                          size="small"
-                          onClick={() => handleOpenDelete(model)}
-                        >
-                          <CloseRounded fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        )}
+        <DataTable
+          rows={models}
+          columns={[
+            { field: 'manufacturer', headerName: 'Manufacturer', renderCell: getManufacturerName },
+            { field: 'modelName', headerName: 'Model', cellSx: { fontWeight: 600 } },
+            { field: 'technology', headerName: 'Technology', renderCell: (model) => getOptionLabel(technologyOptions, model.technology) },
+            { field: 'configuration', headerName: 'Configuration', renderCell: (model) => getOptionLabel(configurationOptions, model.configuration) },
+            { field: 'machines', headerName: 'Machines', align: 'right', renderCell: (model) => model._count?.machines ?? 0 },
+            {
+              field: 'actions',
+              headerName: 'Actions',
+              align: 'right',
+              width: 112,
+              renderCell: (model) => (
+                <>
+                  <Tooltip title={`Edit ${model.modelName}`}>
+                    <IconButton aria-label={`Edit ${model.modelName}`} size="small" onClick={() => setModelToEdit(model)}>
+                      <EditOutlined fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title={`Delete ${model.modelName}`}>
+                    <IconButton aria-label={`Delete ${model.modelName}`} color="error" size="small" onClick={() => handleOpenDelete(model)}>
+                      <CloseRounded fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                </>
+              ),
+            },
+          ]}
+          loading={loading}
+          emptyMessage="No machine models have been registered yet."
+        />
       </Paper>
 
       {modelToEdit && (

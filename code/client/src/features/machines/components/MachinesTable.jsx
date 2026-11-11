@@ -15,12 +15,6 @@ import {
   MenuItem,
   Paper,
   Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   TextField,
   Tooltip,
   Typography,
@@ -31,6 +25,7 @@ import {
   useGetMachineModelsQuery,
   useUpdateMachineMutation,
 } from '../../../services/api.js'
+import DataTable from '../../../components/common/DataTable.jsx'
 import { getApiErrorMessage } from '../../machine-models/utils/getApiErrorMessage.js'
 
 const statusOptions = [
@@ -122,62 +117,58 @@ function MachinesTable({ machines, loading }) {
           </Box>
         </Box>
         <Divider />
-        {loading ? (
-          <Box sx={{ display: 'grid', placeItems: 'center', minHeight: 150 }}><CircularProgress size={28} /></Box>
-        ) : machines.length === 0 ? (
-          <Box sx={{ display: 'grid', placeItems: 'center', textAlign: 'center', minHeight: 150, px: 2 }}>
-            <Typography variant="body2" color="text.secondary">No machines have been registered yet.</Typography>
-          </Box>
-        ) : (
-          <TableContainer>
-            <Table sx={{ minWidth: 850 }}>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Serial number</TableCell>
-                  <TableCell>Machine model</TableCell>
-                  <TableCell>Customer / site</TableCell>
-                  <TableCell>Installation date</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell align="right" sx={{ width: 112 }}>Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {machines.map((machine) => {
-                  const status = statusOptions.find((item) => item.value === machine.status) ?? statusOptions[1]
-                  const modelName = machine.machineModel
-                    ? `${machine.machineModel.manufacturer?.name ?? ''} ${machine.machineModel.modelName}`.trim()
-                    : '—'
-                  const siteName = machine.site
-                    ? `${machine.site.customer?.name ?? ''} — ${machine.site.name}`
-                    : '—'
-                  return (
-                    <TableRow key={machine.id} hover>
-                      <TableCell sx={{ fontWeight: 700 }}>{machine.serialNumber}</TableCell>
-                      <TableCell>{modelName}</TableCell>
-                      <TableCell>{siteName}</TableCell>
-                      <TableCell>{machine.installationDate?.slice(0, 10) ?? '—'}</TableCell>
-                      <TableCell><Chip size="small" label={status.label} color={status.color} /></TableCell>
-                      <TableCell align="right">
-                        <Stack direction="row" spacing={0.5} justifyContent="flex-end">
-                          <Tooltip title={`Edit ${machine.serialNumber}`}>
-                            <IconButton aria-label={`Edit ${machine.serialNumber}`} size="small" onClick={() => handleOpenEdit(machine)}>
-                              <EditOutlined fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                          <Tooltip title={`Delete ${machine.serialNumber}`}>
-                            <IconButton aria-label={`Delete ${machine.serialNumber}`} color="error" size="small" onClick={() => { setDeleteError(''); setMachineToDelete(machine) }}>
-                              <CloseRounded fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                        </Stack>
-                      </TableCell>
-                    </TableRow>
-                  )
-                })}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        )}
+        <DataTable
+          rows={machines}
+          columns={[
+            { field: 'serialNumber', headerName: 'Serial number', cellSx: { fontWeight: 700 } },
+            {
+              field: 'model',
+              headerName: 'Machine model',
+              renderCell: (machine) => machine.machineModel
+                ? `${machine.machineModel.manufacturer?.name ?? ''} ${machine.machineModel.modelName}`.trim()
+                : '—',
+            },
+            {
+              field: 'site',
+              headerName: 'Customer / site',
+              renderCell: (machine) => machine.site
+                ? `${machine.site.customer?.name ?? ''} — ${machine.site.name}`
+                : '—',
+            },
+            { field: 'installationDate', headerName: 'Installation date', renderCell: (machine) => machine.installationDate?.slice(0, 10) ?? '—' },
+            {
+              field: 'status',
+              headerName: 'Status',
+              renderCell: (machine) => {
+                const status = statusOptions.find((item) => item.value === machine.status) ?? statusOptions[1]
+                return <Chip size="small" label={status.label} color={status.color} />
+              },
+            },
+            {
+              field: 'actions',
+              headerName: 'Actions',
+              align: 'right',
+              width: 112,
+              renderCell: (machine) => (
+                <Stack direction="row" spacing={0.5} justifyContent="flex-end">
+                  <Tooltip title={`Edit ${machine.serialNumber}`}>
+                    <IconButton aria-label={`Edit ${machine.serialNumber}`} size="small" onClick={() => handleOpenEdit(machine)}>
+                      <EditOutlined fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title={`Delete ${machine.serialNumber}`}>
+                    <IconButton aria-label={`Delete ${machine.serialNumber}`} color="error" size="small" onClick={() => { setDeleteError(''); setMachineToDelete(machine) }}>
+                      <CloseRounded fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                </Stack>
+              ),
+            },
+          ]}
+          loading={loading}
+          emptyMessage="No machines have been registered yet."
+          minWidth={850}
+        />
       </Paper>
 
       <Dialog open={Boolean(machineToEdit)} onClose={() => !updating && setMachineToEdit(null)} fullWidth maxWidth="md">

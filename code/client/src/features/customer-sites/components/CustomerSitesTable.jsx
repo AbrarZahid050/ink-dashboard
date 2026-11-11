@@ -14,12 +14,6 @@ import {
   MenuItem,
   Paper,
   Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   TextField,
   Tooltip,
   Typography,
@@ -29,6 +23,7 @@ import {
   useGetCustomersQuery,
   useUpdateCustomerSiteMutation,
 } from '../../../services/api.js'
+import DataTable from '../../../components/common/DataTable.jsx'
 import { getApiErrorMessage } from '../../machine-models/utils/getApiErrorMessage.js'
 
 function CustomerSitesTable({ sites, loading }) {
@@ -112,57 +107,52 @@ function CustomerSitesTable({ sites, loading }) {
           </Box>
         </Box>
         <Divider />
-        {loading ? (
-          <Box sx={{ display: 'grid', placeItems: 'center', minHeight: 150 }}><CircularProgress size={28} /></Box>
-        ) : sites.length === 0 ? (
-          <Box sx={{ display: 'grid', placeItems: 'center', textAlign: 'center', minHeight: 150, px: 2 }}>
-            <Typography variant="body2" color="text.secondary">No customer sites have been added yet.</Typography>
-          </Box>
-        ) : (
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Site / Branch</TableCell>
-                  <TableCell>Customer</TableCell>
-                  <TableCell>Location</TableCell>
-                  <TableCell align="center" sx={{ width: 100 }}>Machines</TableCell>
-                  <TableCell align="right" sx={{ width: 112 }}>Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {sites.map((site) => {
-                  const machineCount = site._count?.machines ?? 0
-                  const location = [site.city, site.country].filter(Boolean).join(', ')
-                  return (
-                    <TableRow key={site.id} hover>
-                      <TableCell sx={{ fontWeight: 600 }}>{site.name}</TableCell>
-                      <TableCell>{site.customer?.name ?? '—'}</TableCell>
-                      <TableCell>{location || site.address || '—'}</TableCell>
-                      <TableCell align="center">{machineCount}</TableCell>
-                      <TableCell align="right">
-                        <Stack direction="row" spacing={0.5} justifyContent="flex-end">
-                          <Tooltip title={`Edit ${site.name}`}>
-                            <IconButton aria-label={`Edit ${site.name}`} size="small" onClick={() => handleOpenEdit(site)}>
-                              <EditOutlined fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                          <Tooltip title={machineCount > 0 ? 'Remove installed machines first' : `Delete ${site.name}`}>
-                            <span>
-                              <IconButton aria-label={`Delete ${site.name}`} color="error" size="small" disabled={machineCount > 0} onClick={() => { setDeleteError(''); setSiteToDelete(site) }}>
-                                <CloseRounded fontSize="small" />
-                              </IconButton>
-                            </span>
-                          </Tooltip>
-                        </Stack>
-                      </TableCell>
-                    </TableRow>
-                  )
-                })}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        )}
+        <DataTable
+          rows={sites}
+          columns={[
+            { field: 'name', headerName: 'Site / Branch', cellSx: { fontWeight: 600 } },
+            { field: 'customer', headerName: 'Customer', renderCell: (site) => site.customer?.name ?? '—' },
+            {
+              field: 'location',
+              headerName: 'Location',
+              renderCell: (site) => [site.city, site.country].filter(Boolean).join(', ') || site.address || '—',
+            },
+            {
+              field: 'machines',
+              headerName: 'Machines',
+              align: 'center',
+              width: 100,
+              renderCell: (site) => site._count?.machines ?? 0,
+            },
+            {
+              field: 'actions',
+              headerName: 'Actions',
+              align: 'right',
+              width: 112,
+              renderCell: (site) => {
+                const machineCount = site._count?.machines ?? 0
+                return (
+                  <Stack direction="row" spacing={0.5} justifyContent="flex-end">
+                    <Tooltip title={`Edit ${site.name}`}>
+                      <IconButton aria-label={`Edit ${site.name}`} size="small" onClick={() => handleOpenEdit(site)}>
+                        <EditOutlined fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title={machineCount > 0 ? 'Remove installed machines first' : `Delete ${site.name}`}>
+                      <span>
+                        <IconButton aria-label={`Delete ${site.name}`} color="error" size="small" disabled={machineCount > 0} onClick={() => { setDeleteError(''); setSiteToDelete(site) }}>
+                          <CloseRounded fontSize="small" />
+                        </IconButton>
+                      </span>
+                    </Tooltip>
+                  </Stack>
+                )
+              },
+            },
+          ]}
+          loading={loading}
+          emptyMessage="No customer sites have been added yet."
+        />
       </Paper>
 
       <Dialog open={Boolean(siteToEdit)} onClose={() => !updating && setSiteToEdit(null)} fullWidth maxWidth="sm">

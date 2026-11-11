@@ -13,12 +13,6 @@ import {
   IconButton,
   Paper,
   Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   TextField,
   Tooltip,
   Typography,
@@ -27,6 +21,7 @@ import {
   useDeleteCustomerMutation,
   useUpdateCustomerMutation,
 } from '../../../services/api.js'
+import DataTable from '../../../components/common/DataTable.jsx'
 import { getApiErrorMessage } from '../../machine-models/utils/getApiErrorMessage.js'
 
 function CustomersTable({ customers, loading }) {
@@ -125,67 +120,46 @@ function CustomersTable({ customers, loading }) {
         </Box>
         <Divider />
 
-        {loading ? (
-          <Box sx={{ display: 'grid', placeItems: 'center', minHeight: 150 }}>
-            <CircularProgress size={28} />
-          </Box>
-        ) : customers.length === 0 ? (
-          <Box sx={{ display: 'grid', placeItems: 'center', textAlign: 'center', minHeight: 150, px: 2 }}>
-            <Typography variant="body2" color="text.secondary">
-              No customers have been added yet.
-            </Typography>
-          </Box>
-        ) : (
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Customer / Company</TableCell>
-                  <TableCell align="center" sx={{ width: 120 }}>Sites</TableCell>
-                  <TableCell align="right" sx={{ width: 112 }}>Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {customers.map((customer) => {
-                  const siteCount = customer._count?.sites ?? 0
-
-                  return (
-                    <TableRow key={customer.id} hover>
-                      <TableCell sx={{ fontWeight: 600 }}>{customer.name}</TableCell>
-                      <TableCell align="center">{siteCount}</TableCell>
-                      <TableCell align="right">
-                        <Stack direction="row" spacing={0.5} justifyContent="flex-end">
-                          <Tooltip title={`Edit ${customer.name}`}>
-                            <IconButton
-                              aria-label={`Edit ${customer.name}`}
-                              size="small"
-                              onClick={() => handleOpenEdit(customer)}
-                            >
-                              <EditOutlined fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                          <Tooltip title={siteCount > 0 ? 'Remove customer sites first' : `Delete ${customer.name}`}>
-                            <span>
-                              <IconButton
-                                aria-label={`Delete ${customer.name}`}
-                                color="error"
-                                size="small"
-                                disabled={siteCount > 0}
-                                onClick={() => handleOpenDelete(customer)}
-                              >
-                                <CloseRounded fontSize="small" />
-                              </IconButton>
-                            </span>
-                          </Tooltip>
-                        </Stack>
-                      </TableCell>
-                    </TableRow>
-                  )
-                })}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        )}
+        <DataTable
+          rows={customers}
+          columns={[
+            { field: 'name', headerName: 'Customer / Company', cellSx: { fontWeight: 600 } },
+            {
+              field: 'sites',
+              headerName: 'Sites',
+              align: 'center',
+              width: 120,
+              renderCell: (customer) => customer._count?.sites ?? 0,
+            },
+            {
+              field: 'actions',
+              headerName: 'Actions',
+              align: 'right',
+              width: 112,
+              renderCell: (customer) => {
+                const siteCount = customer._count?.sites ?? 0
+                return (
+                  <Stack direction="row" spacing={0.5} justifyContent="flex-end">
+                    <Tooltip title={`Edit ${customer.name}`}>
+                      <IconButton aria-label={`Edit ${customer.name}`} size="small" onClick={() => handleOpenEdit(customer)}>
+                        <EditOutlined fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title={siteCount > 0 ? 'Remove customer sites first' : `Delete ${customer.name}`}>
+                      <span>
+                        <IconButton aria-label={`Delete ${customer.name}`} color="error" size="small" disabled={siteCount > 0} onClick={() => handleOpenDelete(customer)}>
+                          <CloseRounded fontSize="small" />
+                        </IconButton>
+                      </span>
+                    </Tooltip>
+                  </Stack>
+                )
+              },
+            },
+          ]}
+          loading={loading}
+          emptyMessage="No customers have been added yet."
+        />
       </Paper>
 
       <Dialog open={Boolean(customerToEdit)} onClose={handleCloseEdit} fullWidth maxWidth="xs">
