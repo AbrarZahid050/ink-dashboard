@@ -504,7 +504,7 @@ function InkProducts() {
           loading={loading}
           emptyMessage="No ink products have been registered yet."
           minWidth={900}
-        />}
+        />
       </Paper>
 
       <Dialog

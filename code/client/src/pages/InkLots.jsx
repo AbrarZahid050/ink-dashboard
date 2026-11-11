@@ -517,7 +517,7 @@ function InkLots() {
           loading={loading}
           emptyMessage="No ink lots have been registered yet."
           minWidth={900}
-        />}
+        />
       </Paper>
 
       <Dialog
