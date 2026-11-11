@@ -1,9 +1,12 @@
 import { useState } from 'react'
-import { Alert, Box, Button, Snackbar, Typography } from '@mui/material'
 import CustomerForm from '../features/customers/components/CustomerForm.jsx'
 import CustomersTable from '../features/customers/components/CustomersTable.jsx'
 import { getApiErrorMessage } from '../features/machine-models/utils/getApiErrorMessage.js'
 import { useGetCustomersQuery } from '../services/api.js'
+import FeedbackSnackbar from '../components/common/FeedbackSnackbar.jsx'
+import PageContainer from '../components/common/PageContainer.jsx'
+import PageHeader from '../components/common/PageHeader.jsx'
+import QueryErrorAlert from '../components/common/QueryErrorAlert.jsx'
 
 function Customers() {
   const [notice, setNotice] = useState('')
@@ -16,27 +19,16 @@ function Customers() {
   } = useGetCustomersQuery()
 
   return (
-    <Box sx={{ maxWidth: 1500, mx: 'auto', pt: { xs: 3, sm: 4 } }}>
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h3" sx={{ mb: 0.5 }}>Customers</Typography>
-        <Typography variant="body1" color="text.secondary">
-          Manage customer companies and keep their locations organised.
-        </Typography>
-      </Box>
+    <PageContainer>
+      <PageHeader
+        title="Customers"
+        description="Manage customer companies and keep their locations organised."
+      />
 
-      {error && (
-        <Alert
-          severity="error"
-          sx={{ mb: 2 }}
-          action={
-            <Button color="inherit" size="small" onClick={refetch}>
-              Retry
-            </Button>
-          }
-        >
-          {getApiErrorMessage(error, 'Unable to load customers.')} Check that the backend API is running and try again.
-        </Alert>
-      )}
+      <QueryErrorAlert
+        message={error && `${getApiErrorMessage(error, 'Unable to load customers.')} Check that the backend API is running and try again.`}
+        onRetry={refetch}
+      />
 
       <CustomerForm onCreated={() => setNotice('Customer added successfully.')} />
       <CustomersTable
@@ -44,17 +36,8 @@ function Customers() {
         loading={isLoading || (isFetching && customers.length === 0)}
       />
 
-      <Snackbar
-        open={Boolean(notice)}
-        autoHideDuration={4000}
-        onClose={() => setNotice('')}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-      >
-        <Alert onClose={() => setNotice('')} severity="success" variant="filled" sx={{ width: '100%' }}>
-          {notice}
-        </Alert>
-      </Snackbar>
-    </Box>
+      <FeedbackSnackbar message={notice} onClose={() => setNotice('')} />
+    </PageContainer>
   )
 }
 

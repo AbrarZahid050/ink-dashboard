@@ -1,9 +1,12 @@
 import { useState } from 'react'
-import { Alert, Box, Button, Snackbar, Typography } from '@mui/material'
 import ManufacturerForm from '../features/manufacturers/components/ManufacturerForm.jsx'
 import ManufacturersTable from '../features/manufacturers/components/ManufacturersTable.jsx'
 import { getApiErrorMessage } from '../features/machine-models/utils/getApiErrorMessage.js'
 import { useGetManufacturersQuery } from '../services/api.js'
+import FeedbackSnackbar from '../components/common/FeedbackSnackbar.jsx'
+import PageContainer from '../components/common/PageContainer.jsx'
+import PageHeader from '../components/common/PageHeader.jsx'
+import QueryErrorAlert from '../components/common/QueryErrorAlert.jsx'
 
 function Manufacturers() {
   const [notice, setNotice] = useState('')
@@ -16,50 +19,25 @@ function Manufacturers() {
   } = useGetManufacturersQuery()
 
   return (
-    <Box sx={{ maxWidth: 1500, mx: 'auto', pt: { xs: 3, sm: 4 } }}>
-      <Box sx={{ mb: 3 }}>
-        <TypographyHeader />
-      </Box>
+    <PageContainer>
+      <PageHeader
+        title="Manufacturers"
+        description="Manage the manufacturers available across your equipment catalogue."
+      />
 
-      {error && (
-        <Alert
-          severity="error"
-          sx={{ mb: 2 }}
-          action={
-            <Button color="inherit" size="small" onClick={refetch}>
-              Retry
-            </Button>
-          }
-        >
-          {getApiErrorMessage(error, 'Unable to load manufacturers.')} Check that the backend API is running and try again.
-        </Alert>
-      )}
+      <QueryErrorAlert
+        message={error && `${getApiErrorMessage(error, 'Unable to load manufacturers.')} Check that the backend API is running and try again.`}
+        onRetry={refetch}
+      />
 
       <ManufacturerForm onCreated={() => setNotice('Manufacturer added successfully.')} />
-      <ManufacturersTable manufacturers={manufacturers} loading={isLoading || (isFetching && manufacturers.length === 0)} />
+      <ManufacturersTable
+        manufacturers={manufacturers}
+        loading={isLoading || (isFetching && manufacturers.length === 0)}
+      />
 
-      <Snackbar
-        open={Boolean(notice)}
-        autoHideDuration={4000}
-        onClose={() => setNotice('')}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-      >
-        <Alert onClose={() => setNotice('')} severity="success" variant="filled" sx={{ width: '100%' }}>
-          {notice}
-        </Alert>
-      </Snackbar>
-    </Box>
-  )
-}
-
-function TypographyHeader() {
-  return (
-    <>
-      <Typography variant="h3" sx={{ mb: 0.5 }}>Manufacturers</Typography>
-      <Typography variant="body1" color="text.secondary">
-        Manage the manufacturers available across your equipment catalogue.
-      </Typography>
-    </>
+      <FeedbackSnackbar message={notice} onClose={() => setNotice('')} />
+    </PageContainer>
   )
 }
 
