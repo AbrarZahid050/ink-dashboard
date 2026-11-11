@@ -1,9 +1,12 @@
 import { useState } from 'react'
-import { Alert, Box, Button, Snackbar, Typography } from '@mui/material'
 import MachineForm from '../features/machines/components/MachineForm.jsx'
 import MachinesTable from '../features/machines/components/MachinesTable.jsx'
 import { getApiErrorMessage } from '../features/machine-models/utils/getApiErrorMessage.js'
 import { useGetMachinesQuery } from '../services/api.js'
+import FeedbackSnackbar from '../components/common/FeedbackSnackbar.jsx'
+import PageContainer from '../components/common/PageContainer.jsx'
+import PageHeader from '../components/common/PageHeader.jsx'
+import QueryErrorAlert from '../components/common/QueryErrorAlert.jsx'
 
 function Machines() {
   const [notice, setNotice] = useState('')
@@ -16,27 +19,25 @@ function Machines() {
   } = useGetMachinesQuery()
 
   return (
-    <Box sx={{ maxWidth: 1500, mx: 'auto', pt: { xs: 3, sm: 4 } }}>
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h3" sx={{ mb: 0.5 }}>Machines</Typography>
-        <Typography variant="body1" color="text.secondary">
-          Register and manage individual printers installed at customer locations.
-        </Typography>
-      </Box>
+    <PageContainer>
+      <PageHeader
+        title="Machines"
+        description="Register and manage individual printers installed at customer locations."
+      />
 
-      {error && (
-        <Alert severity="error" sx={{ mb: 2 }} action={<Button color="inherit" size="small" onClick={refetch}>Retry</Button>}>
-          {getApiErrorMessage(error, 'Unable to load machines.')} Check that the backend API is running and try again.
-        </Alert>
-      )}
+      <QueryErrorAlert
+        message={error && `${getApiErrorMessage(error, 'Unable to load machines.')} Check that the backend API is running and try again.`}
+        onRetry={refetch}
+      />
 
       <MachineForm onCreated={() => setNotice('Machine registered successfully.')} />
-      <MachinesTable machines={machines} loading={isLoading || (isFetching && machines.length === 0)} />
+      <MachinesTable
+        machines={machines}
+        loading={isLoading || (isFetching && machines.length === 0)}
+      />
 
-      <Snackbar open={Boolean(notice)} autoHideDuration={4000} onClose={() => setNotice('')} anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}>
-        <Alert onClose={() => setNotice('')} severity="success" variant="filled" sx={{ width: '100%' }}>{notice}</Alert>
-      </Snackbar>
-    </Box>
+      <FeedbackSnackbar message={notice} onClose={() => setNotice('')} />
+    </PageContainer>
   )
 }
 
