@@ -23,14 +23,7 @@ import {
   IconButton,
   MenuItem,
   Paper,
-  Snackbar,
   Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   TextField,
   Tooltip,
   Typography,
@@ -43,6 +36,11 @@ import {
   useUpdateInkModelMutation,
 } from '../services/api.js'
 import { getApiErrorMessage } from '../features/machine-models/utils/getApiErrorMessage.js'
+import PageContainer from '../components/common/PageContainer.jsx'
+import PageHeader from '../components/common/PageHeader.jsx'
+import QueryErrorAlert from '../components/common/QueryErrorAlert.jsx'
+import FeedbackSnackbar from '../components/common/FeedbackSnackbar.jsx'
+import DataTable from '../components/common/DataTable.jsx'
 
 const inkTypes = [
   { value: 'UV', label: 'UV' },
@@ -251,46 +249,58 @@ function InkModels() {
     (type) => type.value === confirmationValues?.inkType,
   )?.label
 
-  return (
-    <Box sx={{ maxWidth: 1500, mx: 'auto', pt: { xs: 3, sm: 4 } }}>
-      <Stack
-        direction={{ xs: 'column', sm: 'row' }}
-        alignItems={{ xs: 'flex-start', sm: 'center' }}
-        justifyContent="space-between"
-        spacing={2}
-        sx={{ mb: 3 }}
-      >
-        <Box>
-          <Typography variant="h1" sx={{ fontSize: { xs: 25, sm: 28 }, mb: 0.75 }}>
-            Ink models
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Manage ink families by manufacturer and printing technology.
-          </Typography>
-        </Box>
-        <Button
-          variant="outlined"
-          startIcon={<RefreshRounded />}
-          onClick={refresh}
-          disabled={inkModelsFetching}
-        >
-          Refresh
-        </Button>
-      </Stack>
+  const columns = [
+    { field: 'manufacturer', headerName: 'Manufacturer', renderCell: (model) => model.manufacturer?.name ?? '—' },
+    { field: 'inkName', headerName: 'Ink name', cellSx: { fontWeight: 600 } },
+    {
+      field: 'inkType',
+      headerName: 'Ink type',
+      renderCell: (model) => inkTypes.find((type) => type.value === model.inkType)?.label ?? model.inkType,
+    },
+    { field: 'products', headerName: 'Products', align: 'right', renderCell: (model) => model._count?.products ?? 0 },
+    {
+      field: 'actions',
+      headerName: 'Actions',
+      align: 'right',
+      width: 112,
+      renderCell: (model) => (
+        <>
+          <Tooltip title={`Edit ${model.inkName}`}>
+            <IconButton aria-label={`Edit ${model.inkName}`} size="small" onClick={() => handleOpenEdit(model)}>
+              <EditOutlined fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title={`Delete ${model.inkName}`}>
+            <IconButton aria-label={`Delete ${model.inkName}`} color="error" size="small" onClick={() => handleOpenDelete(model)}>
+              <CloseRounded fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        </>
+      ),
+    },
+  ]
 
-      {loadError && (
-        <Alert
-          severity="error"
-          sx={{ mb: 2 }}
-          action={
-            <Button color="inherit" size="small" onClick={refresh}>
-              Retry
-            </Button>
-          }
-        >
-          {getApiErrorMessage(loadError, 'Unable to load ink model data.')} Check that the backend API is running and try again.
-        </Alert>
-      )}
+  return (
+    <PageContainer>
+      <PageHeader
+        title="Ink models"
+        description="Manage ink families by manufacturer and printing technology."
+        action={(
+          <Button
+            variant="outlined"
+            startIcon={<RefreshRounded />}
+            onClick={refresh}
+            disabled={inkModelsFetching}
+          >
+            Refresh
+          </Button>
+        )}
+      />
+
+      <QueryErrorAlert
+        message={loadError ? `${getApiErrorMessage(loadError, 'Unable to load ink model data.')} Check that the backend API is running and try again.` : ''}
+        onRetry={refresh}
+      />
 
       <Paper
         component="form"
@@ -438,64 +448,13 @@ function InkModels() {
         </Box>
         <Divider />
 
-        {loading ? (
-          <Box sx={{ display: 'grid', placeItems: 'center', minHeight: 150 }}>
-            <CircularProgress size={28} />
-          </Box>
-        ) : inkModels.length === 0 ? (
-          <Box sx={{ display: 'grid', placeItems: 'center', textAlign: 'center', minHeight: 150, px: 2 }}>
-            <Typography variant="body2" color="text.secondary">
-              No ink models have been registered yet.
-            </Typography>
-          </Box>
-        ) : (
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Manufacturer</TableCell>
-                  <TableCell>Ink name</TableCell>
-                  <TableCell>Ink type</TableCell>
-                  <TableCell align="right">Products</TableCell>
-                  <TableCell align="right" sx={{ width: 112 }}>Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {inkModels.map((model) => (
-                  <TableRow key={model.id} hover>
-                    <TableCell>{model.manufacturer?.name ?? '—'}</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>{model.inkName}</TableCell>
-                    <TableCell>
-                      {inkTypes.find((type) => type.value === model.inkType)?.label ?? model.inkType}
-                    </TableCell>
-                    <TableCell align="right">{model._count?.products ?? 0}</TableCell>
-                    <TableCell align="right">
-                      <Tooltip title={`Edit ${model.inkName}`}>
-                        <IconButton
-                          aria-label={`Edit ${model.inkName}`}
-                          size="small"
-                          onClick={() => handleOpenEdit(model)}
-                        >
-                          <EditOutlined fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title={`Delete ${model.inkName}`}>
-                        <IconButton
-                          aria-label={`Delete ${model.inkName}`}
-                          color="error"
-                          size="small"
-                          onClick={() => handleOpenDelete(model)}
-                        >
-                          <CloseRounded fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        )}
+        <DataTable
+          rows={inkModels}
+          columns={columns}
+          loading={loading}
+          emptyMessage="No ink models have been registered yet."
+          minWidth={720}
+        />
       </Paper>
 
       <Dialog
@@ -637,17 +596,8 @@ function InkModels() {
         </DialogActions>
       </Dialog>
 
-      <Snackbar
-        open={Boolean(notice)}
-        autoHideDuration={4000}
-        onClose={() => setNotice('')}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-      >
-        <Alert onClose={() => setNotice('')} severity="success" variant="filled" sx={{ width: '100%' }}>
-          {notice}
-        </Alert>
-      </Snackbar>
-    </Box>
+      <FeedbackSnackbar message={notice} onClose={() => setNotice('')} />
+    </PageContainer>
   )
 }
 
