@@ -21,14 +21,7 @@ import {
   IconButton,
   MenuItem,
   Paper,
-  Snackbar,
   Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   TextField,
   Tooltip,
   Typography,
@@ -41,6 +34,11 @@ import {
   useUpdateInkLotMutation,
 } from '../services/api.js'
 import { getApiErrorMessage } from '../features/machine-models/utils/getApiErrorMessage.js'
+import PageContainer from '../components/common/PageContainer.jsx'
+import PageHeader from '../components/common/PageHeader.jsx'
+import QueryErrorAlert from '../components/common/QueryErrorAlert.jsx'
+import FeedbackSnackbar from '../components/common/FeedbackSnackbar.jsx'
+import DataTable from '../components/common/DataTable.jsx'
 
 const generateLotNumber = () => {
   const randomPart = Math.random().toString(36).slice(2, 8).toUpperCase()
@@ -299,42 +297,88 @@ function InkLots() {
 
   const confirmedProduct = productById.get(confirmationValues?.inkProductId)
 
-  return (
-    <Box sx={{ maxWidth: 1500, mx: 'auto', pt: { xs: 3, sm: 4 } }}>
-      <Stack
-        direction={{ xs: 'column', sm: 'row' }}
-        alignItems={{ xs: 'flex-start', sm: 'center' }}
-        justifyContent="space-between"
-        spacing={2}
-        sx={{ mb: 3 }}
-      >
-        <Box>
-          <Typography variant="h1" sx={{ fontSize: { xs: 25, sm: 28 }, mb: 0.75 }}>
-            Ink lots
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Track manufacturer batch numbers, expiry dates and package quantities.
-          </Typography>
-        </Box>
-        <Button
-          variant="outlined"
-          startIcon={<RefreshRounded />}
-          onClick={refresh}
-          disabled={lotsFetching}
-        >
-          Refresh
-        </Button>
-      </Stack>
 
-      {loadError && (
-        <Alert
-          severity="error"
-          sx={{ mb: 2 }}
-          action={<Button color="inherit" size="small" onClick={refresh}>Retry</Button>}
-        >
-          {getApiErrorMessage(loadError, 'Unable to load ink lot data.')} Check that the backend API is running and try again.
-        </Alert>
-      )}
+  const columns = [
+    {
+      field: 'product',
+      headerName: 'Ink product',
+      cellSx: { minWidth: 230 },
+      renderCell: (lot) => {
+        const product = lot.inkProduct ?? productById.get(lot.inkProductId)
+        return (
+          <Box>
+            <Typography variant="body2" fontWeight={600}>
+              {product?.inkModel?.manufacturer?.name ?? '—'} — {product?.inkModel?.inkName ?? '—'}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              {product ? `${product.color} · ${product.packagingType} · ${product.capacityMl.toLocaleString()} ml` : '—'}
+            </Typography>
+          </Box>
+        )
+      },
+    },
+    { field: 'lotNumber', headerName: 'Lot number', cellSx: { fontWeight: 600 } },
+    { field: 'expiryDate', headerName: 'Expiry date', renderCell: (lot) => formatDate(lot.expiryDate) },
+    {
+      field: 'status',
+      headerName: 'Expiry status',
+      renderCell: (lot) => {
+        const status = getExpiryStatus(lot.expiryDate)
+        return <Chip size="small" label={status.label} color={status.color} variant="outlined" />
+      },
+    },
+    { field: 'quantity', headerName: 'Quantity', align: 'right', renderCell: (lot) => lot.quantity.toLocaleString() },
+    {
+      field: 'actions',
+      headerName: 'Actions',
+      align: 'right',
+      width: 112,
+      renderCell: (lot) => (
+        <>
+          <Tooltip title={`Edit lot ${lot.lotNumber}`}>
+            <IconButton aria-label={`Edit lot ${lot.lotNumber}`} size="small" onClick={() => handleOpenEdit(lot)}>
+              <EditOutlined fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title={`Delete lot ${lot.lotNumber}`}>
+            <IconButton
+              aria-label={`Delete lot ${lot.lotNumber}`}
+              color="error"
+              size="small"
+              onClick={() => {
+                setDeleteError('')
+                setLotToDelete(lot)
+              }}
+            >
+              <CloseRounded fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        </>
+      ),
+    },
+  ]
+
+  return (
+    <PageContainer>
+      <PageHeader
+        title="Ink lots"
+        description="Track manufacturer batch numbers, expiry dates and package quantities."
+        action={(
+          <Button
+            variant="outlined"
+            startIcon={<RefreshRounded />}
+            onClick={refresh}
+            disabled={lotsFetching}
+          >
+            Refresh
+          </Button>
+        )}
+      />
+
+      <QueryErrorAlert
+        message={loadError ? `${getApiErrorMessage(loadError, 'Unable to load ink lot data.')} Check that the backend API is running and try again.` : ''}
+        onRetry={refresh}
+      />
 
       <Paper
         component="form"
@@ -467,80 +511,13 @@ function InkLots() {
         </Box>
         <Divider />
 
-        {loading ? (
-          <Box sx={{ display: 'grid', placeItems: 'center', minHeight: 150 }}>
-            <CircularProgress size={28} />
-          </Box>
-        ) : inkLots.length === 0 ? (
-          <Box sx={{ display: 'grid', placeItems: 'center', textAlign: 'center', minHeight: 150, px: 2 }}>
-            <Typography variant="body2" color="text.secondary">
-              No ink lots have been registered yet.
-            </Typography>
-          </Box>
-        ) : (
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Ink product</TableCell>
-                  <TableCell>Lot number</TableCell>
-                  <TableCell>Expiry date</TableCell>
-                  <TableCell>Expiry status</TableCell>
-                  <TableCell align="right">Quantity</TableCell>
-                  <TableCell align="right" sx={{ width: 112 }}>Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {inkLots.map((lot) => {
-                  const product = lot.inkProduct ?? productById.get(lot.inkProductId)
-                  const status = getExpiryStatus(lot.expiryDate)
-                  return (
-                    <TableRow key={lot.id} hover>
-                      <TableCell sx={{ minWidth: 230 }}>
-                        <Typography variant="body2" fontWeight={600}>
-                          {product?.inkModel?.manufacturer?.name ?? '—'} — {product?.inkModel?.inkName ?? '—'}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {product ? `${product.color} · ${product.packagingType} · ${product.capacityMl.toLocaleString()} ml` : '—'}
-                        </Typography>
-                      </TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>{lot.lotNumber}</TableCell>
-                      <TableCell>{formatDate(lot.expiryDate)}</TableCell>
-                      <TableCell>
-                        <Chip size="small" label={status.label} color={status.color} variant="outlined" />
-                      </TableCell>
-                      <TableCell align="right">{lot.quantity.toLocaleString()}</TableCell>
-                      <TableCell align="right">
-                        <Tooltip title={`Edit lot ${lot.lotNumber}`}>
-                          <IconButton
-                            aria-label={`Edit lot ${lot.lotNumber}`}
-                            size="small"
-                            onClick={() => handleOpenEdit(lot)}
-                          >
-                            <EditOutlined fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                        <Tooltip title={`Delete lot ${lot.lotNumber}`}>
-                          <IconButton
-                            aria-label={`Delete lot ${lot.lotNumber}`}
-                            color="error"
-                            size="small"
-                            onClick={() => {
-                              setDeleteError('')
-                              setLotToDelete(lot)
-                            }}
-                          >
-                            <CloseRounded fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                      </TableCell>
-                    </TableRow>
-                  )
-                })}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        )}
+        <DataTable
+          rows={inkLots}
+          columns={columns}
+          loading={loading}
+          emptyMessage="No ink lots have been registered yet."
+          minWidth={900}
+        />}
       </Paper>
 
       <Dialog
@@ -673,17 +650,8 @@ function InkLots() {
         </DialogActions>
       </Dialog>
 
-      <Snackbar
-        open={Boolean(notice)}
-        autoHideDuration={4000}
-        onClose={() => setNotice('')}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-      >
-        <Alert onClose={() => setNotice('')} severity="success" variant="filled" sx={{ width: '100%' }}>
-          {notice}
-        </Alert>
-      </Snackbar>
-    </Box>
+      <FeedbackSnackbar message={notice} onClose={() => setNotice('')} />
+    </PageContainer>
   )
 }
 

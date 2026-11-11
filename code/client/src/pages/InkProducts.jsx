@@ -23,14 +23,7 @@ import {
   IconButton,
   MenuItem,
   Paper,
-  Snackbar,
   Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   TextField,
   Tooltip,
   Typography,
@@ -43,6 +36,11 @@ import {
   useUpdateInkProductMutation,
 } from '../services/api.js'
 import { getApiErrorMessage } from '../features/machine-models/utils/getApiErrorMessage.js'
+import PageContainer from '../components/common/PageContainer.jsx'
+import PageHeader from '../components/common/PageHeader.jsx'
+import QueryErrorAlert from '../components/common/QueryErrorAlert.jsx'
+import FeedbackSnackbar from '../components/common/FeedbackSnackbar.jsx'
+import DataTable from '../components/common/DataTable.jsx'
 
 const packagingTypes = [
   { value: 'BOTTLE', label: 'Bottle' },
@@ -272,42 +270,75 @@ function InkProducts() {
     (type) => type.value === confirmationValues?.packagingType,
   )?.label
 
-  return (
-    <Box sx={{ maxWidth: 1500, mx: 'auto', pt: { xs: 3, sm: 4 } }}>
-      <Stack
-        direction={{ xs: 'column', sm: 'row' }}
-        alignItems={{ xs: 'flex-start', sm: 'center' }}
-        justifyContent="space-between"
-        spacing={2}
-        sx={{ mb: 3 }}
-      >
+
+  const columns = [
+    {
+      field: 'inkModel',
+      headerName: 'Manufacturer / Ink model',
+      cellSx: { minWidth: 190 },
+      renderCell: (product) => (
         <Box>
-          <Typography variant="h1" sx={{ fontSize: { xs: 25, sm: 28 }, mb: 0.75 }}>
-            Ink products
+          <Typography variant="body2" fontWeight={600}>
+            {product.inkModel?.manufacturer?.name ?? '—'}
           </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Manage ink colours, packaging formats and product capacities.
+          <Typography variant="caption" color="text.secondary">
+            {product.inkModel?.inkName ?? '—'}
           </Typography>
         </Box>
-        <Button
-          variant="outlined"
-          startIcon={<RefreshRounded />}
-          onClick={refresh}
-          disabled={inkProductsFetching}
-        >
-          Refresh
-        </Button>
-      </Stack>
+      ),
+    },
+    { field: 'color', headerName: 'Colour', cellSx: { fontWeight: 600 } },
+    {
+      field: 'packagingType',
+      headerName: 'Packaging',
+      renderCell: (product) => packagingTypes.find((type) => type.value === product.packagingType)?.label ?? product.packagingType,
+    },
+    { field: 'capacityMl', headerName: 'Capacity', align: 'right', renderCell: (product) => `${product.capacityMl.toLocaleString()} ml` },
+    { field: 'productCode', headerName: 'Product code', renderCell: (product) => product.productCode || '—' },
+    { field: 'lots', headerName: 'Lots', align: 'right', renderCell: (product) => product._count?.lots ?? 0 },
+    {
+      field: 'actions',
+      headerName: 'Actions',
+      align: 'right',
+      width: 112,
+      renderCell: (product) => (
+        <>
+          <Tooltip title={`Edit ${product.color} product`}>
+            <IconButton aria-label={`Edit ${product.color} product`} size="small" onClick={() => handleOpenEdit(product)}>
+              <EditOutlined fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title={`Delete ${product.color} product`}>
+            <IconButton aria-label={`Delete ${product.color} product`} color="error" size="small" onClick={() => handleOpenDelete(product)}>
+              <CloseRounded fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        </>
+      ),
+    },
+  ]
 
-      {loadError && (
-        <Alert
-          severity="error"
-          sx={{ mb: 2 }}
-          action={<Button color="inherit" size="small" onClick={refresh}>Retry</Button>}
-        >
-          {getApiErrorMessage(loadError, 'Unable to load ink product data.')} Check that the backend API is running and try again.
-        </Alert>
-      )}
+  return (
+    <PageContainer>
+      <PageHeader
+        title="Ink products"
+        description="Manage ink colours, packaging formats and product capacities."
+        action={(
+          <Button
+            variant="outlined"
+            startIcon={<RefreshRounded />}
+            onClick={refresh}
+            disabled={inkProductsFetching}
+          >
+            Refresh
+          </Button>
+        )}
+      />
+
+      <QueryErrorAlert
+        message={loadError ? `${getApiErrorMessage(loadError, 'Unable to load ink product data.')} Check that the backend API is running and try again.` : ''}
+        onRetry={refresh}
+      />
 
       <Paper
         component="form"
@@ -467,75 +498,13 @@ function InkProducts() {
         </Box>
         <Divider />
 
-        {loading ? (
-          <Box sx={{ display: 'grid', placeItems: 'center', minHeight: 150 }}>
-            <CircularProgress size={28} />
-          </Box>
-        ) : inkProducts.length === 0 ? (
-          <Box sx={{ display: 'grid', placeItems: 'center', textAlign: 'center', minHeight: 150, px: 2 }}>
-            <Typography variant="body2" color="text.secondary">
-              No ink products have been registered yet.
-            </Typography>
-          </Box>
-        ) : (
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Manufacturer / Ink model</TableCell>
-                  <TableCell>Colour</TableCell>
-                  <TableCell>Packaging</TableCell>
-                  <TableCell align="right">Capacity</TableCell>
-                  <TableCell>Product code</TableCell>
-                  <TableCell align="right">Lots</TableCell>
-                  <TableCell align="right" sx={{ width: 112 }}>Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {inkProducts.map((product) => (
-                  <TableRow key={product.id} hover>
-                    <TableCell sx={{ minWidth: 190 }}>
-                      <Typography variant="body2" fontWeight={600}>
-                        {product.inkModel?.manufacturer?.name ?? '—'}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {product.inkModel?.inkName ?? '—'}
-                      </Typography>
-                    </TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>{product.color}</TableCell>
-                    <TableCell>
-                      {packagingTypes.find((type) => type.value === product.packagingType)?.label ?? product.packagingType}
-                    </TableCell>
-                    <TableCell align="right">{product.capacityMl.toLocaleString()} ml</TableCell>
-                    <TableCell>{product.productCode || '—'}</TableCell>
-                    <TableCell align="right">{product._count?.lots ?? 0}</TableCell>
-                    <TableCell align="right">
-                      <Tooltip title={`Edit ${product.color} product`}>
-                        <IconButton
-                          aria-label={`Edit ${product.color} product`}
-                          size="small"
-                          onClick={() => handleOpenEdit(product)}
-                        >
-                          <EditOutlined fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title={`Delete ${product.color} product`}>
-                        <IconButton
-                          aria-label={`Delete ${product.color} product`}
-                          color="error"
-                          size="small"
-                          onClick={() => handleOpenDelete(product)}
-                        >
-                          <CloseRounded fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        )}
+        <DataTable
+          rows={inkProducts}
+          columns={columns}
+          loading={loading}
+          emptyMessage="No ink products have been registered yet."
+          minWidth={900}
+        />}
       </Paper>
 
       <Dialog
@@ -681,17 +650,8 @@ function InkProducts() {
         </DialogActions>
       </Dialog>
 
-      <Snackbar
-        open={Boolean(notice)}
-        autoHideDuration={4000}
-        onClose={() => setNotice('')}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-      >
-        <Alert onClose={() => setNotice('')} severity="success" variant="filled" sx={{ width: '100%' }}>
-          {notice}
-        </Alert>
-      </Snackbar>
-    </Box>
+      <FeedbackSnackbar message={notice} onClose={() => setNotice('')} />
+    </PageContainer>
   )
 }
 
