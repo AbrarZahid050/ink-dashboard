@@ -1,19 +1,8 @@
-import { lazy, Suspense, useState } from 'react'
+import { Suspense } from 'react'
+import { Navigate, Route, Routes } from 'react-router'
 import { Box, CircularProgress } from '@mui/material'
 import MainLayout from './components/layout/MainLayout.jsx'
-
-const Dashboard = lazy(() => import('./pages/Dashboard.jsx'))
-const MachineModels = lazy(() => import('./pages/MachineModels.jsx'))
-const InkModels = lazy(() => import('./pages/InkModels.jsx'))
-const InkProducts = lazy(() => import('./pages/InkProducts.jsx'))
-const InkLots = lazy(() => import('./pages/InkLots.jsx'))
-const InkInventory = lazy(() => import('./pages/InkInventory.jsx'))
-const Manufacturers = lazy(() => import('./pages/Manufacturers.jsx'))
-const Customers = lazy(() => import('./pages/Customers.jsx'))
-const CustomerSites = lazy(() => import('./pages/CustomerSites.jsx'))
-const Machines = lazy(() => import('./pages/Machines.jsx'))
-const InkForecasts = lazy(() => import('./pages/InkForecasts.jsx'))
-const Sales = lazy(() => import('./pages/Sales.jsx'))
+import { appRoutes } from './app/routes.js'
 
 function PageLoader() {
   return (
@@ -24,36 +13,15 @@ function PageLoader() {
 }
 
 function App() {
-  const [activePage, setActivePage] = useState('Dashboard')
-
   return (
-    <MainLayout activePage={activePage} onNavigate={setActivePage}>
+    <MainLayout>
       <Suspense fallback={<PageLoader />}>
-        {activePage === 'Dashboard' ? (
-          <Dashboard />
-        ) : activePage === 'Ink Models' ? (
-          <InkModels />
-        ) : activePage === 'Ink Products' ? (
-          <InkProducts />
-        ) : activePage === 'Ink Lots' ? (
-          <InkLots />
-        ) : activePage === 'Ink Inventory' ? (
-          <InkInventory />
-        ) : activePage === 'Manufacturers' ? (
-          <Manufacturers />
-        ) : activePage === 'Customers' ? (
-          <Customers />
-        ) : activePage === 'Customer Sites' ? (
-          <CustomerSites />
-        ) : activePage === 'Machines' ? (
-          <Machines />
-        ) : activePage === 'Ink Forecasts' ? (
-          <InkForecasts />
-        ) : activePage === 'Sales' ? (
-          <Sales />
-        ) : (
-          <MachineModels />
-        )}
+        <Routes>
+          {appRoutes.map(({ path, Component }) => (
+            <Route key={path} path={path} element={<Component />} />
+          ))}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
       </Suspense>
     </MainLayout>
   )
