@@ -1,15 +1,23 @@
 import { useState } from 'react'
+import { useLocation, useNavigate } from 'react-router'
 import { Box, Toolbar, useMediaQuery, useTheme } from '@mui/material'
 import Header from './Header.jsx'
 import Sidebar from './Sidebar.jsx'
 
-function MainLayout({ children, activePage, onNavigate }) {
+function MainLayout({ children }) {
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('md'))
+  const location = useLocation()
+  const navigate = useNavigate()
   const [mobileOpen, setMobileOpen] = useState(false)
 
   const handleMenuOpen = () => setMobileOpen(true)
   const handleMenuClose = () => setMobileOpen(false)
+
+  const handleNavigate = (path) => {
+    navigate(path)
+    if (isMobile) handleMenuClose()
+  }
 
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh', backgroundColor: 'background.default' }}>
@@ -18,8 +26,8 @@ function MainLayout({ children, activePage, onNavigate }) {
         mobileOpen={mobileOpen}
         onClose={handleMenuClose}
         isMobile={isMobile}
-        activePage={activePage}
-        onNavigate={onNavigate}
+        activePath={location.pathname}
+        onNavigate={handleNavigate}
       />
 
       <Box
