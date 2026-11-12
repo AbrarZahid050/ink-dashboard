@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { Fragment, useMemo, useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -6,6 +6,8 @@ import {
   AddRounded,
   CloseRounded,
   EditOutlined,
+  ExpandLessRounded,
+  ExpandMoreRounded,
   Inventory2Outlined,
   RefreshRounded,
 } from '@mui/icons-material'
@@ -14,6 +16,7 @@ import {
   Box,
   Button,
   CircularProgress,
+  Collapse,
   Dialog,
   DialogActions,
   DialogContent,
@@ -24,6 +27,12 @@ import {
   MenuItem,
   Paper,
   Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
   TextField,
   Tooltip,
   Typography,
@@ -79,6 +88,7 @@ function InkProducts() {
   const [editError, setEditError] = useState('')
   const [productToDelete, setProductToDelete] = useState(null)
   const [deleteError, setDeleteError] = useState('')
+  const [expandedManufacturers, setExpandedManufacturers] = useState({})
 
   const {
     data: inkModels = [],
@@ -110,6 +120,27 @@ function InkProducts() {
     defaultValues: initialValues,
     mode: 'onSubmit',
   })
+
+  const manufacturerGroups = useMemo(() => {
+    const groups = new Map()
+    inkProducts.forEach((product) => {
+      const manufacturerName = product.inkModel?.manufacturer?.name?.trim() || 'Other'
+      const groupKey = manufacturerName.toLocaleLowerCase()
+      const group = groups.get(groupKey) ?? { key: groupKey, name: manufacturerName, products: [] }
+      group.products.push(product)
+      groups.set(groupKey, group)
+    })
+    return [...groups.values()].sort((a, b) => a.name.localeCompare(b.name))
+  }, [inkProducts])
+
+  const expandAll = () => setExpandedManufacturers(
+    Object.fromEntries(manufacturerGroups.map((group) => [group.key, true])),
+  )
+  const collapseAll = () => setExpandedManufacturers({})
+  const toggleManufacturer = (groupKey) => setExpandedManufacturers((current) => ({
+    ...current,
+    [groupKey]: !current[groupKey],
+  }))
 
   const loading = inkModelsLoading || inkProductsLoading
   const loadError = inkModelsError || inkProductsError
@@ -272,47 +303,22 @@ function InkProducts() {
   )?.label
 
 
-  const columns = [
-    {
-      field: 'inkModel',
-      headerName: 'Manufacturer / Ink model',
-      cellSx: { minWidth: 190 },
-      renderCell: (product) => (
-        <Box>
-          <Typography variant="body2" fontWeight={600}>
-            {product.inkModel?.manufacturer?.name ?? '—'}
-          </Typography>
-          <Typography variant="caption" color="text.secondary">
-            {product.inkModel?.inkName ?? '—'}
-          </Typography>
-        </Box>
-      ),
-    },
+  const productColumns = [
+    { field: 'inkModel', headerName: 'Ink model', cellSx: { minWidth: 190 }, renderCell: (product) => <Typography variant="body2" fontWeight={600}>{product.inkModel?.inkName ?? '—'}</Typography> },
     { field: 'color', headerName: 'Colour', cellSx: { fontWeight: 600 } },
-    {
-      field: 'packagingType',
-      headerName: 'Packaging',
-      renderCell: (product) => packagingTypes.find((type) => type.value === product.packagingType)?.label ?? product.packagingType,
-    },
+    { field: 'packagingType', headerName: 'Packaging', renderCell: (product) => packagingTypes.find((type) => type.value === product.packagingType)?.label ?? product.packagingType },
     { field: 'capacityMl', headerName: 'Capacity', align: 'right', renderCell: (product) => `${product.capacityMl.toLocaleString()} ml` },
     { field: 'productCode', headerName: 'Product code', renderCell: (product) => product.productCode || '—' },
     { field: 'lots', headerName: 'Lots', align: 'right', renderCell: (product) => product._count?.lots ?? 0 },
     {
-      field: 'actions',
-      headerName: 'Actions',
-      align: 'right',
-      width: 112,
+      field: 'actions', headerName: 'Actions', align: 'right', width: 112,
       renderCell: (product) => (
         <>
           <Tooltip title={`Edit ${product.color} product`}>
-            <IconButton aria-label={`Edit ${product.color} product`} size="small" onClick={() => handleOpenEdit(product)}>
-              <EditOutlined fontSize="small" />
-            </IconButton>
+            <IconButton aria-label={`Edit ${product.color} product`} size="small" onClick={() => handleOpenEdit(product)}><EditOutlined fontSize="small" /></IconButton>
           </Tooltip>
           <Tooltip title={`Delete ${product.color} product`}>
-            <IconButton aria-label={`Delete ${product.color} product`} color="error" size="small" onClick={() => handleOpenDelete(product)}>
-              <CloseRounded fontSize="small" />
-            </IconButton>
+            <IconButton aria-label={`Delete ${product.color} product`} color="error" size="small" onClick={() => handleOpenDelete(product)}><CloseRounded fontSize="small" /></IconButton>
           </Tooltip>
         </>
       ),
@@ -494,18 +500,78 @@ function InkProducts() {
                 {inkProducts.length} {inkProducts.length === 1 ? 'product' : 'products'} in your catalogue
               </Typography>
             </Box>
-            <Inventory2Outlined color="action" />
+            <Stack direction="row" spacing={1} alignItems="center">
+              {manufacturerGroups.length > 1 && (
+                <>
+                  <Button size="small" color="inherit" onClick={expandAll}>Expand all</Button>
+                  <Button size="small" color="inherit" onClick={collapseAll}>Collapse all</Button>
+                </>
+              )}
+              <Inventory2Outlined color="action" />
+            </Stack>
           </Box>
         </Box>
         <Divider />
 
-        <DataTable
-          rows={inkProducts}
-          columns={columns}
-          loading={loading}
-          emptyMessage="No ink products have been registered yet."
-          minWidth={900}
-        />
+        {loading ? (
+          <Box sx={{ display: 'grid', placeItems: 'center', minHeight: 150 }}><CircularProgress size={28} /></Box>
+        ) : inkProducts.length === 0 ? (
+          <Box sx={{ display: 'grid', placeItems: 'center', textAlign: 'center', minHeight: 150, px: 2 }}>
+            <Typography variant="body2" color="text.secondary">No ink products have been registered yet.</Typography>
+          </Box>
+        ) : (
+          <TableContainer sx={{ overflowX: 'auto' }}>
+            <Table size="medium" sx={{ minWidth: 900 }}>
+              <TableBody>
+                {manufacturerGroups.map((group) => {
+                  const expanded = Boolean(expandedManufacturers[group.key])
+                  return (
+                    <Fragment key={group.key}>
+                      <TableRow hover onClick={() => toggleManufacturer(group.key)} sx={{ cursor: 'pointer', '& > td': { bgcolor: 'action.hover', borderBottom: expanded ? 0 : undefined, py: 1.5 } }}>
+                        <TableCell colSpan={productColumns.length}>
+                          <Stack direction="row" alignItems="center" spacing={1.25}>
+                            <IconButton size="small" aria-label={`${expanded ? 'Collapse' : 'Expand'} ${group.name} products`} onClick={(event) => { event.stopPropagation(); toggleManufacturer(group.key) }}>
+                              {expanded ? <ExpandLessRounded /> : <ExpandMoreRounded />}
+                            </IconButton>
+                            <Typography fontWeight={700}>{group.name}</Typography>
+                            <Chip size="small" label={group.products.length} />
+                            <Typography variant="caption" color="text.secondary">{group.products.length === 1 ? 'product' : 'products'}</Typography>
+                          </Stack>
+                        </TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell colSpan={productColumns.length} sx={{ p: 0, borderBottom: expanded ? undefined : 0 }}>
+                          <Collapse in={expanded} timeout="auto" unmountOnExit>
+                            <Table size="small" sx={{ minWidth: 900 }}>
+                              <TableHead>
+                                <TableRow>
+                                  {productColumns.map((column) => (
+                                    <TableCell key={column.field} align={column.align ?? 'left'} sx={{ width: column.width, ...column.headerSx }}>{column.headerName}</TableCell>
+                                  ))}
+                                </TableRow>
+                              </TableHead>
+                              <TableBody>
+                                {group.products.map((product) => (
+                                  <TableRow key={product.id} hover>
+                                    {productColumns.map((column) => (
+                                      <TableCell key={column.field} align={column.align ?? 'left'} sx={column.cellSx}>
+                                        {column.renderCell ? column.renderCell(product) : product[column.field] ?? '—'}
+                                      </TableCell>
+                                    ))}
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          </Collapse>
+                        </TableCell>
+                      </TableRow>
+                    </Fragment>
+                  )
+                })}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )}
       </Paper>
 
       <Dialog
