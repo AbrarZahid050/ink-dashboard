@@ -2,12 +2,13 @@ import { useMemo, useState } from 'react'
 import {
   AddRounded, ArrowUpwardRounded, ReceiptLongRounded,
   RefreshRounded, RemoveCircleOutlineRounded, SearchRounded, ShoppingCartCheckoutRounded,
+  VisibilityRounded,
 } from '@mui/icons-material'
 import {
   Alert, Box, Button, Chip, CircularProgress, Divider, Grid,
-  IconButton, InputAdornment, MenuItem, Paper, Snackbar, Stack,
-  Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField,
-  Typography,
+  Dialog, DialogActions, DialogContent, DialogTitle, IconButton, InputAdornment,
+  MenuItem, Paper, Snackbar, Stack, Table, TableBody, TableCell, TableContainer,
+  TableHead, TableRow, TextField, Typography,
 } from '@mui/material'
 import {
   useCreateInkPurchaseMutation, useGetCustomersQuery, useGetInkProductsQuery,
@@ -50,6 +51,7 @@ function Sales() {
   const [search, setSearch] = useState('')
   const [notice, setNotice] = useState('')
   const [formError, setFormError] = useState('')
+  const [purchaseToView, setPurchaseToView] = useState(null)
   const { data: customers = [], isLoading: customersLoading } = useGetCustomersQuery()
   const { data: products = [], isLoading: productsLoading } = useGetInkProductsQuery()
   const { data: lots = [], isLoading: lotsLoading } = useGetInkLotsQuery()
@@ -247,7 +249,7 @@ function Sales() {
           filteredPurchases.length === 0 ? <Box sx={{ display: 'grid', placeItems: 'center', textAlign: 'center', minHeight: 160, px: 2 }}><ReceiptLongRounded sx={{ color: 'text.secondary', fontSize: 34, mb: 1 }} /><Typography variant="body2" color="text.secondary">{purchases.length ? 'No invoices match your search.' : 'No sales have been recorded yet. Create your first invoice above.'}</Typography></Box> :
           <TableContainer sx={{ overflowX: 'auto' }}>
             <Table>
-              <TableHead><TableRow><TableCell>Date</TableCell><TableCell>Reference</TableCell><TableCell>Customer</TableCell><TableCell>Items</TableCell><TableCell align="right">Packages</TableCell><TableCell align="right">Total</TableCell></TableRow></TableHead>
+              <TableHead><TableRow><TableCell>Date</TableCell><TableCell>Reference</TableCell><TableCell>Customer</TableCell><TableCell>Items</TableCell><TableCell align="right">Packages</TableCell><TableCell align="right">Total</TableCell><TableCell align="right">Details</TableCell></TableRow></TableHead>
               <TableBody>
                 {filteredPurchases.map((purchase) => {
                   const quantity = (purchase.items ?? []).reduce((sum, item) => sum + Number(item.quantity), 0)
@@ -263,12 +265,126 @@ function Sales() {
                     </TableCell>
                     <TableCell align="right">{quantity.toLocaleString()}</TableCell>
                     <TableCell align="right" sx={{ fontWeight: 700 }}>{money(amount, currency)}</TableCell>
+                    <TableCell align="right">
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        startIcon={<VisibilityRounded />}
+                        onClick={() => setPurchaseToView(purchase)}
+                        aria-label={`View invoice ${purchase.reference || purchase.id}`}
+                      >
+                        View
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 })}
               </TableBody>
             </Table>
           </TableContainer>}
       </Paper>
+      <Dialog
+        open={Boolean(purchaseToView)}
+        onClose={() => setPurchaseToView(null)}
+        fullWidth
+        maxWidth="md"
+      >
+        <DialogTitle>
+          <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" spacing={1}>
+            <Box>
+              <Typography variant="h5">Invoice details</Typography>
+              <Typography variant="body2" color="text.secondary">
+                {purchaseToView?.reference || 'Unreferenced invoice'}
+              </Typography>
+            </Box>
+            <Chip size="small" color="success" variant="outlined" label="Recorded" sx={{ alignSelf: 'flex-start' }} />
+          </Stack>
+        </DialogTitle>
+        <DialogContent dividers>
+          {purchaseToView && (() => {
+            const invoiceCurrency = purchaseToView.currencyCode ?? 'AED'
+            const invoiceItems = purchaseToView.items ?? []
+            const invoiceTotal = invoiceItems.reduce(
+              (sum, line) => sum + Number(line.quantity) * Number(line.unitPrice ?? 0),
+              0,
+            )
+            return (
+              <Stack spacing={2.5}>
+                <Grid container spacing={2}>
+                  <Grid size={{ xs: 12, sm: 4 }}>
+                    <Typography variant="caption" color="text.secondary">Customer</Typography>
+                    <Typography fontWeight={650}>{purchaseToView.customer?.name ?? '—'}</Typography>
+                  </Grid>
+                  <Grid size={{ xs: 6, sm: 4 }}>
+                    <Typography variant="caption" color="text.secondary">Invoice date</Typography>
+                    <Typography fontWeight={650}>{dateLabel(purchaseToView.purchasedAt)}</Typography>
+                  </Grid>
+                  <Grid size={{ xs: 6, sm: 4 }}>
+                    <Typography variant="caption" color="text.secondary">Reference</Typography>
+                    <Typography fontWeight={650}>{purchaseToView.reference || '—'}</Typography>
+                  </Grid>
+                </Grid>
+                <Divider />
+                <Box>
+                  <Typography variant="h6" sx={{ mb: 1.25 }}>Purchased items ({invoiceItems.length})</Typography>
+                  <TableContainer sx={{ overflowX: 'auto' }}>
+                    <Table size="small" sx={{ minWidth: 760 }}>
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>Ink product</TableCell>
+                          <TableCell>Lot number</TableCell>
+                          <TableCell>Machine</TableCell>
+                          <TableCell align="right">Qty</TableCell>
+                          <TableCell align="right">Unit price</TableCell>
+                          <TableCell align="right">Line total</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {invoiceItems.map((line) => {
+                          const product = line.inkProduct
+                          const machine = line.machine
+                          return (
+                            <TableRow key={line.id}>
+                              <TableCell sx={{ minWidth: 190 }}>
+                                <Typography variant="body2" fontWeight={650}>{productName(product)}</Typography>
+                                <Typography variant="caption" color="text.secondary">
+                                  {product?.packagingType ?? '—'} · {product?.productCode || 'No product code'}
+                                </Typography>
+                              </TableCell>
+                              <TableCell>{line.inkLot?.lotNumber ?? '—'}</TableCell>
+                              <TableCell sx={{ minWidth: 150 }}>
+                                {machine
+                                  ? [machine.serialNumber, machine.machineModel?.manufacturer?.name, machine.machineModel?.modelName].filter(Boolean).join(' · ')
+                                  : 'Not assigned'}
+                              </TableCell>
+                              <TableCell align="right">{Number(line.quantity).toLocaleString()}</TableCell>
+                              <TableCell align="right">{money(line.unitPrice, invoiceCurrency)}</TableCell>
+                              <TableCell align="right" sx={{ fontWeight: 650 }}>
+                                {money(Number(line.quantity) * Number(line.unitPrice ?? 0), invoiceCurrency)}
+                              </TableCell>
+                            </TableRow>
+                          )
+                        })}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </Box>
+                <Stack direction="row" justifyContent="flex-end">
+                  <Paper variant="outlined" sx={{ px: 2.5, py: 1.5, minWidth: 210, borderRadius: 2 }}>
+                    <Typography variant="caption" color="text.secondary">Invoice total</Typography>
+                    <Typography variant="h5" fontWeight={750}>{money(invoiceTotal, invoiceCurrency)}</Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {invoiceItems.reduce((sum, line) => sum + Number(line.quantity), 0).toLocaleString()} packages
+                    </Typography>
+                  </Paper>
+                </Stack>
+              </Stack>
+            )
+          })()}
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setPurchaseToView(null)} variant="contained">Close</Button>
+        </DialogActions>
+      </Dialog>
       <Snackbar open={Boolean(notice)} autoHideDuration={4000} onClose={() => setNotice('')} anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}>
         <Alert severity="success" variant="filled" onClose={() => setNotice('')}>{notice}</Alert>
       </Snackbar>
