@@ -2,6 +2,7 @@ import { Fragment, useMemo, useState } from 'react'
 import {
   CloseRounded,
   EditOutlined,
+  ExpandLessRounded,
   ExpandMoreRounded,
   PrecisionManufacturingOutlined,
 } from '@mui/icons-material'
