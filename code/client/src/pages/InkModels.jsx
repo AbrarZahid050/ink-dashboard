@@ -41,6 +41,7 @@ import PageHeader from '../components/common/PageHeader.jsx'
 import QueryErrorAlert from '../components/common/QueryErrorAlert.jsx'
 import FeedbackSnackbar from '../components/common/FeedbackSnackbar.jsx'
 import DataTable from '../components/common/DataTable.jsx'
+import ConfirmationDetail from '../components/common/ConfirmationDetail.jsx'
 
 const inkTypes = [
   { value: 'UV', label: 'UV' },
@@ -598,15 +599,6 @@ function InkModels() {
 
       <FeedbackSnackbar message={notice} onClose={() => setNotice('')} />
     </PageContainer>
-  )
-}
-
-function ConfirmationDetail({ label, value }) {
-  return (
-    <Stack direction="row" justifyContent="space-between" spacing={2}>
-      <Typography color="text.secondary" variant="body2">{label}</Typography>
-      <Typography variant="body2" fontWeight={600} textAlign="right">{value || '—'}</Typography>
-    </Stack>
   )
 }
 
