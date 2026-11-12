@@ -1,11 +1,18 @@
-import { useState } from 'react'
-import { CloseRounded, EditOutlined, PrecisionManufacturingOutlined } from '@mui/icons-material'
+import { useMemo, useState } from 'react'
+import {
+  CloseRounded,
+  EditOutlined,
+  ExpandLessRounded,
+  ExpandMoreRounded,
+  PrecisionManufacturingOutlined,
+} from '@mui/icons-material'
 import {
   Alert,
   Box,
   Button,
   Chip,
   CircularProgress,
+  Collapse,
   Dialog,
   DialogActions,
   DialogContent,
@@ -15,6 +22,12 @@ import {
   MenuItem,
   Paper,
   Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
   TextField,
   Tooltip,
   Typography,
@@ -25,13 +38,21 @@ import {
   useGetMachineModelsQuery,
   useUpdateMachineMutation,
 } from '../../../services/api.js'
-import DataTable from '../../../components/common/DataTable.jsx'
 import { getApiErrorMessage } from '../../machine-models/utils/getApiErrorMessage.js'
 
 const statusOptions = [
   { value: 'ACTIVE', label: 'Active', color: 'success' },
   { value: 'INACTIVE', label: 'Inactive', color: 'default' },
   { value: 'DECOMMISSIONED', label: 'Decommissioned', color: 'warning' },
+]
+
+const machineColumns = [
+  { id: 'serialNumber', label: 'Serial number' },
+  { id: 'model', label: 'Machine model' },
+  { id: 'site', label: 'Customer / site' },
+  { id: 'installationDate', label: 'Installation date' },
+  { id: 'status', label: 'Status' },
+  { id: 'actions', label: 'Actions', align: 'right' },
 ]
 
 function MachinesTable({ machines, loading }) {
@@ -42,8 +63,34 @@ function MachinesTable({ machines, loading }) {
   const [editError, setEditError] = useState('')
   const [machineToDelete, setMachineToDelete] = useState(null)
   const [deleteError, setDeleteError] = useState('')
+  const [expandedManufacturers, setExpandedManufacturers] = useState({})
   const [updateMachine, { isLoading: updating }] = useUpdateMachineMutation()
   const [deleteMachine, { isLoading: deleting }] = useDeleteMachineMutation()
+
+  const manufacturerGroups = useMemo(() => {
+    const groups = new Map()
+
+    machines.forEach((machine) => {
+      const manufacturerName = machine.machineModel?.manufacturer?.name?.trim() || 'Other'
+      const groupKey = manufacturerName.toLocaleLowerCase()
+      const existingGroup = groups.get(groupKey) ?? {
+        key: groupKey,
+        name: manufacturerName,
+        machines: [],
+      }
+      existingGroup.machines.push(machine)
+      groups.set(groupKey, existingGroup)
+    })
+
+    return [...groups.values()].sort((a, b) => a.name.localeCompare(b.name))
+  }, [machines])
+
+  const toggleManufacturer = (groupKey) => {
+    setExpandedManufacturers((current) => ({
+      ...current,
+      [groupKey]: !current[groupKey],
+    }))
+  }
 
   const handleOpenEdit = (machine) => {
     setMachineToEdit(machine)
@@ -102,6 +149,42 @@ function MachinesTable({ machines, loading }) {
     }
   }
 
+  const renderMachineRow = (machine) => {
+    const status = statusOptions.find((item) => item.value === machine.status) ?? statusOptions[1]
+
+    return (
+      <TableRow key={machine.id} hover>
+        <TableCell sx={{ pl: 5, fontWeight: 700 }}>{machine.serialNumber}</TableCell>
+        <TableCell>
+          {machine.machineModel
+            ? `${machine.machineModel.manufacturer?.name ?? ''} ${machine.machineModel.modelName}`.trim()
+            : '—'}
+        </TableCell>
+        <TableCell>
+          {machine.site
+            ? `${machine.site.customer?.name ?? ''} — ${machine.site.name}`
+            : '—'}
+        </TableCell>
+        <TableCell>{machine.installationDate?.slice(0, 10) ?? '—'}</TableCell>
+        <TableCell><Chip size="small" label={status.label} color={status.color} /></TableCell>
+        <TableCell align="right">
+          <Stack direction="row" spacing={0.5} justifyContent="flex-end">
+            <Tooltip title={`Edit ${machine.serialNumber}`}>
+              <IconButton aria-label={`Edit ${machine.serialNumber}`} size="small" onClick={() => handleOpenEdit(machine)}>
+                <EditOutlined fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title={`Delete ${machine.serialNumber}`}>
+              <IconButton aria-label={`Delete ${machine.serialNumber}`} color="error" size="small" onClick={() => { setDeleteError(''); setMachineToDelete(machine) }}>
+                <CloseRounded fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          </Stack>
+        </TableCell>
+      </TableRow>
+    )
+  }
+
   return (
     <>
       <Paper variant="outlined" sx={{ borderColor: 'divider', borderRadius: 3, overflow: 'hidden' }}>
@@ -110,65 +193,89 @@ function MachinesTable({ machines, loading }) {
             <Box>
               <Typography variant="h4">Registered machines</Typography>
               <Typography variant="body2" color="text.secondary">
-                {machines.length} {machines.length === 1 ? 'machine' : 'machines'} registered
+                {machines.length} {machines.length === 1 ? 'machine' : 'machines'} registered across {manufacturerGroups.length} {manufacturerGroups.length === 1 ? 'manufacturer' : 'manufacturers'}
               </Typography>
             </Box>
             <PrecisionManufacturingOutlined color="action" />
           </Box>
         </Box>
         <Divider />
-        <DataTable
-          rows={machines}
-          columns={[
-            { field: 'serialNumber', headerName: 'Serial number', cellSx: { fontWeight: 700 } },
-            {
-              field: 'model',
-              headerName: 'Machine model',
-              renderCell: (machine) => machine.machineModel
-                ? `${machine.machineModel.manufacturer?.name ?? ''} ${machine.machineModel.modelName}`.trim()
-                : '—',
-            },
-            {
-              field: 'site',
-              headerName: 'Customer / site',
-              renderCell: (machine) => machine.site
-                ? `${machine.site.customer?.name ?? ''} — ${machine.site.name}`
-                : '—',
-            },
-            { field: 'installationDate', headerName: 'Installation date', renderCell: (machine) => machine.installationDate?.slice(0, 10) ?? '—' },
-            {
-              field: 'status',
-              headerName: 'Status',
-              renderCell: (machine) => {
-                const status = statusOptions.find((item) => item.value === machine.status) ?? statusOptions[1]
-                return <Chip size="small" label={status.label} color={status.color} />
-              },
-            },
-            {
-              field: 'actions',
-              headerName: 'Actions',
-              align: 'right',
-              width: 112,
-              renderCell: (machine) => (
-                <Stack direction="row" spacing={0.5} justifyContent="flex-end">
-                  <Tooltip title={`Edit ${machine.serialNumber}`}>
-                    <IconButton aria-label={`Edit ${machine.serialNumber}`} size="small" onClick={() => handleOpenEdit(machine)}>
-                      <EditOutlined fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                  <Tooltip title={`Delete ${machine.serialNumber}`}>
-                    <IconButton aria-label={`Delete ${machine.serialNumber}`} color="error" size="small" onClick={() => { setDeleteError(''); setMachineToDelete(machine) }}>
-                      <CloseRounded fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                </Stack>
-              ),
-            },
-          ]}
-          loading={loading}
-          emptyMessage="No machines have been registered yet."
-          minWidth={850}
-        />
+        {loading ? (
+          <Box sx={{ display: 'grid', placeItems: 'center', minHeight: 150 }}>
+            <CircularProgress size={28} />
+          </Box>
+        ) : machines.length === 0 ? (
+          <Box sx={{ display: 'grid', placeItems: 'center', textAlign: 'center', minHeight: 150, px: 2 }}>
+            <Typography variant="body2" color="text.secondary">No machines have been registered yet.</Typography>
+          </Box>
+        ) : (
+          <TableContainer sx={{ overflowX: 'auto' }}>
+            <Table size="medium" sx={{ minWidth: 850 }}>
+              <TableHead>
+                <TableRow>
+                  {machineColumns.map((column) => (
+                    <TableCell key={column.id} align={column.align ?? 'left'}>
+                      {column.label}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {manufacturerGroups.map((group) => {
+                  const expanded = Boolean(expandedManufacturers[group.key])
+                  return (
+                    <>
+                      <TableRow
+                        key={`manufacturer-${group.key}`}
+                        hover
+                        onClick={() => toggleManufacturer(group.key)}
+                        sx={{
+                          cursor: 'pointer',
+                          '& > td': {
+                            bgcolor: 'action.hover',
+                            borderBottom: expanded ? 0 : undefined,
+                            py: 1.5,
+                          },
+                        }}
+                      >
+                        <TableCell colSpan={machineColumns.length}>
+                          <Stack direction="row" alignItems="center" spacing={1.25}>
+                            <IconButton
+                              size="small"
+                              aria-label={`${expanded ? 'Collapse' : 'Expand'} ${group.name} machines`}
+                              onClick={(event) => {
+                                event.stopPropagation()
+                                toggleManufacturer(group.key)
+                              }}
+                            >
+                              {expanded ? <ExpandLessRounded /> : <ExpandMoreRounded />}
+                            </IconButton>
+                            <Typography fontWeight={700}>{group.name}</Typography>
+                            <Chip size="small" label={group.machines.length} />
+                            <Typography variant="caption" color="text.secondary">
+                              {group.machines.length === 1 ? 'machine' : 'machines'}
+                            </Typography>
+                          </Stack>
+                        </TableCell>
+                      </TableRow>
+                      <TableRow key={`machines-${group.key}`}>
+                        <TableCell colSpan={machineColumns.length} sx={{ p: 0, borderBottom: expanded ? undefined : 0 }}>
+                          <Collapse in={expanded} timeout="auto" unmountOnExit>
+                            <Table size="small" sx={{ minWidth: 850 }}>
+                              <TableBody>
+                                {group.machines.map(renderMachineRow)}
+                              </TableBody>
+                            </Table>
+                          </Collapse>
+                        </TableCell>
+                      </TableRow>
+                    </>
+                  )
+                })}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )}
       </Paper>
 
       <Dialog open={Boolean(machineToEdit)} onClose={() => !updating && setMachineToEdit(null)} fullWidth maxWidth="md">
