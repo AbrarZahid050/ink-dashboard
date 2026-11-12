@@ -1,4 +1,4 @@
-import { Fragment, useMemo, useState } from 'react'
+import { Fragment, useCallback, useMemo, useState } from 'react'
 import { CloseRounded, EditOutlined, ExpandMoreRounded, PrecisionManufacturingOutlined } from '@mui/icons-material'
 import {
   Alert,
@@ -34,10 +34,10 @@ function MachineModelsTable({ models, manufacturers, loading }) {
   const [expandedManufacturers, setExpandedManufacturers] = useState({})
   const [deleteMachineModel, { isLoading: deleting }] = useDeleteMachineModelMutation()
 
-  const getManufacturerName = (model) =>
+  const getManufacturerName = useCallback((model) =>
     model.manufacturer?.name ??
     manufacturers.find((manufacturer) => manufacturer.id === model.manufacturerId)?.name ??
-    'Unassigned manufacturer'
+    'Unassigned manufacturer', [manufacturers])
 
   const manufacturerGroups = useMemo(() => {
     const groups = new Map()
@@ -55,7 +55,7 @@ function MachineModelsTable({ models, manufacturers, loading }) {
     })
 
     return [...groups.values()].sort((a, b) => a.name.localeCompare(b.name))
-  }, [models, manufacturers])
+  }, [models, getManufacturerName])
 
   const getOptionLabel = (options, value) =>
     options.find((option) => option.value === value)?.label ?? value
