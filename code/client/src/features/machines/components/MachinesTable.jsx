@@ -231,15 +231,6 @@ function MachinesTable({ machines, loading }) {
         ) : (
           <TableContainer sx={{ overflowX: 'auto' }}>
             <Table size="medium" sx={{ minWidth: 850 }}>
-              <TableHead>
-                <TableRow>
-                  {machineColumns.map((column) => (
-                    <TableCell key={column.id} align={column.align ?? 'left'}>
-                      {column.label}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              </TableHead>
               <TableBody>
                 {manufacturerGroups.map((group) => {
                   const expanded = Boolean(expandedManufacturers[group.key])
@@ -282,6 +273,15 @@ function MachinesTable({ machines, loading }) {
                         <TableCell colSpan={machineColumns.length} sx={{ p: 0, borderBottom: expanded ? undefined : 0 }}>
                           <Collapse in={expanded} timeout="auto" unmountOnExit>
                             <Table size="small" sx={{ minWidth: 850 }}>
+                              <TableHead>
+                                <TableRow>
+                                  {machineColumns.map((column) => (
+                                    <TableCell key={column.id} align={column.align ?? 'left'}>
+                                      {column.label}
+                                    </TableCell>
+                                  ))}
+                                </TableRow>
+                              </TableHead>
                               <TableBody>
                                 {group.machines.map(renderMachineRow)}
                               </TableBody>
