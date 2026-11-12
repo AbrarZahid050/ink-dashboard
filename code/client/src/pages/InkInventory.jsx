@@ -8,7 +8,6 @@ import {
   WarehouseOutlined,
 } from '@mui/icons-material'
 import {
-  Alert,
   Box,
   Button,
   Chip,
@@ -31,6 +30,9 @@ import {
 } from '@mui/material'
 import { useGetInkLotsQuery, useGetInkProductsQuery } from '../services/api.js'
 import { getApiErrorMessage } from '../features/machine-models/utils/getApiErrorMessage.js'
+import PageContainer from '../components/common/PageContainer.jsx'
+import PageHeader from '../components/common/PageHeader.jsx'
+import QueryErrorAlert from '../components/common/QueryErrorAlert.jsx'
 
 const formatDate = (value) => {
   if (!value) return '—'
@@ -266,29 +268,21 @@ function InkInventory() {
   }
 
   return (
-    <Box sx={{ maxWidth: 1550, mx: 'auto', pt: { xs: 3, sm: 4 } }}>
-      <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems={{ xs: 'flex-start', sm: 'center' }} spacing={2} sx={{ mb: 3 }}>
-        <Box>
-          <Stack direction="row" spacing={1.25} alignItems="center" sx={{ mb: 0.65 }}>
-            <Box sx={{ width: 42, height: 42, borderRadius: 2.5, display: 'grid', placeItems: 'center', color: 'primary.main', bgcolor: 'rgba(85,214,194,0.11)' }}>
-              <WarehouseOutlined />
-            </Box>
-            <Typography variant="h3">Ink inventory</Typography>
-          </Stack>
-          <Typography variant="body2" color="text.secondary">
-            View available packages by ink product and inspect individual batch quantities and expiry dates.
-          </Typography>
-        </Box>
-        <Button variant="outlined" startIcon={<RefreshRounded />} onClick={refresh} disabled={lotsFetching}>
-          Refresh inventory
-        </Button>
-      </Stack>
+    <PageContainer>
+      <PageHeader
+        title="Ink inventory"
+        description="View available packages by ink product and inspect individual batch quantities and expiry dates."
+        action={(
+          <Button variant="outlined" startIcon={<RefreshRounded />} onClick={refresh} disabled={lotsFetching}>
+            Refresh inventory
+          </Button>
+        )}
+      />
 
-      {loadError && (
-        <Alert severity="error" sx={{ mb: 2 }} action={<Button color="inherit" size="small" onClick={refresh}>Retry</Button>}>
-          {getApiErrorMessage(loadError, 'Unable to load inventory data.')} Check that the backend API is running and try again.
-        </Alert>
-      )}
+      <QueryErrorAlert
+        message={loadError ? `${getApiErrorMessage(loadError, 'Unable to load inventory data.')} Check that the backend API is running and try again.` : ''}
+        onRetry={refresh}
+      />
 
       <Grid container spacing={2} sx={{ mb: 3 }}>
         <Grid size={{ xs: 12, sm: 6, xl: 3 }}>
@@ -374,8 +368,7 @@ function InkInventory() {
           </TableContainer>
         )}
       </Paper>
-
-    </Box>
+    </PageContainer>
   )
 }
 
