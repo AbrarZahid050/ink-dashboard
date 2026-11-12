@@ -1,268 +1,18 @@
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
+import './catalogApi.js'
+import './operationsApi.js'
+import './salesApi.js'
+import './forecastingApi.js'
 
-export const api = createApi({
-  reducerPath: 'api',
-  baseQuery: fetchBaseQuery({
-    baseUrl: '/api/v1',
-  }),
-  tagTypes: ['Manufacturer', 'MachineModel', 'InkModel', 'InkProduct', 'InkLot', 'Customer', 'CustomerSite', 'Machine', 'InkPurchase'],
-  endpoints: (builder) => ({
-    getManufacturers: builder.query({
-      query: () => '/manufacturers',
-      transformResponse: (response) => response.data ?? [],
-      providesTags: ['Manufacturer'],
-    }),
-    createManufacturer: builder.mutation({
-      query: (manufacturer) => ({
-        url: '/manufacturers',
-        method: 'POST',
-        body: manufacturer,
-      }),
-      invalidatesTags: ['Manufacturer'],
-    }),
-    updateManufacturer: builder.mutation({
-      query: ({ id, ...manufacturer }) => ({
-        url: `/manufacturers/${id}`,
-        method: 'PATCH',
-        body: manufacturer,
-      }),
-      invalidatesTags: ['Manufacturer'],
-    }),
-    deleteManufacturer: builder.mutation({
-      query: (id) => ({
-        url: `/manufacturers/${id}`,
-        method: 'DELETE',
-      }),
-      invalidatesTags: ['Manufacturer'],
-    }),
-    getMachineModels: builder.query({
-      query: () => '/machine-models',
-      transformResponse: (response) => response.data ?? [],
-      providesTags: ['MachineModel'],
-    }),
-    createMachineModel: builder.mutation({
-      query: (machineModel) => ({
-        url: '/machine-models',
-        method: 'POST',
-        body: machineModel,
-      }),
-      invalidatesTags: ['MachineModel'],
-    }),
-    updateMachineModel: builder.mutation({
-      query: ({ id, ...machineModel }) => ({
-        url: `/machine-models/${id}`,
-        method: 'PATCH',
-        body: machineModel,
-      }),
-      invalidatesTags: ['MachineModel'],
-    }),
-    deleteMachineModel: builder.mutation({
-      query: (id) => ({
-        url: `/machine-models/${id}`,
-        method: 'DELETE',
-      }),
-      invalidatesTags: ['MachineModel'],
-    }),
-    getInkModels: builder.query({
-      query: () => '/ink-models',
-      transformResponse: (response) => response.data ?? [],
-      providesTags: ['InkModel'],
-    }),
-    createInkModel: builder.mutation({
-      query: (inkModel) => ({
-        url: '/ink-models',
-        method: 'POST',
-        body: inkModel,
-      }),
-      invalidatesTags: ['InkModel'],
-    }),
-    updateInkModel: builder.mutation({
-      query: ({ id, ...inkModel }) => ({
-        url: `/ink-models/${id}`,
-        method: 'PATCH',
-        body: inkModel,
-      }),
-      invalidatesTags: ['InkModel'],
-    }),
-    deleteInkModel: builder.mutation({
-      query: (id) => ({
-        url: `/ink-models/${id}`,
-        method: 'DELETE',
-      }),
-      invalidatesTags: ['InkModel'],
-    }),
-    getInkProducts: builder.query({
-      query: () => '/ink-products',
-      transformResponse: (response) => response.data ?? [],
-      providesTags: ['InkProduct'],
-    }),
-    createInkProduct: builder.mutation({
-      query: (inkProduct) => ({
-        url: '/ink-products',
-        method: 'POST',
-        body: inkProduct,
-      }),
-      invalidatesTags: ['InkProduct', 'InkModel'],
-    }),
-    updateInkProduct: builder.mutation({
-      query: ({ id, ...inkProduct }) => ({
-        url: `/ink-products/${id}`,
-        method: 'PATCH',
-        body: inkProduct,
-      }),
-      invalidatesTags: ['InkProduct', 'InkModel'],
-    }),
-    deleteInkProduct: builder.mutation({
-      query: (id) => ({
-        url: `/ink-products/${id}`,
-        method: 'DELETE',
-      }),
-      invalidatesTags: ['InkProduct', 'InkModel'],
-    }),
-    getInkLots: builder.query({
-      query: () => '/ink-lots',
-      transformResponse: (response) => response.data ?? [],
-      providesTags: ['InkLot'],
-    }),
-    createInkLot: builder.mutation({
-      query: (inkLot) => ({
-        url: '/ink-lots',
-        method: 'POST',
-        body: inkLot,
-      }),
-      invalidatesTags: ['InkLot', 'InkProduct'],
-    }),
-    updateInkLot: builder.mutation({
-      query: ({ id, ...inkLot }) => ({
-        url: `/ink-lots/${id}`,
-        method: 'PATCH',
-        body: inkLot,
-      }),
-      invalidatesTags: ['InkLot', 'InkProduct'],
-    }),
-    deleteInkLot: builder.mutation({
-      query: (id) => ({
-        url: `/ink-lots/${id}`,
-        method: 'DELETE',
-      }),
-      invalidatesTags: ['InkLot', 'InkProduct'],
-    }),
-    getMachines: builder.query({
-      query: () => '/machines',
-      transformResponse: (response) => response.data ?? [],
-      providesTags: ['Machine'],
-    }),
-    createMachine: builder.mutation({
-      query: (machine) => ({
-        url: '/machines',
-        method: 'POST',
-        body: machine,
-      }),
-      invalidatesTags: ['Machine', 'CustomerSite', 'MachineModel'],
-    }),
-    updateMachine: builder.mutation({
-      query: ({ id, ...machine }) => ({
-        url: `/machines/${id}`,
-        method: 'PATCH',
-        body: machine,
-      }),
-      invalidatesTags: ['Machine', 'CustomerSite', 'MachineModel'],
-    }),
-    deleteMachine: builder.mutation({
-      query: (id) => ({
-        url: `/machines/${id}`,
-        method: 'DELETE',
-      }),
-      invalidatesTags: ['Machine', 'CustomerSite', 'MachineModel'],
-    }),
-    getInkPurchases: builder.query({
-      query: (filters = {}) => ({ url: '/ink-purchases', params: filters }),
-      transformResponse: (response) => response.data ?? [],
-      providesTags: ['InkPurchase'],
-    }),
-    createInkPurchase: builder.mutation({
-      query: (purchase) => ({
-        url: '/ink-purchases',
-        method: 'POST',
-        body: purchase,
-      }),
-      invalidatesTags: ['InkPurchase', 'InkLot', 'InkProduct'],
-    }),
-    getInkForecast: builder.query({
-      query: ({ customerId, machineModelId, inkModelId, horizonMonths = 3 }) => ({
-        url: '/ink-forecasts',
-        params: { customerId, machineModelId, inkModelId, horizonMonths },
-      }),
-      transformResponse: (response) => response.data ?? null,
-    }),
-    getCustomers: builder.query({
-      query: () => '/customers',
-      transformResponse: (response) => response.data ?? [],
-      providesTags: ['Customer'],
-    }),
-    getCustomerSites: builder.query({
-      query: () => '/customer-sites',
-      transformResponse: (response) => response.data ?? [],
-      providesTags: ['CustomerSite'],
-    }),
-    createCustomerSite: builder.mutation({
-      query: (site) => ({
-        url: '/customer-sites',
-        method: 'POST',
-        body: site,
-      }),
-      invalidatesTags: ['CustomerSite', 'Customer'],
-    }),
-    updateCustomerSite: builder.mutation({
-      query: ({ id, ...site }) => ({
-        url: `/customer-sites/${id}`,
-        method: 'PATCH',
-        body: site,
-      }),
-      invalidatesTags: ['CustomerSite', 'Customer'],
-    }),
-    deleteCustomerSite: builder.mutation({
-      query: (id) => ({
-        url: `/customer-sites/${id}`,
-        method: 'DELETE',
-      }),
-      invalidatesTags: ['CustomerSite', 'Customer'],
-    }),
-    createCustomer: builder.mutation({
-      query: (customer) => ({
-        url: '/customers',
-        method: 'POST',
-        body: customer,
-      }),
-      invalidatesTags: ['Customer'],
-    }),
-    updateCustomer: builder.mutation({
-      query: ({ id, ...customer }) => ({
-        url: `/customers/${id}`,
-        method: 'PATCH',
-        body: customer,
-      }),
-      invalidatesTags: ['Customer'],
-    }),
-    deleteCustomer: builder.mutation({
-      query: (id) => ({
-        url: `/customers/${id}`,
-        method: 'DELETE',
-      }),
-      invalidatesTags: ['Customer'],
-    }),
-  }),
-})
-
-export const {
+export { api } from './baseApi.js'
+export {
   useGetManufacturersQuery,
   useCreateManufacturerMutation,
-  useDeleteManufacturerMutation,
   useUpdateManufacturerMutation,
+  useDeleteManufacturerMutation,
   useGetMachineModelsQuery,
   useCreateMachineModelMutation,
-  useDeleteMachineModelMutation,
   useUpdateMachineModelMutation,
+  useDeleteMachineModelMutation,
   useGetInkModelsQuery,
   useCreateInkModelMutation,
   useUpdateInkModelMutation,
@@ -275,14 +25,13 @@ export const {
   useCreateInkLotMutation,
   useUpdateInkLotMutation,
   useDeleteInkLotMutation,
+} from './catalogApi.js'
+export {
   useGetMachinesQuery,
   useCreateMachineMutation,
   useUpdateMachineMutation,
   useDeleteMachineMutation,
   useGetCustomersQuery,
-  useGetInkPurchasesQuery,
-  useCreateInkPurchaseMutation,
-  useLazyGetInkForecastQuery,
   useCreateCustomerMutation,
   useUpdateCustomerMutation,
   useDeleteCustomerMutation,
@@ -290,4 +39,9 @@ export const {
   useCreateCustomerSiteMutation,
   useUpdateCustomerSiteMutation,
   useDeleteCustomerSiteMutation,
-} = api
+} from './operationsApi.js'
+export {
+  useGetInkPurchasesQuery,
+  useCreateInkPurchaseMutation,
+} from './salesApi.js'
+export { useLazyGetInkForecastQuery } from './forecastingApi.js'
