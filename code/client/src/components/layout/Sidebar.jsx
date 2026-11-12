@@ -1,17 +1,4 @@
-import {
-  BusinessOutlined,
-  ColorLensOutlined,
-  DashboardOutlined,
-  Inventory2Outlined,
-  GroupsOutlined,
-  LocationOnOutlined,
-  PrecisionManufacturingOutlined,
-  QueryStatsOutlined,
-  ReceiptLongRounded,
-  SettingsOutlined,
-  ViewInArOutlined,
-  WarehouseOutlined,
-} from '@mui/icons-material'
+import { SettingsOutlined } from '@mui/icons-material'
 import {
   Box,
   Divider,
@@ -22,25 +9,11 @@ import {
   ListItemText,
   Typography,
 } from '@mui/material'
+import { appRoutes } from '../../app/routes.js'
 
 const drawerWidth = 256
 
-function Sidebar({ mobileOpen, onClose, isMobile, activePage, onNavigate }) {
-  const navigationItems = [
-    { label: 'Dashboard', icon: <DashboardOutlined fontSize="small" /> },
-    { label: 'Machine Models', icon: <ViewInArOutlined fontSize="small" /> },
-    { label: 'Ink Models', icon: <ColorLensOutlined fontSize="small" /> },
-    { label: 'Ink Products', icon: <Inventory2Outlined fontSize="small" /> },
-    { label: 'Ink Lots', icon: <Inventory2Outlined fontSize="small" /> },
-    { label: 'Ink Inventory', icon: <WarehouseOutlined fontSize="small" /> },
-    { label: 'Manufacturers', icon: <BusinessOutlined fontSize="small" /> },
-    { label: 'Customers', icon: <GroupsOutlined fontSize="small" /> },
-    { label: 'Customer Sites', icon: <LocationOnOutlined fontSize="small" /> },
-    { label: 'Machines', icon: <PrecisionManufacturingOutlined fontSize="small" /> },
-    { label: 'Sales', icon: <ReceiptLongRounded fontSize="small" /> },
-    { label: 'Ink Forecasts', icon: <QueryStatsOutlined fontSize="small" /> },
-  ]
-
+function Sidebar({ mobileOpen, onClose, isMobile, activePath, onNavigate }) {
   const drawerContent = (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <Box sx={{ px: 3, py: 3.1 }}>
@@ -64,14 +37,11 @@ function Sidebar({ mobileOpen, onClose, isMobile, activePage, onNavigate }) {
       </Box>
 
       <List sx={{ px: 1.5, pt: 0 }}>
-        {navigationItems.map((item) => (
+        {appRoutes.map(({ path, label, Icon }) => (
           <ListItemButton
-            key={item.label}
-            selected={activePage === item.label}
-            onClick={() => {
-              onNavigate(item.label)
-              if (isMobile) onClose()
-            }}
+            key={path}
+            selected={activePath === path}
+            onClick={() => onNavigate(path)}
             sx={{
               minHeight: 46,
               mb: 0.55,
@@ -90,9 +60,9 @@ function Sidebar({ mobileOpen, onClose, isMobile, activePage, onNavigate }) {
               '&:hover': { backgroundColor: 'rgba(226,232,240,0.065)', color: '#FFFFFF' },
             }}
           >
-            <ListItemIcon>{item.icon}</ListItemIcon>
+            <ListItemIcon><Icon fontSize="small" /></ListItemIcon>
             <ListItemText
-              primary={item.label}
+              primary={label}
               primaryTypographyProps={{ fontSize: 13.5, fontWeight: 600 }}
             />
           </ListItemButton>
