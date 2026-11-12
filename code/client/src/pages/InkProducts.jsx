@@ -89,6 +89,7 @@ function InkProducts() {
   const [productToDelete, setProductToDelete] = useState(null)
   const [deleteError, setDeleteError] = useState('')
   const [expandedManufacturers, setExpandedManufacturers] = useState({})
+  const [expandedInkModels, setExpandedInkModels] = useState({})
 
   const {
     data: inkModels = [],
@@ -123,23 +124,54 @@ function InkProducts() {
 
   const manufacturerGroups = useMemo(() => {
     const groups = new Map()
+
     inkProducts.forEach((product) => {
       const manufacturerName = product.inkModel?.manufacturer?.name?.trim() || 'Other'
-      const groupKey = manufacturerName.toLocaleLowerCase()
-      const group = groups.get(groupKey) ?? { key: groupKey, name: manufacturerName, products: [] }
-      group.products.push(product)
-      groups.set(groupKey, group)
+      const manufacturerKey = manufacturerName.toLocaleLowerCase()
+      const manufacturer = groups.get(manufacturerKey) ?? {
+        key: manufacturerKey,
+        name: manufacturerName,
+        models: new Map(),
+      }
+      const modelName = product.inkModel?.inkName?.trim() || 'Unassigned model'
+      const modelKey = product.inkModel?.id ?? `unknown-${modelName.toLocaleLowerCase()}`
+      const model = manufacturer.models.get(modelKey) ?? {
+        key: `${manufacturerKey}::${modelKey}`,
+        name: modelName,
+        products: [],
+      }
+
+      model.products.push(product)
+      manufacturer.models.set(modelKey, model)
+      groups.set(manufacturerKey, manufacturer)
     })
-    return [...groups.values()].sort((a, b) => a.name.localeCompare(b.name))
+
+    return [...groups.values()]
+      .map((manufacturer) => ({
+        ...manufacturer,
+        models: [...manufacturer.models.values()].sort((a, b) => a.name.localeCompare(b.name)),
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name))
   }, [inkProducts])
 
-  const expandAll = () => setExpandedManufacturers(
-    Object.fromEntries(manufacturerGroups.map((group) => [group.key, true])),
+  const allModelKeys = manufacturerGroups.flatMap((manufacturer) =>
+    manufacturer.models.map((model) => model.key),
   )
-  const collapseAll = () => setExpandedManufacturers({})
+  const expandAll = () => {
+    setExpandedManufacturers(Object.fromEntries(manufacturerGroups.map((group) => [group.key, true])))
+    setExpandedInkModels(Object.fromEntries(allModelKeys.map((key) => [key, true])))
+  }
+  const collapseAll = () => {
+    setExpandedManufacturers({})
+    setExpandedInkModels({})
+  }
   const toggleManufacturer = (groupKey) => setExpandedManufacturers((current) => ({
     ...current,
     [groupKey]: !current[groupKey],
+  }))
+  const toggleInkModel = (modelKey) => setExpandedInkModels((current) => ({
+    ...current,
+    [modelKey]: !current[modelKey],
   }))
 
   const loading = inkModelsLoading || inkProductsLoading
@@ -304,7 +336,6 @@ function InkProducts() {
 
 
   const productColumns = [
-    { field: 'inkModel', headerName: 'Ink model', cellSx: { minWidth: 190 }, renderCell: (product) => <Typography variant="body2" fontWeight={600}>{product.inkModel?.inkName ?? '—'}</Typography> },
     { field: 'color', headerName: 'Colour', cellSx: { fontWeight: 600 } },
     { field: 'packagingType', headerName: 'Packaging', renderCell: (product) => packagingTypes.find((type) => type.value === product.packagingType)?.label ?? product.packagingType },
     { field: 'capacityMl', headerName: 'Capacity', align: 'right', renderCell: (product) => `${product.capacityMl.toLocaleString()} ml` },
@@ -524,42 +555,103 @@ function InkProducts() {
             <Table size="medium" sx={{ minWidth: 900 }}>
               <TableBody>
                 {manufacturerGroups.map((group) => {
-                  const expanded = Boolean(expandedManufacturers[group.key])
+                  const manufacturerExpanded = Boolean(expandedManufacturers[group.key])
+                  const productCount = group.models.reduce((total, model) => total + model.products.length, 0)
+
                   return (
                     <Fragment key={group.key}>
-                      <TableRow hover onClick={() => toggleManufacturer(group.key)} sx={{ cursor: 'pointer', '& > td': { bgcolor: 'action.hover', borderBottom: expanded ? 0 : undefined, py: 1.5 } }}>
+                      <TableRow
+                        hover
+                        onClick={() => toggleManufacturer(group.key)}
+                        sx={{ cursor: 'pointer', '& > td': { bgcolor: 'action.hover', borderBottom: manufacturerExpanded ? 0 : undefined, py: 1.5 } }}
+                      >
                         <TableCell colSpan={productColumns.length}>
                           <Stack direction="row" alignItems="center" spacing={1.25}>
-                            <IconButton size="small" aria-label={`${expanded ? 'Collapse' : 'Expand'} ${group.name} products`} onClick={(event) => { event.stopPropagation(); toggleManufacturer(group.key) }}>
-                              {expanded ? <ExpandLessRounded /> : <ExpandMoreRounded />}
+                            <IconButton
+                              size="small"
+                              aria-label={`${manufacturerExpanded ? 'Collapse' : 'Expand'} ${group.name}`}
+                              onClick={(event) => { event.stopPropagation(); toggleManufacturer(group.key) }}
+                            >
+                              {manufacturerExpanded ? <ExpandLessRounded /> : <ExpandMoreRounded />}
                             </IconButton>
                             <Typography fontWeight={700}>{group.name}</Typography>
-                            <Chip size="small" label={group.products.length} />
-                            <Typography variant="caption" color="text.secondary">{group.products.length === 1 ? 'product' : 'products'}</Typography>
+                            <Chip size="small" label={group.models.length} />
+                            <Typography variant="caption" color="text.secondary">
+                              {group.models.length === 1 ? 'ink model' : 'ink models'} · {productCount} {productCount === 1 ? 'product' : 'products'}
+                            </Typography>
                           </Stack>
                         </TableCell>
                       </TableRow>
                       <TableRow>
-                        <TableCell colSpan={productColumns.length} sx={{ p: 0, borderBottom: expanded ? undefined : 0 }}>
-                          <Collapse in={expanded} timeout="auto" unmountOnExit>
-                            <Table size="small" sx={{ minWidth: 900 }}>
-                              <TableHead>
-                                <TableRow>
-                                  {productColumns.map((column) => (
-                                    <TableCell key={column.field} align={column.align ?? 'left'} sx={{ width: column.width, ...column.headerSx }}>{column.headerName}</TableCell>
-                                  ))}
-                                </TableRow>
-                              </TableHead>
+                        <TableCell colSpan={productColumns.length} sx={{ p: 0, borderBottom: manufacturerExpanded ? undefined : 0 }}>
+                          <Collapse in={manufacturerExpanded} timeout="auto" unmountOnExit>
+                            <Table size="small">
                               <TableBody>
-                                {group.products.map((product) => (
-                                  <TableRow key={product.id} hover>
-                                    {productColumns.map((column) => (
-                                      <TableCell key={column.field} align={column.align ?? 'left'} sx={column.cellSx}>
-                                        {column.renderCell ? column.renderCell(product) : product[column.field] ?? '—'}
-                                      </TableCell>
-                                    ))}
-                                  </TableRow>
-                                ))}
+                                {group.models.map((model) => {
+                                  const modelExpanded = Boolean(expandedInkModels[model.key])
+                                  return (
+                                    <Fragment key={model.key}>
+                                      <TableRow
+                                        hover
+                                        onClick={() => toggleInkModel(model.key)}
+                                        sx={{
+                                          cursor: 'pointer',
+                                          '& > td': {
+                                            bgcolor: 'action.selected',
+                                            borderBottom: modelExpanded ? 0 : undefined,
+                                            py: 1.25,
+                                            pl: 7,
+                                          },
+                                        }}
+                                      >
+                                        <TableCell colSpan={productColumns.length}>
+                                          <Stack direction="row" alignItems="center" spacing={1.25}>
+                                            <IconButton
+                                              size="small"
+                                              aria-label={`${modelExpanded ? 'Collapse' : 'Expand'} ${model.name}`}
+                                              onClick={(event) => { event.stopPropagation(); toggleInkModel(model.key) }}
+                                            >
+                                              {modelExpanded ? <ExpandLessRounded /> : <ExpandMoreRounded />}
+                                            </IconButton>
+                                            <Typography variant="body2" fontWeight={650}>{model.name}</Typography>
+                                            <Chip size="small" variant="outlined" label={model.products.length} />
+                                            <Typography variant="caption" color="text.secondary">
+                                              {model.products.length === 1 ? 'colour variant' : 'colour variants'}
+                                            </Typography>
+                                          </Stack>
+                                        </TableCell>
+                                      </TableRow>
+                                      <TableRow>
+                                        <TableCell colSpan={productColumns.length} sx={{ p: 0, borderBottom: modelExpanded ? undefined : 0 }}>
+                                          <Collapse in={modelExpanded} timeout="auto" unmountOnExit>
+                                            <Table size="small" sx={{ minWidth: 820 }}>
+                                              <TableHead>
+                                                <TableRow>
+                                                  {productColumns.map((column) => (
+                                                    <TableCell key={column.field} align={column.align ?? 'left'} sx={{ width: column.width, ...column.headerSx }}>
+                                                      {column.headerName}
+                                                    </TableCell>
+                                                  ))}
+                                                </TableRow>
+                                              </TableHead>
+                                              <TableBody>
+                                                {model.products.map((product) => (
+                                                  <TableRow key={product.id} hover>
+                                                    {productColumns.map((column) => (
+                                                      <TableCell key={column.field} align={column.align ?? 'left'} sx={column.cellSx}>
+                                                        {column.renderCell ? column.renderCell(product) : product[column.field] ?? '—'}
+                                                      </TableCell>
+                                                    ))}
+                                                  </TableRow>
+                                                ))}
+                                              </TableBody>
+                                            </Table>
+                                          </Collapse>
+                                        </TableCell>
+                                      </TableRow>
+                                    </Fragment>
+                                  )
+                                })}
                               </TableBody>
                             </Table>
                           </Collapse>
