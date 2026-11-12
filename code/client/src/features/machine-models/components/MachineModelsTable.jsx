@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { Fragment, useMemo, useState } from 'react'
 import { CloseRounded, EditOutlined, ExpandMoreRounded, PrecisionManufacturingOutlined } from '@mui/icons-material'
 import {
   Alert,
@@ -171,7 +171,7 @@ function MachineModelsTable({ models, manufacturers, loading }) {
                   const expanded = isExpanded(group.id)
 
                   return (
-                    <>
+                    <Fragment key={group.id}>
                       <TableRow
                         key={group.id}
                         hover
@@ -224,7 +224,7 @@ function MachineModelsTable({ models, manufacturers, loading }) {
                           </Collapse>
                         </TableCell>
                       </TableRow>
-                    </>
+                    </Fragment>
                   )
                 })}
               </TableBody>
