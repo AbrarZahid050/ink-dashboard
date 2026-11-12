@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { Fragment, useMemo, useState } from 'react'
 import {
   CloseRounded,
   EditOutlined,
@@ -224,7 +224,7 @@ function MachinesTable({ machines, loading }) {
                 {manufacturerGroups.map((group) => {
                   const expanded = Boolean(expandedManufacturers[group.key])
                   return (
-                    <>
+                    <Fragment key={group.key}>
                       <TableRow
                         key={`manufacturer-${group.key}`}
                         hover
@@ -269,7 +269,7 @@ function MachinesTable({ machines, loading }) {
                           </Collapse>
                         </TableCell>
                       </TableRow>
-                    </>
+                    </Fragment>
                   )
                 })}
               </TableBody>
