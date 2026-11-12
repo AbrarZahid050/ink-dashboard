@@ -65,10 +65,38 @@ function Sales() {
 
   const lineTotal = (item) => Number(item.quantity) * Number(item.unitPrice || 0)
   const total = items.reduce((sum, item) => sum + lineTotal(item), 0)
+  const normalizedSearch = search.trim().toLocaleLowerCase()
   const filteredPurchases = purchases.filter((purchase) => {
-    const customer = purchase.customer?.name ?? ''
-    const ref = purchase.reference ?? ''
-    return `${customer} ${ref}`.toLowerCase().includes(search.toLowerCase())
+    if (!normalizedSearch) return true
+
+    const invoiceDetails = [
+      purchase.customer?.name,
+      purchase.reference,
+      purchase.currencyCode,
+      ...(purchase.items ?? []).flatMap((line) => {
+        const product = line.inkProduct
+        const model = product?.inkModel
+        const manufacturer = model?.manufacturer
+        const machine = line.machine
+        return [
+          manufacturer?.name,
+          model?.inkName,
+          model?.inkType,
+          product?.color,
+          product?.packagingType,
+          product?.capacityMl,
+          product?.productCode,
+          line.inkLot?.lotNumber,
+          machine?.serialNumber,
+          machine?.machineModel?.modelName,
+          machine?.machineModel?.manufacturer?.name,
+        ]
+      }),
+    ]
+
+    return invoiceDetails.some((value) =>
+      String(value ?? '').toLocaleLowerCase().includes(normalizedSearch),
+    )
   })
   const monthPurchases = purchases.filter((purchase) => String(purchase.purchasedAt).slice(0, 7) === today.slice(0, 7))
   const monthValue = monthPurchases.reduce((sum, purchase) =>
@@ -241,7 +269,7 @@ function Sales() {
               <Typography variant="h4">Sales history</Typography>
               <Typography variant="body2" color="text.secondary">{purchases.length} recorded {purchases.length === 1 ? 'invoice' : 'invoices'}</Typography>
             </Box>
-            <TextField size="small" placeholder="Search customer or reference" value={search} onChange={(event) => setSearch(event.target.value)} sx={{ width: { xs: '100%', sm: 300 } }} InputProps={{ startAdornment: <InputAdornment position="start"><SearchRounded fontSize="small" /></InputAdornment> }} />
+            <TextField size="small" placeholder="Search customer, reference, ink model, colour, lot…" value={search} onChange={(event) => setSearch(event.target.value)} sx={{ width: { xs: '100%', sm: 300 } }} InputProps={{ startAdornment: <InputAdornment position="start"><SearchRounded fontSize="small" /></InputAdornment> }} />
           </Stack>
         </Box>
         <Divider />
