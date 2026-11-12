@@ -14,6 +14,7 @@ import {
 import {
   Alert,
   Box,
+  Chip,
   Button,
   CircularProgress,
   Collapse,
@@ -49,7 +50,6 @@ import PageContainer from '../components/common/PageContainer.jsx'
 import PageHeader from '../components/common/PageHeader.jsx'
 import QueryErrorAlert from '../components/common/QueryErrorAlert.jsx'
 import FeedbackSnackbar from '../components/common/FeedbackSnackbar.jsx'
-import DataTable from '../components/common/DataTable.jsx'
 import ConfirmationDetail from '../components/common/ConfirmationDetail.jsx'
 
 const packagingTypes = [
