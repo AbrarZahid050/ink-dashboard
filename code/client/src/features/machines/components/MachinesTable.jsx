@@ -204,7 +204,19 @@ function MachinesTable({ machines, loading }) {
                 {machines.length} {machines.length === 1 ? 'machine' : 'machines'} registered across {manufacturerGroups.length} {manufacturerGroups.length === 1 ? 'manufacturer' : 'manufacturers'}
               </Typography>
             </Box>
-            <PrecisionManufacturingOutlined color="action" />
+            <Stack direction="row" spacing={1} alignItems="center">
+              {manufacturerGroups.length > 1 && (
+                <>
+                  <Button size="small" color="inherit" onClick={expandAll}>
+                    Expand all
+                  </Button>
+                  <Button size="small" color="inherit" onClick={collapseAll}>
+                    Collapse all
+                  </Button>
+                </>
+              )}
+              <PrecisionManufacturingOutlined color="action" />
+            </Stack>
           </Box>
         </Box>
         <Divider />
